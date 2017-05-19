@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <TableLayout
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true">
+
+        <TableRow>
+            <FrameLayout
+                android:id="@+id/fragment_offers_container"
+                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight="1">
+            </FrameLayout>
+
+        </TableRow>
+    </TableLayout>
+
+   <TableLayout
+       android:id="@+id/footer"
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:layout_alignParentBottom="true">
+
+       <TableRow>
+           <FrameLayout
+               android:id="@+id/fragment_status_bar_container"
+               android:layout_height="wrap_content"
+               android:layout_width="0dp"
+               android:layout_weight="9"/>
+
+           <ImageButton
+               android:layout_height="wrap_content"
+               android:layout_width="0dp"
+               android:id="@+id/button_config"
+               android:src="@drawable/config_icon"
+               android:scaleType="centerInside"
+               android:maxWidth="25dp"
+               android:maxHeight="25dp"
+               android:layout_weight="1"/>
+       </TableRow>
+
+   </TableLayout>
+
+    <TableLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/header"
+        android:layout_above="@+id/footer">
+
+        <TableRow>
+            <FrameLayout
+                android:id="@+id/fragment_buttons_container"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"/>
+
+
+            <FrameLayout
+                android:id="@+id/fragment_content_container"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="3"
+                />
+        </TableRow>
+    </TableLayout>
+
+</RelativeLayout>

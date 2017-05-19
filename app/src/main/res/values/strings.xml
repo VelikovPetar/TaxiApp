@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">TaxiApp</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="server_status">Сервер:</string>
+    <string name="connection_status">Конекција:</string>
+    <string name="logged_driver">Најавен возач:</string>
+    <string name="login_button_text">Најава</string>
+    <string name="login_error">Внесовте погрешен код! Обидете се повторно!</string>
+    <string name="gps">GPS</string>
+</resources>
