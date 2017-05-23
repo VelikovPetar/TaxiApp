@@ -48,6 +48,17 @@
                 android:inputType="number"/>
         </LinearLayout>
 
+        <Button
+            android:id="@+id/button_confirm_config"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/config_confirm"/>
+
+        <TextView
+            android:id="@+id/text_view_error_config"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
     </LinearLayout>
 
 </RelativeLayout>

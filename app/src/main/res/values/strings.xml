@@ -7,4 +7,5 @@
     <string name="login_button_text">Најава</string>
     <string name="login_error">Внесовте погрешен код! Обидете се повторно!</string>
     <string name="gps">GPS</string>
+    <string name="config_confirm">Потврди</string>
 </resources>

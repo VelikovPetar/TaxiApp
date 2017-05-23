@@ -4,6 +4,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -14,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.example.acer.taxiapp.MainActivity;
 import com.example.acer.taxiapp.R;
 
 /**
@@ -23,29 +25,35 @@ import com.example.acer.taxiapp.R;
 public class LoginFragment extends Fragment {
 
     private EditText loginEditText;
-    private TextView loginErrorTextView;
+    private TextView errorTextView;
     private Button loginButton;
+
+    private boolean isConfig = true;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_login, container, false);
         loginEditText = (EditText) view.findViewById(R.id.edit_text_login);
-        loginErrorTextView = (TextView) view.findViewById(R.id.text_view_error_login);
-        loginErrorTextView.setVisibility(View.INVISIBLE);
+        errorTextView = (TextView) view.findViewById(R.id.text_view_error_login);
+        errorTextView.setVisibility(View.INVISIBLE);
         loginButton = (Button) view.findViewById(R.id.button_login);
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(loginEditText.getText().toString().equals("1234")) {
-                    hideKeyboard();
-                    loginErrorTextView.setVisibility(View.INVISIBLE);
-                    FragmentManager fManager = getFragmentManager();
-                    FragmentTransaction fTransaction = fManager.beginTransaction();
-                    fTransaction.replace(R.id.fragment_content_container, new MapFragment());
-                    fTransaction.commit();
-                } else {
-                    loginErrorTextView.setVisibility(View.VISIBLE);
+                if(isConfig) {
+                    SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, 0);
+                    String driverID = preferences.getString(MainActivity.RF_CARD_ID, null);
+                    if(driverID != null && driverID.equals(loginEditText.getText().toString().trim())) {
+                        FragmentManager fManager = getFragmentManager();
+                        FragmentTransaction fTransaction = fManager.beginTransaction();
+                        fTransaction.replace(R.id.fragment_content_container, new MapFragment());
+                        fTransaction.commit();
+                        hideKeyboard();
+                        errorTextView.setVisibility(View.INVISIBLE);
+                    } else {
+                        errorTextView.setVisibility(View.VISIBLE);
+                    }
                 }
             }
         });
@@ -53,8 +61,24 @@ public class LoginFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, 0);
+        if(!preferences.contains(MainActivity.RF_CARD_ID) || !preferences.contains(MainActivity.DEVICE_ID)) {
+            errorTextView.setText("Уредот не е конфигуриран! Направете конфигурација пред да се логирате!");
+            errorTextView.setVisibility(View.VISIBLE);
+            isConfig = false;
+            loginEditText.setEnabled(false);
+            loginButton.setEnabled(false);
+        }
+    }
+
     private void hideKeyboard() {
-        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(loginEditText.getWindowToken(), 0);
+        View view = getActivity().getCurrentFocus();
+        if(view != null) {
+            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 }

@@ -38,6 +38,11 @@ import com.example.acer.taxiapp.services.TCPClientService;
 
 public class MainActivity extends Activity implements LocationListener {
 
+
+    // Constants
+    public static final String PREFERENCES = "my_preferences";
+    public static final String RF_CARD_ID = "rf_card";
+    public static final String DEVICE_ID = "device_id";
     // Debug
     private String DEBUG_TAG = "TCP";
     private boolean debug = true;
@@ -143,8 +148,6 @@ public class MainActivity extends Activity implements LocationListener {
         FragmentTransaction fTransaction = fManager.beginTransaction();
         fTransaction.replace(R.id.fragment_content_container, new LoginFragment());
         fTransaction.commit();
-        byte [] loginMsg = MessengerClient.getCommonMessage(lastLocation);
-        tcpClientService.sendBytes(lastLocation);
     }
 
     @Override
