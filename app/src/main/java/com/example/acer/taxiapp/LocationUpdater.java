@@ -37,7 +37,7 @@ public class LocationUpdater {
     }
 
     public void execute(Location location) {
-        byte [] loginMessage = MessengerClient.getCommonMessage(location);
+
     }
 
     public void setLastLocation(Location location) {

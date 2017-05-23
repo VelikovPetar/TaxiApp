@@ -35,14 +35,13 @@ public class TCPClientService extends Service {
         return binder;
     }
 
-    public void sendBytes(Location location) {
-        byte[] loginMsg = MessengerClient.getCommonMessage(location);
+    public void sendBytes(byte[] message) {
 //        String msg = "";
 //        for(byte b : loginMsg) {
 //            msg += (int)b + "";
 //        }
 //        Log.e("MSG", msg);
-        tcpClient.sendByte(loginMsg);
+        tcpClient.sendByte(message);
     }
 
 

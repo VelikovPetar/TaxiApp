@@ -15,19 +15,23 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Button"/>
+            android:text="Send Login"
+            android:onClick="sendLoginMessage"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Button"/>
+            android:text="Send Logout"
+            android:onClick="sendLogoutMessage"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Button"/>
+            android:text="Send Pause Start"
+            android:onClick="sendPauseStartMessage"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Button"/>
+            android:text="Send Pause Stop"
+            android:onClick="sendPauseStopMessage"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"

@@ -1,5 +1,7 @@
 package com.example.acer.taxiapp;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 
@@ -13,20 +15,27 @@ import java.util.TimeZone;
 
 public class MessengerClient {
 
-    public static byte[] getCommonMessage(Location location) {
+    private static byte[] getBaseCommonMessage(Location location, Context context) {
         byte[] message = new byte[71];
 
         // Najava na paket
         message[0] = message[1] = (byte) 'A';
 
         // Broj na ured
-        // TODO
-        // Make it dynamic
-        message[2] = (byte) '9';
-        message[3] = (byte) '0';
-        message[4] = (byte) '0';
-        message[5] = (byte) '0';
-        message[6] = (byte) '1';
+        // TODO Da se prochita ID=na uredot samo ednashka i da se chuva vo memorija
+        SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+        String deviceID = preferences.getString(MainActivity.DEVICE_ID, null);
+        byte[] bytes;
+        if(deviceID != null) {
+            bytes = deviceID.getBytes();
+        } else {
+            bytes = new byte[5];
+        }
+        message[2] = bytes[0];
+        message[3] = bytes[1];
+        message[4] = bytes[2];
+        message[5] = bytes[3];
+        message[6] = bytes[4];
 
         // Komanda
         message[7] = (byte) '0';
@@ -58,7 +67,6 @@ public class MessengerClient {
         message[19] = (byte) (degrees);
         message[20] = (byte) (degrees >> 8);
 
-        // TODO FIX
         float minutes = (float) (latitude - degrees) * 60;
         bits = Float.floatToIntBits(minutes);
         message[21] = (byte) (bits);
@@ -74,7 +82,6 @@ public class MessengerClient {
         message[26] = (byte) (degrees);
         message[27] = (byte) (degrees >> 8);
 
-        // TODO FIX
         minutes = (float) (longitude - degrees) * 60;
         bits = Float.floatToIntBits(minutes);
         message[28] = (byte) (bits);
@@ -123,7 +130,7 @@ public class MessengerClient {
         message[49] = setBinaryData1ForCommonMessage();
 
         // Binary data 2
-        message[50] = setBinaryData2ForCommonmessage();
+        message[50] = setBinaryData2ForCommonMessage();
 
         // Analog data
         int analogData = 0;
@@ -152,18 +159,81 @@ public class MessengerClient {
         message[64] = '0';
         message[65] = '0';
         message[66] = '0';
-        message[67] = '1';
-        message[68] = '2';
-        message[69] = '3';
-        message[70] = '4';
+        message[67] = '0';
+        message[68] = '0';
+        message[69] = '0';
+        message[70] = '0';
 
-        byte [] retVal = addChkSum(message);
-
-        // TODO CHECK EVERYTHING
-        return retVal;
+        return message;
     }
 
-    public static byte[] addChkSum(byte[] message) {
+    public static byte[] getLoginMessage(Location location, Context context) {
+        byte[] message = getBaseCommonMessage(location, context);
+        message[49] = setBinaryData1ForLoginMessage();
+        message[50] = setBinaryData2ForLoginMessage();
+
+        SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+        String driverID = preferences.getString(MainActivity.RF_CARD_ID, null);
+        byte[] bytes;
+        if(driverID != null) {
+            bytes = driverID.getBytes();
+        } else {
+            bytes = new byte[4];
+        }
+        message[67] = bytes[0];
+        message[68] = bytes[1];
+        message[69] = bytes[2];
+        message[70] = bytes[3];
+
+        byte[] res = addChkSum(message);
+        return res;
+    }
+
+    // TODO CHECK?!
+    public static byte[] getLogoutMessage(Location location, Context context) {
+        byte[] message = getBaseCommonMessage(location, context);
+        message[49] = setBinaryData1ForLogoutMessage();
+        message[50] = setBinaryData2ForLogoutMessage();
+
+        SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+        String driverID = preferences.getString(MainActivity.RF_CARD_ID, null);
+        byte[] bytes;
+        if(driverID != null) {
+            bytes = driverID.getBytes();
+        } else {
+            bytes = new byte[4];
+        }
+        message[67] = bytes[0];
+        message[68] = bytes[1];
+        message[69] = bytes[2];
+        message[70] = bytes[3];
+
+        byte[] res = addChkSum(message);
+        return res;
+    }
+
+    // TODO FIX?!
+    public static byte[] getPauseStartMessage(Location location, Context context) {
+        byte[] message = getBaseCommonMessage(location, context);
+
+        message[49] = setBinaryData1ForLogoutMessage();
+        message[50] = setBinaryData2ForLogoutMessage();
+
+        byte[] res = addChkSum(message);
+        return res;
+    }
+
+    // TODO FIX?!
+    public static byte[] getPauseStopMessage(Location location, Context context) {
+        byte[] message = getBaseCommonMessage(location, context);
+
+        message[49] = setBinaryData1ForLoginMessage();
+        message[50] = setBinaryData2ForLoginMessage();
+
+        byte[] res = addChkSum(message);
+        return res;
+    }
+    private static byte[] addChkSum(byte[] message) {
         byte[] retVal = new byte[message.length + 2];
 //        byte[] retVal = new byte[message.length + 7];
 
@@ -204,7 +274,7 @@ public class MessengerClient {
         return res;
     }
 
-    private static byte setBinaryData2ForCommonmessage() {
+    private static byte setBinaryData2ForCommonMessage() {
         byte res = 0;
         res |= 1 << 7; // FIKSNO
         res |= 1 << 6; // FIKSNO
@@ -213,4 +283,39 @@ public class MessengerClient {
         // TODO
         return res;
     }
+
+    private static byte setBinaryData1ForLoginMessage() {
+        byte res = 0;
+        res |= 1 << 7; // FIKSNO
+        res |= 1 << 6; // FIKSNO
+        res |= 1; // FIKSNO
+        return res;
+    }
+
+    private static byte setBinaryData2ForLoginMessage() {
+        byte res = 0;
+        res |= 1 << 7; // FIKSNO
+        res |= 1 << 6; // FIKSNO
+        return res;
+    }
+
+    private static byte setBinaryData1ForLogoutMessage() {
+        byte res = 0;
+        res |= 1 << 7; // FIKSNO
+        res |= 1 << 6; // FIKSNO
+        res |= 1; // FIKSNO
+        // Za odlogiranje
+        res |= 1 << 5;
+        return res;
+    }
+
+    private static byte setBinaryData2ForLogoutMessage() {
+        byte res = 0;
+        res |= 1 << 7; // FIKSNO
+        res |= 1 << 6; // FIKSNO
+        // Za iskluchen taksimetar
+        res |= 1 << 1;
+        return res;
+    }
+
 }

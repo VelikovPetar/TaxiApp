@@ -42,7 +42,7 @@ public class LoginFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if(isConfig) {
-                    SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, 0);
+                    SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
                     String driverID = preferences.getString(MainActivity.RF_CARD_ID, null);
                     if(driverID != null && driverID.equals(loginEditText.getText().toString().trim())) {
                         FragmentManager fManager = getFragmentManager();
@@ -64,7 +64,7 @@ public class LoginFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, 0);
+        SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         if(!preferences.contains(MainActivity.RF_CARD_ID) || !preferences.contains(MainActivity.DEVICE_ID)) {
             errorTextView.setText("Уредот не е конфигуриран! Направете конфигурација пред да се логирате!");
             errorTextView.setVisibility(View.VISIBLE);

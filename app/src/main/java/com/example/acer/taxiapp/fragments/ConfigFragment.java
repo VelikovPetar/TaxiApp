@@ -53,7 +53,7 @@ public class ConfigFragment extends Fragment {
                     errorTextView.setText(errorMessage);
                     errorTextView.setTextColor(Color.RED);
                 } else {
-                    SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, 0);
+                    SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
                     SharedPreferences.Editor editor = preferences.edit();
                     editor.putString(MainActivity.RF_CARD_ID, driverNumberEditText.getText().toString().trim());
                     editor.putString(MainActivity.DEVICE_ID, deviceNumberEditText.getText().toString().trim());
@@ -77,9 +77,9 @@ public class ConfigFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, 0);
+        SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         if(preferences.contains(MainActivity.RF_CARD_ID) || preferences.contains(MainActivity.DEVICE_ID)) {
-            errorTextView.setText("Уредот е веќе конфигуриран. Внесување нови вредности ќе ги препокри старите.");
+            errorTextView.setText("Уредот е веќе конфигуриран. Внесување нови вредности ќе ги препокрие старите.");
             errorTextView.setTextColor(Color.YELLOW);
         }
     }

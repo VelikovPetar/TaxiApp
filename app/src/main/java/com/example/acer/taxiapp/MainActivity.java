@@ -150,6 +150,26 @@ public class MainActivity extends Activity implements LocationListener {
         fTransaction.commit();
     }
 
+    public void sendLoginMessage(View view) {
+        byte[] message = MessengerClient.getLoginMessage(lastLocation, this);
+        tcpClientService.sendBytes(message);
+    }
+
+    public void sendLogoutMessage(View view) {
+        byte[] message = MessengerClient.getLogoutMessage(lastLocation, this);
+        tcpClientService.sendBytes(message);
+    }
+
+    public void sendPauseStartMessage(View view) {
+        byte[] message = MessengerClient.getPauseStartMessage(lastLocation, this);
+        tcpClientService.sendBytes(message);
+    }
+
+    public void sendPauseStopMessage(View view) {
+        byte[] message = MessengerClient.getPauseStopMessage(lastLocation, this);
+        tcpClientService.sendBytes(message);
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
