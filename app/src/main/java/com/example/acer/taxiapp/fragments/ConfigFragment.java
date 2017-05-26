@@ -17,10 +17,6 @@ import android.widget.TextView;
 import com.example.acer.taxiapp.MainActivity;
 import com.example.acer.taxiapp.R;
 
-/**
- * Created by Acer on 17.5.2017.
- */
-
 public class ConfigFragment extends Fragment {
 
     private EditText driverNumberEditText;

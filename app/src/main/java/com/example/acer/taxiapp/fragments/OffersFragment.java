@@ -12,10 +12,6 @@ import android.widget.TextView;
 
 import com.example.acer.taxiapp.R;
 
-/**
- * Created by Acer on 05.5.2017.
- */
-
 public class OffersFragment extends Fragment {
 
     private TextView offersInfoTextView;

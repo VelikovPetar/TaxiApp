@@ -2,29 +2,18 @@ package com.example.acer.taxiapp;
 
 import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
-/**
- * Created by Acer on 15.5.2017.
- */
 
 public class TCPClient implements Runnable {
 
@@ -140,13 +129,6 @@ public class TCPClient implements Runnable {
         }
     }
 
-    private void broadcastMessage(String action, String value) {
-        Intent intent = new Intent();
-        intent.setAction(action);
-        intent.putExtra(MESSAGE, value);
-        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-    }
-
     private void broadcastStatusUpdate(String action, StatusBarFragment.StatusUpdate statusUpdate) {
         Intent intent = new Intent();
         intent.setAction(action);
@@ -182,7 +164,7 @@ public class TCPClient implements Runnable {
                     e.printStackTrace();
                 }
             }
-            // TODO
+
             // Notify user that internet connection WAS established
             isWaitingData = true;
             broadcastStatusUpdate(BroadcastActions.ACTION_CONNECTION_STATUS, StatusBarFragment.ConnectionStatusValues.CONNECTED);

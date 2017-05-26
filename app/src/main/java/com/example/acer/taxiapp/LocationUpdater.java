@@ -8,10 +8,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by Acer on 18.5.2017.
- */
-
 public class LocationUpdater {
 
     private static final int INTERVAL = 10;

@@ -19,10 +19,6 @@ import com.example.acer.taxiapp.BroadcastActions;
 import com.example.acer.taxiapp.R;
 import com.example.acer.taxiapp.TCPClient;
 
-/**
- * Created by Acer on 15.5.2017.
- */
-
 public class StatusBarFragment extends Fragment {
 
     // TextViews
@@ -44,11 +40,11 @@ public class StatusBarFragment extends Fragment {
         vehicleStatus = (TextView) view.findViewById(R.id.text_view_vehicle_status);
         vehicleStatus.setText("Unknown");
         locationStatus = (TextView) view.findViewById(R.id.text_view_location_status);
-        locationStatus.setText("GPS + WiFi");
+        locationStatus.setText("NO INFO");
         connectionStatus = (TextView) view.findViewById(R.id.text_view_connection_status);
         connectionStatus.setText("NO INFO");
         serverStatus = (TextView) view.findViewById(R.id.text_view_server_status);
-        serverStatus.setText("Connected");
+        serverStatus.setText("NO INFO");
         return view;
     }
 

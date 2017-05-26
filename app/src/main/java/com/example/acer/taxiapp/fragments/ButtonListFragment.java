@@ -9,10 +9,6 @@ import android.view.ViewGroup;
 
 import com.example.acer.taxiapp.R;
 
-/**
- * Created by Acer on 04.5.2017.
- */
-
 public class ButtonListFragment extends Fragment {
 
     @Nullable

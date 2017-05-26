@@ -12,12 +12,10 @@ import com.example.acer.taxiapp.services.TCPClientIntentService;
 
 import java.util.Arrays;
 
-/**
- * Created by Acer on 26.5.2017.
- */
 
 public class Parser {
 
+    // Debug
     private static final String DEBUG_TAG = "BYTE-PARSER";
 
     // Name for broadcasts concerning status bar updates
@@ -143,9 +141,7 @@ public class Parser {
             return false;
         }
         byte[] deviceIdBytes = Arrays.copyOfRange(message, 2, 7);
-        if(!deviceId.equals(bytesToString(deviceIdBytes)))
-            return false;
-        return true;
+        return deviceId.equals(bytesToString(deviceIdBytes));
     }
 
     private void broadcastStatusUpdate(String action, StatusBarFragment.StatusUpdate statusUpdate) {

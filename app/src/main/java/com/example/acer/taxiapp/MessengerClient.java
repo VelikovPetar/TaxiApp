@@ -9,10 +9,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-/**
- * Created by Acer on 15.5.2017.
- */
-
 public class MessengerClient {
 
     private static byte[] getBaseCommonMessage(Location location, Context context) {

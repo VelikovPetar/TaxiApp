@@ -1,9 +1,5 @@
 package com.example.acer.taxiapp;
 
-/**
- * Created by Acer on 18.5.2017.
- */
-
 public class BroadcastActions {
     public static final String ACTION_DRIVER_STATUS = "tcpclient.broadcastactions.driver";
     public static final String ACTION_LOCATION_STATUS = "locationupdater.broadcastactions.location";

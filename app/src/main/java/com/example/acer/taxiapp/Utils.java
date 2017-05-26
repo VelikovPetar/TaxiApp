@@ -5,10 +5,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.view.View;
 
-/**
- * Created by Acer on 16.5.2017.
- */
-
 public class Utils {
 
     public static boolean hasInternetConnection(Context context) {
