@@ -204,6 +204,9 @@ public class TCPClient implements Runnable {
 
                 if(debug)Log.e(DEBUG_TAG, "Acquired I/O streams");
 
+                // Create parser
+                Parser parser = new Parser(context);
+
                 // Waiting for incoming data
                 while(isWaitingData) {
 
@@ -230,9 +233,20 @@ public class TCPClient implements Runnable {
                     char[] buffer = new char[256];
                     int readChars = reader.read(buffer);
                     for(int i = 0; i < readChars; ++i) {
+                        if(i < readChars - 1) {
+                            if(buffer[i] == 'A' && buffer[i + 1] == 'A') {
+                                if(message.length() > 2) {
+                                    if(debug)Log.e(DEBUG_TAG, "RECEIVED: " + message);
+                                    parser.parse(message.getBytes());
+                                    message = "";
+                                }
+                            }
+                        }
                         message += buffer[i];
                     }
 
+                    // Parse the received message
+                    parser.parse(message.getBytes());
                     if(debug)Log.e(DEBUG_TAG, "RECEIVED: " + message);
 
                 }

@@ -6,6 +6,7 @@
     <string name="logged_driver">Најавен возач:</string>
     <string name="login_button_text">Најава</string>
     <string name="login_error">Внесовте погрешен код! Обидете се повторно!</string>
-    <string name="gps">GPS</string>
+    <string name="gps_status">GPS</string>
     <string name="config_confirm">Потврди</string>
+    <string name="vehicle_status">Статус на возило:</string>
 </resources>

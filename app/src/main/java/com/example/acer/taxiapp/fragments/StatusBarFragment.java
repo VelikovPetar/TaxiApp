@@ -27,6 +27,7 @@ public class StatusBarFragment extends Fragment {
 
     // TextViews
     private TextView driverStatus;
+    private TextView vehicleStatus;
     private TextView locationStatus;
     private TextView connectionStatus;
     private TextView serverStatus;
@@ -39,7 +40,9 @@ public class StatusBarFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_status_bar, container, false);
         driverStatus = (TextView) view.findViewById(R.id.text_view_driver_status);
-        driverStatus.setText("Petar Velikov");
+        driverStatus.setText("Unknown");
+        vehicleStatus = (TextView) view.findViewById(R.id.text_view_vehicle_status);
+        vehicleStatus.setText("Unknown");
         locationStatus = (TextView) view.findViewById(R.id.text_view_location_status);
         locationStatus.setText("GPS + WiFi");
         connectionStatus = (TextView) view.findViewById(R.id.text_view_connection_status);
@@ -106,6 +109,27 @@ public class StatusBarFragment extends Fragment {
     public interface StatusUpdate {
         String getValue();
         int getColor();
+    }
+
+    public static class DriverStatusValue implements StatusUpdate {
+
+        private String value;
+        private int color;
+
+        public DriverStatusValue(String value, int color) {
+            this.value = value;
+            this.color = color;
+        }
+
+        @Override
+        public String getValue() {
+            return value;
+        }
+
+        @Override
+        public int getColor() {
+            return color;
+        }
     }
 
     public enum LocationStatusValues implements StatusUpdate {

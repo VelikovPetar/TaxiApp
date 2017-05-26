@@ -228,11 +228,14 @@ public class MessengerClient {
         byte[] message = getBaseCommonMessage(location, context);
 
         message[49] = setBinaryData1ForLoginMessage();
-        message[50] = setBinaryData2ForLoginMessage();
+        message[50] = setBinaryData2ForLogoutMessage();
 
         byte[] res = addChkSum(message);
         return res;
     }
+
+
+
     private static byte[] addChkSum(byte[] message) {
         byte[] retVal = new byte[message.length + 2];
 //        byte[] retVal = new byte[message.length + 7];
