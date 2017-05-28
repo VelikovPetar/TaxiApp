@@ -1,7 +1,9 @@
 package com.example.acer.taxiapp;
 
 
+import android.content.Context;
 import android.location.Location;
+import android.location.LocationManager;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -12,20 +14,23 @@ public class LocationUpdater {
 
     private static final int INTERVAL = 10;
 
+    private Context context;
     private TCPClient tcpClient;
     private ScheduledExecutorService scheduler;
     private ScheduledFuture scheduledFuture;
     private Location lastLocation;
 
+
     private final Object locationLock = new Object();
 
-    public LocationUpdater(TCPClient tcpClient) {
-        this.tcpClient = tcpClient;
-        this.scheduler = Executors.newSingleThreadScheduledExecutor();
+    public LocationUpdater(Context context) {
+        this.context = context;
+        this.tcpClient = TCPClient.getInstance(context);
+        this.scheduler = Executors.newScheduledThreadPool(1);
     }
 
     public void start() {
-        scheduledFuture = scheduler.scheduleWithFixedDelay(new ScheduledUpdateTask(), 0, INTERVAL, TimeUnit.SECONDS);
+        scheduledFuture = scheduler.scheduleWithFixedDelay(new ScheduledUpdateTask(), 10, INTERVAL, TimeUnit.SECONDS);
     }
 
     public void stop() {
@@ -45,8 +50,11 @@ public class LocationUpdater {
     private class ScheduledUpdateTask implements Runnable {
         @Override
         public void run() {
-//            byte[] message = new byte[64];
-//            tcpClient.sendByte(message);
+            if(lastLocation != null) {
+                byte[] message = MessengerClient.getCommonMessage(lastLocation, context);
+                tcpClient.sendBytes(message);
+
+            }
         }
     }
 }

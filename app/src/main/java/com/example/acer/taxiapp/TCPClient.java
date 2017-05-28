@@ -53,8 +53,19 @@ public class TCPClient implements Runnable {
     // Socket
     private Socket socket;
 
+    // Instance
+    private static TCPClient instance;
+
+    // Singleton getter
+    public static TCPClient getInstance(Context context) {
+        if(instance == null) {
+            instance = new TCPClient(context.getApplicationContext());
+        }
+        return instance;
+    }
+
     // Constructor
-    public TCPClient(Context context) {
+    private TCPClient(Context context) {
         this.context = context;
         this.isWaitingData = false;
         this.shouldAutomaticallyReconnect = true;
@@ -107,7 +118,8 @@ public class TCPClient implements Runnable {
         }
     }
 
-    public void sendByte(byte[] message) {
+    public void sendBytes(byte[] message) {
+        Log.e("SINCHRO", "Waiting to write...");
         synchronized (this) {
             try {
                 if(!Utils.hasInternetConnection(context)) {
@@ -117,6 +129,7 @@ public class TCPClient implements Runnable {
                 if(writer != null) {
                     writer.write(message);
                     writer.flush();
+                    Log.e("SINCHRO", "DONE WRITING");
                 }
                 String msg = "";
                 for(byte b : message) {
@@ -215,6 +228,7 @@ public class TCPClient implements Runnable {
                     char[] buffer = new char[256];
                     int readChars = reader.read(buffer);
                     for(int i = 0; i < readChars; ++i) {
+                        // Case when multiple messages come appended to each other
                         if(i < readChars - 1) {
                             if(buffer[i] == 'A' && buffer[i + 1] == 'A') {
                                 if(message.length() > 2) {

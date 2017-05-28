@@ -41,14 +41,18 @@ public class TCPClientService extends Service {
 //            msg += (int)b + "";
 //        }
 //        Log.e("MSG", msg);
-        tcpClient.sendByte(message);
+        tcpClient.sendBytes(message);
+    }
+
+    public TCPClient getTcpClient() {
+        return tcpClient;
     }
 
 
     @Override
     public void onCreate() {
         super.onCreate();
-        tcpClient = new TCPClient(getApplicationContext());
+        tcpClient = TCPClient.getInstance(this);
         thread = new Thread(tcpClient);
         thread.start();
         if(debug) Log.e(DEBUG_TAG, "Service onCreate");

@@ -161,13 +161,13 @@ public class MainActivity extends Activity implements LocationListener {
     }
 
     public void sendPauseStartMessage(View view) {
-        byte[] message = MessengerClient.getPauseStartMessage(lastLocation, this);
-        tcpClientService.sendBytes(message);
+//        byte[] message = MessengerClient.getCommonMessage(lastLocation, this);
+//        tcpClientService.sendBytes(message);
     }
 
     public void sendPauseStopMessage(View view) {
-        byte[] message = MessengerClient.getPauseStopMessage(lastLocation, this);
-        tcpClientService.sendBytes(message);
+//        byte[] message = MessengerClient.getPauseStopMessage(lastLocation, this);
+//        tcpClientService.sendBytes(message);
     }
 
     @Override
@@ -184,6 +184,10 @@ public class MainActivity extends Activity implements LocationListener {
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 0, this);
             lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             updateStatusBarLocation();
+            //TODO Fix lock
+            locationUpdater = new LocationUpdater(this);
+            locationUpdater.setLastLocation(lastLocation);
+            locationUpdater.start();
         }
 
 
@@ -200,6 +204,7 @@ public class MainActivity extends Activity implements LocationListener {
 
         // Unregister network status receiver
 //        unregisterReceiver(receiver);
+        locationUpdater.stop();
         locationManager.removeUpdates(this);
     }
 
@@ -234,6 +239,7 @@ public class MainActivity extends Activity implements LocationListener {
     public void onLocationChanged(Location location) {
         this.lastLocation = location;
         Toast.makeText(this, lastLocation.getLatitude() + " " + lastLocation.getLongitude() + " from " + lastLocation.getProvider(), Toast.LENGTH_SHORT).show();
+
     }
 
 

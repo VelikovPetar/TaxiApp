@@ -163,6 +163,12 @@ public class MessengerClient {
         return message;
     }
 
+    public static byte[] getCommonMessage(Location location, Context context) {
+        byte[] message = getBaseCommonMessage(location, context);
+        byte[] res = addChkSum(message);
+        return res;
+    }
+
     public static byte[] getLoginMessage(Location location, Context context) {
         byte[] message = getBaseCommonMessage(location, context);
         message[49] = setBinaryData1ForLoginMessage();
@@ -263,6 +269,7 @@ public class MessengerClient {
         return retVal;
     }
 
+    // Za obichna poraka - Pause bit = 0
     private static byte setBinaryData1ForCommonMessage() {
         byte res = 0;
         res |= 1 << 7; // FIKSNO
@@ -273,12 +280,14 @@ public class MessengerClient {
         return res;
     }
 
+
+    // Za obichna poraka - Taximeter bit = 1
     private static byte setBinaryData2ForCommonMessage() {
         byte res = 0;
         res |= 1 << 7; // FIKSNO
         res |= 1 << 6; // FIKSNO
         // Za iskluchen taksimetar
-        // res |= 1
+        res |= 1 << 1;
         // TODO
         return res;
     }
@@ -315,6 +324,22 @@ public class MessengerClient {
         // Za iskluchen taksimetar
         res |= 1 << 1;
         return res;
+    }
+
+    private static void turnOnPauseBit(byte[] message) {
+
+    }
+
+    private static void turnOffPauseBit(byte[] message) {
+
+    }
+
+    private static void turnOnTaximeterBit(byte[] message) {
+
+    }
+
+    private static void turnOffTaximeterBit(byte[] message) {
+
     }
 
 }
