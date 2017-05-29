@@ -119,7 +119,6 @@ public class TCPClient implements Runnable {
     }
 
     public void sendBytes(byte[] message) {
-        Log.e("SINCHRO", "Waiting to write...");
         synchronized (this) {
             try {
                 if(!Utils.hasInternetConnection(context)) {
@@ -129,7 +128,6 @@ public class TCPClient implements Runnable {
                 if(writer != null) {
                     writer.write(message);
                     writer.flush();
-                    Log.e("SINCHRO", "DONE WRITING");
                 }
                 String msg = "";
                 for(byte b : message) {
@@ -152,6 +150,9 @@ public class TCPClient implements Runnable {
 
     @Override
     public void run() {
+
+        // TODO Handle server errors
+        shouldAutomaticallyReconnect = true;
 
         if(debug)Log.e(DEBUG_TAG, "sar = " + shouldAutomaticallyReconnect);
 
@@ -230,8 +231,8 @@ public class TCPClient implements Runnable {
                     for(int i = 0; i < readChars; ++i) {
                         // Case when multiple messages come appended to each other
                         if(i < readChars - 1) {
-                            if(buffer[i] == 'A' && buffer[i + 1] == 'A') {
-                                if(message.length() > 2) {
+                            if((buffer[i] == 'A' && buffer[i + 1] == 'A') || (buffer[i] == 'B' && buffer[i + 1] == 'B')) {
+                                if(message.length() > 0) {
                                     if(debug)Log.e(DEBUG_TAG, "RECEIVED: " + message);
                                     parser.parse(message.getBytes());
                                     message = "";

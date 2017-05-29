@@ -74,7 +74,7 @@ public class ConfigFragment extends Fragment {
     public void onResume() {
         super.onResume();
         SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
-        if(preferences.contains(MainActivity.RF_CARD_ID) || preferences.contains(MainActivity.DEVICE_ID)) {
+        if(preferences.contains(MainActivity.RF_CARD_ID) && preferences.contains(MainActivity.DEVICE_ID)) {
             errorTextView.setText("Уредот е веќе конфигуриран. Внесување нови вредности ќе ги препокрие старите.");
             errorTextView.setTextColor(Color.YELLOW);
         }

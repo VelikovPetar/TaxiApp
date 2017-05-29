@@ -25,6 +25,11 @@ public class Parser {
     private Context context;
     private String deviceId;
 
+    // Constants
+    private static final int HEADER_LENGTH = 9;
+    private static final int CHECKSUM_LENGTH = 2;
+    private static final int PADDING_LENGTH = 5;
+
     public Parser(Context context) {
         this.context = context;
         SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
@@ -66,6 +71,10 @@ public class Parser {
                         Log.e(DEBUG_TAG, "Popup message.");
                         parsePopupMessage(message);
                         break;
+                    case "40":
+                        Log.e(DEBUG_TAG, "Status update message.");
+                        parseStatusUpdateMessage(message);
+                        break;
                 }
 
             } else if(message[0] == 'B' && message[1] == 'B') {
@@ -89,7 +98,7 @@ public class Parser {
         // AAxxxxxyyccc(12) +
         // Validnost(1) + length(text) + source(1) // lengthOfMessage +
         // checksum(2) + zzzzz(5)
-        if(message.length != 12 + lengthOfMessage + 2 + 5) {
+        if(message.length != HEADER_LENGTH + 3 + lengthOfMessage + CHECKSUM_LENGTH + PADDING_LENGTH) {
             Log.e(DEBUG_TAG, "Full message not received");
             return;
         }
@@ -125,6 +134,40 @@ public class Parser {
                     break;
             }
         }
+    }
+
+    private void parseStatusUpdateMessage(byte[] message) {
+        int stateLength = 20;
+
+        // AAxxxxxyy(9)
+        int startPos = 9;
+        if(message.length < HEADER_LENGTH + stateLength + 2 + 1 + 1 + CHECKSUM_LENGTH + PADDING_LENGTH) {
+            Log.e(DEBUG_TAG, "Full message not received");
+            return;
+        }
+        String newState = "";
+        for(int i = startPos; i < startPos + stateLength; ++i) {
+            if(message[i] == 0)
+                break;
+            newState += (char) message[i];
+        }
+
+        // TODO Proveri shto treba da se pravi so:
+        // Vreme vo sostojba?
+        // message[startPos + stateLength] ?!
+        // message[startPos + stateLength + 1] ?!
+
+        // Prodolzhuvanje na vreme?
+        // message[startPos + stateLength + 2] ?!
+
+        // Sostojba?
+        // message[startPos + stateLength + 3] ?!
+
+
+
+        // Show status on the Status bar
+        broadcastStatusUpdate(BroadcastActions.ACTION_VEHICLE_STATE_STATUS, new StatusBarFragment.VehicleStatusValue(newState.replace("State", ""), Color.GREEN));
+        Log.e(DEBUG_TAG, "STATE = " + newState);
     }
 
     private String bytesToString(byte[] bytes) {

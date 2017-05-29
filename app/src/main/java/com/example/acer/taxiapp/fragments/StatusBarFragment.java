@@ -54,11 +54,11 @@ public class StatusBarFragment extends Fragment {
         receiver = new StatusBarUpdatesBroadcastReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BroadcastActions.ACTION_DRIVER_STATUS);
+        intentFilter.addAction(BroadcastActions.ACTION_VEHICLE_STATE_STATUS);
         intentFilter.addAction(BroadcastActions.ACTION_LOCATION_STATUS);
         intentFilter.addAction(BroadcastActions.ACTION_CONNECTION_STATUS);
         intentFilter.addAction(BroadcastActions.ACTION_SERVER_STATUS);
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(receiver, intentFilter);
-        Log.e("BROAD", "Receiver registered");
     }
 
     @Override
@@ -71,7 +71,6 @@ public class StatusBarFragment extends Fragment {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.e("BROAD", "Receiver called");
             String action = intent.getAction();
             String value = intent.getStringExtra(TCPClient.VALUE);
             int color = intent.getIntExtra(TCPClient.COLOR, Color.GRAY);
@@ -79,25 +78,24 @@ public class StatusBarFragment extends Fragment {
                 case BroadcastActions.ACTION_DRIVER_STATUS:
                     driverStatus.setText(value);
                     driverStatus.setTextColor(color);
-                    Log.e("BROAD", "1");
+                    break;
+                case BroadcastActions.ACTION_VEHICLE_STATE_STATUS:
+                    vehicleStatus.setText(value);
+                    vehicleStatus.setTextColor(color);
                     break;
                 case BroadcastActions.ACTION_LOCATION_STATUS:
                     locationStatus.setText(value);
                     locationStatus.setTextColor(color);
-                    Log.e("BROAD", "2");
                     break;
                 case BroadcastActions.ACTION_CONNECTION_STATUS:
                     connectionStatus.setText(value);
                     connectionStatus.setTextColor(color);
-                    Log.e("BROAD", "3");
                     break;
                 case BroadcastActions.ACTION_SERVER_STATUS:
                     serverStatus.setText(value);
                     serverStatus.setTextColor(color);
-                    Log.e("BROAD", "4");
                     break;
             }
-            Log.e("BROAD", "End");
         }
     }
 
@@ -113,6 +111,26 @@ public class StatusBarFragment extends Fragment {
         private int color;
 
         public DriverStatusValue(String value, int color) {
+            this.value = value;
+            this.color = color;
+        }
+
+        @Override
+        public String getValue() {
+            return value;
+        }
+
+        @Override
+        public int getColor() {
+            return color;
+        }
+    }
+
+    public static class VehicleStatusValue implements StatusUpdate {
+        private String value;
+        private int color;
+
+        public VehicleStatusValue(String value, int color) {
             this.value = value;
             this.color = color;
         }

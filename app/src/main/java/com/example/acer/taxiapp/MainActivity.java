@@ -141,6 +141,7 @@ public class MainActivity extends Activity implements LocationListener {
         Intent intent = new Intent(this, TCPClientService.class);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
 
+        Log.e("LIFECYCLE", "ON CREATE");
     }
 
     public void showLoginFragment(View v) {
@@ -173,11 +174,14 @@ public class MainActivity extends Activity implements LocationListener {
     @Override
     protected void onStart() {
         super.onStart();
+        Log.e("LIFECYCLE", "ON START");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        // TODO Konsultiraj se shto da pravi aplikacijata ako e vo pozadina!
+        locationUpdater = new LocationUpdater(this);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, this);
@@ -185,12 +189,11 @@ public class MainActivity extends Activity implements LocationListener {
             lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             updateStatusBarLocation();
             //TODO Fix lock
-            locationUpdater = new LocationUpdater(this);
             locationUpdater.setLastLocation(lastLocation);
             locationUpdater.start();
         }
 
-
+        Log.e("LIFECYCLE", "ON RESUME");
         // Register network status receiver
 //        receiver = new NetworkChangeReceiver();
 //        IntentFilter intentFilter = new IntentFilter();
@@ -206,6 +209,8 @@ public class MainActivity extends Activity implements LocationListener {
 //        unregisterReceiver(receiver);
         locationUpdater.stop();
         locationManager.removeUpdates(this);
+
+        Log.e("LIFECYCLE", "ON PAUSE");
     }
 
 
@@ -213,12 +218,14 @@ public class MainActivity extends Activity implements LocationListener {
     @Override
     protected void onStop() {
         super.onStop();
+        Log.e("LIFECYCLE", "ON STOP");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         unbindService(serviceConnection);
+        Log.e("LIFECYCLE", "ON DESTROY");
     }
 
     @Override

@@ -20,6 +20,8 @@ public class LocationUpdater {
     private ScheduledFuture scheduledFuture;
     private Location lastLocation;
 
+    private volatile boolean isRunning;
+
 
     private final Object locationLock = new Object();
 
@@ -27,14 +29,21 @@ public class LocationUpdater {
         this.context = context;
         this.tcpClient = TCPClient.getInstance(context);
         this.scheduler = Executors.newScheduledThreadPool(1);
+        this.isRunning = false;
     }
 
     public void start() {
-        scheduledFuture = scheduler.scheduleWithFixedDelay(new ScheduledUpdateTask(), 10, INTERVAL, TimeUnit.SECONDS);
+        if(!isRunning) {
+            scheduledFuture = scheduler.scheduleWithFixedDelay(new ScheduledUpdateTask(), 10, INTERVAL, TimeUnit.SECONDS);
+            isRunning = true;
+        }
     }
 
     public void stop() {
-        scheduler.shutdownNow();
+        if(isRunning) {
+            scheduler.shutdownNow();
+            isRunning = false;
+        }
     }
 
     public void execute(Location location) {

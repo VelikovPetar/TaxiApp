@@ -44,11 +44,6 @@ public class TCPClientService extends Service {
         tcpClient.sendBytes(message);
     }
 
-    public TCPClient getTcpClient() {
-        return tcpClient;
-    }
-
-
     @Override
     public void onCreate() {
         super.onCreate();
