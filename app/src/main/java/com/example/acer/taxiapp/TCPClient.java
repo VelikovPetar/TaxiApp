@@ -21,9 +21,6 @@ public class TCPClient implements Runnable {
     private String DEBUG_TAG = "TCP";
     private boolean debug = true;
 
-    // Name for the messages that are broadcast by the TcpClient
-    public static final String MESSAGE = "broadcast_message";
-
     // Name for broadcasts concerning status bar updates
     public static final String VALUE = "status_bar_update_value";
     public static final String COLOR = "status_bar_update_color";
@@ -254,7 +251,6 @@ public class TCPClient implements Runnable {
                 if(debug) Log.e(DEBUG_TAG, "SocketException");
             } catch (IOException e) {
                 e.printStackTrace();
-                // TODO
                 // Identify the problem
                 if(Utils.hasInternetConnection(context)) {
                     // TODO Notify of probable server error

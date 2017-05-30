@@ -9,4 +9,5 @@
     <string name="gps_status">GPS</string>
     <string name="config_confirm">Потврди</string>
     <string name="vehicle_status">Статус на возило:</string>
+    <string name="no_messages">Нема пораки!</string>
 </resources>

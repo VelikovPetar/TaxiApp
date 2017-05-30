@@ -8,9 +8,9 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -30,26 +30,34 @@ import android.widget.Toast;
 import com.example.acer.taxiapp.fragments.ButtonListFragment;
 import com.example.acer.taxiapp.fragments.ConfigFragment;
 import com.example.acer.taxiapp.fragments.LoginFragment;
+import com.example.acer.taxiapp.fragments.MessagesFragment;
 import com.example.acer.taxiapp.fragments.OffersFragment;
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
-import com.example.acer.taxiapp.services.TCPClientIntentService;
 import com.example.acer.taxiapp.services.TCPClientService;
+
+import java.util.ArrayList;
 
 
 public class MainActivity extends Activity implements LocationListener {
-
 
     // Constants
     public static final String PREFERENCES = "my_preferences";
     public static final String RF_CARD_ID = "rf_card";
     public static final String DEVICE_ID = "device_id";
+
     // Debug
     private String DEBUG_TAG = "TCP";
     private boolean debug = true;
 
-    LocationManager locationManager;
-    Location lastLocation;
+    // Location manager
+    private LocationManager locationManager;
+    // Last known location
+    private Location lastLocation;
+
     boolean isMapVisible;
+
+    // Thread for automatically sending periodical location updates
+    private LocationUpdater locationUpdater;
 
     // Communicating with the TcpClientService
     private TCPClientService tcpClientService;
@@ -65,7 +73,7 @@ public class MainActivity extends Activity implements LocationListener {
             tcpClientService = null;
         }
     };
-    private boolean isBound = false;
+//    private boolean isBound = false;
 
     // Communicating with the TcpClientIntentService
 //    private TCPClientIntentService tcpClientIntentService;
@@ -82,24 +90,24 @@ public class MainActivity extends Activity implements LocationListener {
 //    };
 //    private boolean isBound = false;
 //
-    private void doBind() {
-        if(!isBound) {
-            bindService(new Intent(MainActivity.this, TCPClientIntentService.class), serviceConnection, BIND_AUTO_CREATE);
-            isBound = true;
-        }
-    }
+//    private void doBind() {
+//        if(!isBound) {
+//            bindService(new Intent(MainActivity.this, TCPClientIntentService.class), serviceConnection, BIND_AUTO_CREATE);
+//            isBound = true;
+//        }
+//    }
 
-    private void doUnbind() {
-        if(isBound) {
-            unbindService(serviceConnection);
-            isBound = false;
-        }
-    }
+//    private void doUnbind() {
+//        if(isBound) {
+//            unbindService(serviceConnection);
+//            isBound = false;
+//        }
+//    }
 //
 //    NetworkChangeReceiver receiver;
-    private LocationUpdater locationUpdater;
-    private Location gpsLocation;
-    private Location networkLocation;
+
+//    private Location gpsLocation;
+//    private Location networkLocation;
 
 
     @Override
@@ -108,14 +116,14 @@ public class MainActivity extends Activity implements LocationListener {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
 
-
+        // Initialize fragments
         final FragmentManager fManager = getFragmentManager();
         if(savedInstanceState == null) {
             FragmentTransaction fTransaction = fManager.beginTransaction();
-            fTransaction.add(R.id.fragment_offers_container, new OffersFragment());
-            fTransaction.add(R.id.fragment_buttons_container, new ButtonListFragment());
-            fTransaction.add(R.id.fragment_content_container, new LoginFragment());
-            fTransaction.add(R.id.fragment_status_bar_container, new StatusBarFragment());
+            fTransaction.add(R.id.fragment_offers_container, new OffersFragment(), "TAG_OFFERS_FRAGMENT");
+            fTransaction.add(R.id.fragment_buttons_container, new ButtonListFragment(), "TAG_BUTTONS_LIST_FRAGMENT");
+            fTransaction.add(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
+            fTransaction.add(R.id.fragment_status_bar_container, new StatusBarFragment(), "TAG_STATUS_BAR_FRAGMENT");
             fTransaction.commit();
         }
 
@@ -124,19 +132,20 @@ public class MainActivity extends Activity implements LocationListener {
             @Override
             public void onClick(View v) {
                 FragmentTransaction fTransaction = fManager.beginTransaction();
-                fTransaction.replace(R.id.fragment_content_container, new ConfigFragment());
+                fTransaction.replace(R.id.fragment_content_container, new ConfigFragment(), "TAG_CONFIG_FRAGMENT");
                 fTransaction.commit();
             }
         });
 
-
+        // Check for location permissions
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
         }
 
-
+        // Initialize the Location manager
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
+        // bind to the Tcp client service
         Log.e(DEBUG_TAG, "BINDING");
         Intent intent = new Intent(this, TCPClientService.class);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
@@ -147,7 +156,7 @@ public class MainActivity extends Activity implements LocationListener {
     public void showLoginFragment(View v) {
         FragmentManager fManager = getFragmentManager();
         FragmentTransaction fTransaction = fManager.beginTransaction();
-        fTransaction.replace(R.id.fragment_content_container, new LoginFragment());
+        fTransaction.replace(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
         fTransaction.commit();
     }
 
@@ -171,6 +180,17 @@ public class MainActivity extends Activity implements LocationListener {
 //        tcpClientService.sendBytes(message);
     }
 
+    public void showMessagesFragment(View view) {
+        FragmentManager fManager = getFragmentManager();
+        FragmentTransaction fTransaction = fManager.beginTransaction();
+        MessagesFragment messagesFragment = new MessagesFragment();
+        Bundle bundle = new Bundle();
+        bundle.putStringArrayList(MessagesFragment.MESSAGES, popupMessages);
+        messagesFragment.setArguments(bundle);
+        fTransaction.replace(R.id.fragment_content_container, messagesFragment, "TAG_POPUP_MESSAGES_FRAGMENT");
+        fTransaction.commit();
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -182,16 +202,23 @@ public class MainActivity extends Activity implements LocationListener {
         super.onResume();
         // TODO Konsultiraj se shto da pravi aplikacijata ako e vo pozadina!
         locationUpdater = new LocationUpdater(this);
+
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, this);
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 0, this);
             lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             updateStatusBarLocation();
-            //TODO Fix lock
+
+            // Start the thread that sends periodical location updates
             locationUpdater.setLastLocation(lastLocation);
             locationUpdater.start();
         }
+
+        // Register receiver for popup messages
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BroadcastActions.ACTION_POPUP_MESSAGE);
+        LocalBroadcastManager.getInstance(this).registerReceiver(popupMessageReceiver, intentFilter);
 
         Log.e("LIFECYCLE", "ON RESUME");
         // Register network status receiver
@@ -207,9 +234,13 @@ public class MainActivity extends Activity implements LocationListener {
 
         // Unregister network status receiver
 //        unregisterReceiver(receiver);
+
+        // Stop the thread sending periodical location updates
         locationUpdater.stop();
         locationManager.removeUpdates(this);
 
+        // Unregister popup message receiver
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(popupMessageReceiver);
         Log.e("LIFECYCLE", "ON PAUSE");
     }
 
@@ -240,8 +271,6 @@ public class MainActivity extends Activity implements LocationListener {
     }
 
 
-    // TODO: HANDLE DISRUPTIONS IN LOCATION SERVICES IN MAIN ACTIVITY
-    // TODO: HANDLE SENDING UPDATES IN SCHEDULED EXECUTOR SERVICE
     @Override
     public void onLocationChanged(Location location) {
         this.lastLocation = location;
@@ -249,7 +278,7 @@ public class MainActivity extends Activity implements LocationListener {
 
     }
 
-
+    // Displaying the changes in status of the location services
     private boolean networkAvailable, gpsAvailable;
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
@@ -291,19 +320,17 @@ public class MainActivity extends Activity implements LocationListener {
                         networkAvailable = false;
                         break;
                 }
+                break;
         }
-
     }
 
     @Override
     public void onProviderEnabled(String provider) {
-        Log.e("LOCATION", "EN");
         updateStatusBarLocation();
     }
 
     @Override
     public void onProviderDisabled(String provider) {
-        Log.e("LOCATION", "DIS");
         updateStatusBarLocation();
     }
 
@@ -340,40 +367,65 @@ public class MainActivity extends Activity implements LocationListener {
         intent.putExtra(VALUE, statusUpdate.getValue());
         intent.putExtra(COLOR, statusUpdate.getColor());
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-        Log.e("BROAD", "CAST");
     }
 
     // Listener for changes in network connection
-    private class NetworkChangeReceiver extends BroadcastReceiver {
+//    private class NetworkChangeReceiver extends BroadcastReceiver {
+//
+//        @Override
+//        public void onReceive(Context context, Intent _intent) {
+//            Log.e(DEBUG_TAG, "IN LOCAL ON RECEIVED");
+//            if(Utils.hasInternetConnection(context)) {
+//                Intent intent = new Intent(context, TCPClientIntentService.class);
+//                startService(intent);
+//                doBind();
+//                Log.e(DEBUG_TAG, "Started service");
+//                Intent broadcast = new Intent();
+//                broadcast.setAction(BroadcastActions.ACTION_CONNECTION_STATUS);
+//                broadcast.putExtra(TCPClientIntentService.VALUE, "Connected");
+//                broadcast.putExtra(TCPClientIntentService.COLOR, Color.GREEN);
+//                LocalBroadcastManager.getInstance(context).sendBroadcast(broadcast);
+//                Log.e(DEBUG_TAG, "Broadcast sent");
+//
+//            } else {
+//                doUnbind();
+//                Intent intent = new Intent(context, TCPClientIntentService.class);
+//                stopService(intent);
+//                Log.e(DEBUG_TAG, "Stopped service");
+//                Intent broadcast = new Intent();
+//                broadcast.setAction(BroadcastActions.ACTION_CONNECTION_STATUS);
+//                broadcast.putExtra(TCPClientIntentService.VALUE, "No connection");
+//                broadcast.putExtra(TCPClientIntentService.COLOR, Color.RED);
+//                LocalBroadcastManager.getInstance(context).sendBroadcast(broadcast);
+//                Log.e(DEBUG_TAG, "Sent broadcast");
+//            }
+//        }
+//    }
+
+    // List that keeps most recent popup messages
+    private ArrayList<String> popupMessages = new ArrayList<>();
+
+    // receiver instance
+    private PopupMessageReceiver popupMessageReceiver = new PopupMessageReceiver();
+
+    // Broadcast receiver for incoming popup messages
+    private class PopupMessageReceiver extends BroadcastReceiver {
 
         @Override
-        public void onReceive(Context context, Intent _intent) {
-            Log.e(DEBUG_TAG, "IN LOCAL ON RECEIVED");
-            if(Utils.hasInternetConnection(context)) {
-                Intent intent = new Intent(context, TCPClientIntentService.class);
-                startService(intent);
-                doBind();
-                Log.e(DEBUG_TAG, "Started service");
-                Intent broadcast = new Intent();
-                broadcast.setAction(BroadcastActions.ACTION_CONNECTION_STATUS);
-                broadcast.putExtra(TCPClientIntentService.VALUE, "Connected");
-                broadcast.putExtra(TCPClientIntentService.COLOR, Color.GREEN);
-                LocalBroadcastManager.getInstance(context).sendBroadcast(broadcast);
-                Log.e(DEBUG_TAG, "Broadcast sent");
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if(action.equals(BroadcastActions.ACTION_POPUP_MESSAGE)) {
+                // Add the latest message to the list
+                String message = intent.getStringExtra(Parser.MESSAGE);
+                popupMessages.add(0, message);
 
-            } else {
-                doUnbind();
-                Intent intent = new Intent(context, TCPClientIntentService.class);
-                stopService(intent);
-                Log.e(DEBUG_TAG, "Stopped service");
-                Intent broadcast = new Intent();
-                broadcast.setAction(BroadcastActions.ACTION_CONNECTION_STATUS);
-                broadcast.putExtra(TCPClientIntentService.VALUE, "No connection");
-                broadcast.putExtra(TCPClientIntentService.COLOR, Color.RED);
-                LocalBroadcastManager.getInstance(context).sendBroadcast(broadcast);
-                Log.e(DEBUG_TAG, "Sent broadcast");
+                // If the message fragment is visible, update the list view displaying the messages
+                FragmentManager fManager = getFragmentManager();
+                MessagesFragment messagesFragment = (MessagesFragment) fManager.findFragmentByTag("TAG_POPUP_MESSAGES_FRAGMENT");
+                if(messagesFragment != null && messagesFragment.isVisible()) {
+                    messagesFragment.notifyDataSetChanged();
+                }
             }
         }
     }
-
 }

@@ -11,12 +11,18 @@ import com.example.acer.taxiapp.fragments.StatusBarFragment;
 import com.example.acer.taxiapp.services.TCPClientIntentService;
 
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 
 public class Parser {
 
     // Debug
     private static final String DEBUG_TAG = "BYTE-PARSER";
+
+    // Name for the messages that are broadcast by the TcpClient
+    public static final String MESSAGE = "broadcast_message";
 
     // Name for broadcasts concerning status bar updates
     public static final String VALUE = "status_bar_update_value";
@@ -115,22 +121,31 @@ public class Parser {
             byte[] popupMessageTextBytes = Arrays.copyOfRange(message, 13, 12 + lengthOfMessage - 1);
             String popupMessageText = bytesToString(popupMessageTextBytes);
 
+            // Append time to the message text
+            Date date = new Date();
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(date);
+            String timeStamp = String.format(Locale.getDefault(), "%02d:%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND));
             // Check for the message source
             byte source = message[12 + lengthOfMessage - 1];
             switch(source) {
                 case '4': // System
                     // Don't display
                     Log.e(DEBUG_TAG, "System message");
+                    popupMessageText = "Систем: " + popupMessageText + timeStamp;
+                    broadcastMessage(BroadcastActions.ACTION_POPUP_MESSAGE, popupMessageText);
                     break;
                 case '0': // Dispatcher
                     Log.e(DEBUG_TAG, "Dispatcher message.");
                     // TODO Broadcast
-                    popupMessageText = "Диспечер: " + popupMessageText;
+                    popupMessageText = "Диспечер: " + popupMessageText + timeStamp;
+                    broadcastMessage(BroadcastActions.ACTION_POPUP_MESSAGE, popupMessageText);
                     break;
                 case '3': // Android
                     Log.e(DEBUG_TAG, "Android message");
                     // TODO Broadcast
-                    popupMessageText = "Android: " + popupMessageText;
+                    popupMessageText = "Android: " + popupMessageText + timeStamp;
+                    broadcastMessage(BroadcastActions.ACTION_POPUP_MESSAGE, popupMessageText);
                     break;
             }
         }
@@ -163,10 +178,8 @@ public class Parser {
         // Sostojba?
         // message[startPos + stateLength + 3] ?!
 
-
-
         // Show status on the Status bar
-        broadcastStatusUpdate(BroadcastActions.ACTION_VEHICLE_STATE_STATUS, new StatusBarFragment.VehicleStatusValue(newState.replace("State", ""), Color.GREEN));
+        broadcastStatusUpdate(BroadcastActions.ACTION_VEHICLE_STATE_STATUS, new StatusBarFragment.VehicleStatusValue(newState.replace("State", ""), Color.CYAN));
         Log.e(DEBUG_TAG, "STATE = " + newState);
     }
 
@@ -192,6 +205,13 @@ public class Parser {
         intent.setAction(action);
         intent.putExtra(VALUE, statusUpdate.getValue());
         intent.putExtra(COLOR, statusUpdate.getColor());
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+
+    private void broadcastMessage(String action, String message) {
+        Intent intent = new Intent();
+        intent.setAction(action);
+        intent.putExtra(MESSAGE, message);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 }
