@@ -1,23 +1,23 @@
 package com.example.acer.taxiapp.fragments;
 
+import android.app.Activity;
 import android.app.ListFragment;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.example.acer.taxiapp.MessageListProvider;
 import com.example.acer.taxiapp.R;
 
 import java.util.List;
-
-/**
- * Created by Acer on 30.5.2017.
- */
 
 public class MessagesFragment extends ListFragment {
 
@@ -25,8 +25,45 @@ public class MessagesFragment extends ListFragment {
     private List<String> messages;
     private MessageListAdapter mla;
 
+    private MessageListProvider provider;
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        Log.e("MSG_FRAGMENT", "On Attach(context)");
+        try {
+            provider = (MessageListProvider) context;
+        } catch(ClassCastException e) {
+            e.printStackTrace();
+            Log.e("MSG_FRAGMENT", "Class Cast Exception");
+        }
+    }
+
+
+    // If the device has android version older than 6.0(Marshmallow),
+    // the method onAttach(context) doesn't get called.
+    // On devices with android version 6.0 or newer, both methods
+    // onAttach(Context) and onAttach(Activity) are called.
+    // This method performs the check so the provider doesn't get
+    // initialized twice.
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            Log.e("MSG_FRAGMENT", "On Attach(activity)");
+            try {
+                provider = (MessageListProvider) activity;
+            } catch (ClassCastException e) {
+                e.printStackTrace();
+                Log.e("MSG_FRAGMENT", "Class Cast Exception");
+            }
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.e("MSG_FRAGMENT", "On Create View");
         return inflater.inflate(R.layout.fragment_messages, container, false);
     }
 
@@ -34,8 +71,8 @@ public class MessagesFragment extends ListFragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        Bundle args = getArguments();
-        messages = args.getStringArrayList(MESSAGES);
+        Log.e("MSG_FRAGMENT", "On Activity Created");
+        messages = provider.getMessages();
         mla = new MessageListAdapter(getActivity(), messages);
         setListAdapter(mla);
     }
@@ -49,7 +86,7 @@ public class MessagesFragment extends ListFragment {
         private Context context;
         private List<String> messages;
 
-        public MessageListAdapter(@NonNull Context context, @NonNull List<String> objects) {
+        MessageListAdapter(@NonNull Context context, @NonNull List<String> objects) {
             super(context, 0, objects);
             this.context = context;
             messages = objects;

@@ -36,9 +36,10 @@ import com.example.acer.taxiapp.fragments.StatusBarFragment;
 import com.example.acer.taxiapp.services.TCPClientService;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
-public class MainActivity extends Activity implements LocationListener {
+public class MainActivity extends Activity implements LocationListener, MessageListProvider {
 
     // Constants
     public static final String PREFERENCES = "my_preferences";
@@ -118,7 +119,7 @@ public class MainActivity extends Activity implements LocationListener {
 
         // Initialize fragments
         final FragmentManager fManager = getFragmentManager();
-        if(savedInstanceState == null) {
+        if (savedInstanceState == null) {
             FragmentTransaction fTransaction = fManager.beginTransaction();
             fTransaction.add(R.id.fragment_offers_container, new OffersFragment(), "TAG_OFFERS_FRAGMENT");
             fTransaction.add(R.id.fragment_buttons_container, new ButtonListFragment(), "TAG_BUTTONS_LIST_FRAGMENT");
@@ -207,7 +208,7 @@ public class MainActivity extends Activity implements LocationListener {
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, this);
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 0, this);
-            lastLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            lastLocation = getLastKnownLocation();
             updateStatusBarLocation();
 
             // Start the thread that sends periodical location updates
@@ -245,7 +246,6 @@ public class MainActivity extends Activity implements LocationListener {
     }
 
 
-
     @Override
     protected void onStop() {
         super.onStop();
@@ -262,7 +262,7 @@ public class MainActivity extends Activity implements LocationListener {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 1234 && grantResults.length > 0) {
-            if (grantResults[0] != PackageManager.PERMISSION_GRANTED && grantResults[1]  != PackageManager.PERMISSION_GRANTED) {
+            if (grantResults[0] != PackageManager.PERMISSION_GRANTED && grantResults[1] != PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "PLEASE GIVE PERMISSION TO USE FINE LOCATION", Toast.LENGTH_SHORT).show();
             } else {
                 updateStatusBarLocation();
@@ -280,40 +280,41 @@ public class MainActivity extends Activity implements LocationListener {
 
     // Displaying the changes in status of the location services
     private boolean networkAvailable, gpsAvailable;
+
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
         Log.e("LOCATION", "STATUS of " + provider + " CHANGED");
         switch (provider) {
             case LocationManager.GPS_PROVIDER:
-               switch (status) {
-                   case LocationProvider.AVAILABLE:
-                       broadcastStatusUpdate(BroadcastActions.ACTION_LOCATION_STATUS,
-                               StatusBarFragment.LocationStatusValues.GPS);
-                       gpsAvailable = true;
-                       break;
-                   default:
-                       if(networkAvailable) {
-                           broadcastStatusUpdate(BroadcastActions.ACTION_LOCATION_STATUS,
-                                   StatusBarFragment.LocationStatusValues.NETWORK);
-                       } else {
-                           broadcastStatusUpdate(BroadcastActions.ACTION_LOCATION_STATUS,
-                                   StatusBarFragment.LocationStatusValues.NO_LOCATION_SERVICE);
-                       }
-                       gpsAvailable = false;
-                       break;
-               }
-               break;
+                switch (status) {
+                    case LocationProvider.AVAILABLE:
+                        broadcastStatusUpdate(BroadcastActions.ACTION_LOCATION_STATUS,
+                                StatusBarFragment.LocationStatusValues.GPS);
+                        gpsAvailable = true;
+                        break;
+                    default:
+                        if (networkAvailable) {
+                            broadcastStatusUpdate(BroadcastActions.ACTION_LOCATION_STATUS,
+                                    StatusBarFragment.LocationStatusValues.NETWORK);
+                        } else {
+                            broadcastStatusUpdate(BroadcastActions.ACTION_LOCATION_STATUS,
+                                    StatusBarFragment.LocationStatusValues.NO_LOCATION_SERVICE);
+                        }
+                        gpsAvailable = false;
+                        break;
+                }
+                break;
             case LocationManager.NETWORK_PROVIDER:
                 switch (status) {
                     case LocationProvider.AVAILABLE:
-                        if(!gpsAvailable) {
+                        if (!gpsAvailable) {
                             broadcastStatusUpdate(BroadcastActions.ACTION_LOCATION_STATUS,
                                     StatusBarFragment.LocationStatusValues.NETWORK);
                         }
                         networkAvailable = true;
                         break;
                     default:
-                        if(!gpsAvailable) {
+                        if (!gpsAvailable) {
                             broadcastStatusUpdate(BroadcastActions.ACTION_LOCATION_STATUS,
                                     StatusBarFragment.LocationStatusValues.NO_LOCATION_SERVICE);
                         }
@@ -337,16 +338,16 @@ public class MainActivity extends Activity implements LocationListener {
     private void updateStatusBarLocation() {
         boolean gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean networkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        if(!gpsEnabled && !networkEnabled) {
+        if (!gpsEnabled && !networkEnabled) {
             // Show no location
             gpsAvailable = networkAvailable = false;
             broadcastStatusUpdate(BroadcastActions.ACTION_LOCATION_STATUS, StatusBarFragment.LocationStatusValues.NO_LOCATION_SERVICE);
-        } else if(!gpsEnabled) {
+        } else if (!gpsEnabled) {
             // Show network
             gpsAvailable = false;
             networkAvailable = true;
             broadcastStatusUpdate(BroadcastActions.ACTION_LOCATION_STATUS, StatusBarFragment.LocationStatusValues.NETWORK);
-        } else if (!networkEnabled){
+        } else if (!networkEnabled) {
             // Show gps
             gpsAvailable = true;
             networkAvailable = false;
@@ -355,6 +356,25 @@ public class MainActivity extends Activity implements LocationListener {
             gpsAvailable = networkAvailable = true;
             broadcastStatusUpdate(BroadcastActions.ACTION_LOCATION_STATUS, StatusBarFragment.LocationStatusValues.GPS);
         }
+    }
+
+    // helper function that gets the last known location
+    private Location getLastKnownLocation() {
+        List<String> providers = locationManager.getProviders(true);
+        Location bestLocation = null;
+        for (String provider : providers) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return null;
+            }
+            Location tmp = locationManager.getLastKnownLocation(provider);
+            if(tmp == null)
+                continue;
+            if(bestLocation == null || bestLocation.getAccuracy() > tmp.getAccuracy()) {
+                bestLocation = tmp;
+            }
+        }
+        return bestLocation;
     }
 
     // Name for broadcasts concerning status bar updates
@@ -408,6 +428,11 @@ public class MainActivity extends Activity implements LocationListener {
     // receiver instance
     private PopupMessageReceiver popupMessageReceiver = new PopupMessageReceiver();
 
+    @Override
+    public List<String> getMessages() {
+        return popupMessages;
+    }
+
     // Broadcast receiver for incoming popup messages
     private class PopupMessageReceiver extends BroadcastReceiver {
 
@@ -424,6 +449,11 @@ public class MainActivity extends Activity implements LocationListener {
                 MessagesFragment messagesFragment = (MessagesFragment) fManager.findFragmentByTag("TAG_POPUP_MESSAGES_FRAGMENT");
                 if(messagesFragment != null && messagesFragment.isVisible()) {
                     messagesFragment.notifyDataSetChanged();
+                }
+
+                OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
+                if(offersFragment != null && offersFragment.isVisible()) {
+                    offersFragment.setMessagesCount(popupMessages.size());
                 }
             }
         }
