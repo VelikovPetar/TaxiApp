@@ -162,23 +162,31 @@ public class MainActivity extends Activity implements LocationListener, MessageL
     }
 
     public void sendLoginMessage(View view) {
-        byte[] message = MessengerClient.getLoginMessage(lastLocation, this);
-        tcpClientService.sendBytes(message);
+        if(lastLocation != null) {
+            byte[] message = MessengerClient.getLoginMessage(lastLocation, this);
+            tcpClientService.sendBytes(message);
+        }
     }
 
     public void sendLogoutMessage(View view) {
-        byte[] message = MessengerClient.getLogoutMessage(lastLocation, this);
-        tcpClientService.sendBytes(message);
+        if(lastLocation != null) {
+            byte[] message = MessengerClient.getLogoutMessage(lastLocation, this);
+            tcpClientService.sendBytes(message);
+        }
     }
 
     public void sendPauseStartMessage(View view) {
-//        byte[] message = MessengerClient.getCommonMessage(lastLocation, this);
-//        tcpClientService.sendBytes(message);
+        if(lastLocation != null) {
+            byte[] message = MessengerClient.getPauseStartMessage(lastLocation, this);
+            tcpClientService.sendBytes(message);
+        }
     }
 
     public void sendPauseStopMessage(View view) {
-//        byte[] message = MessengerClient.getPauseStopMessage(lastLocation, this);
-//        tcpClientService.sendBytes(message);
+        if(lastLocation != null) {
+            byte[] message = MessengerClient.getPauseStopMessage(lastLocation, this);
+            tcpClientService.sendBytes(message);
+        }
     }
 
     public void showMessagesFragment(View view) {
@@ -358,7 +366,7 @@ public class MainActivity extends Activity implements LocationListener, MessageL
         }
     }
 
-    // helper function that gets the last known location
+    // helper function that gets the best last known location
     private Location getLastKnownLocation() {
         List<String> providers = locationManager.getProviders(true);
         Location bestLocation = null;
@@ -425,7 +433,7 @@ public class MainActivity extends Activity implements LocationListener, MessageL
     // List that keeps most recent popup messages
     private ArrayList<String> popupMessages = new ArrayList<>();
 
-    // receiver instance
+    // Receiver instance
     private PopupMessageReceiver popupMessageReceiver = new PopupMessageReceiver();
 
     @Override

@@ -304,6 +304,8 @@ public class MessengerClient {
         byte res = 0;
         res |= 1 << 7; // FIKSNO
         res |= 1 << 6; // FIKSNO
+
+        res |= 1 << 1;
         return res;
     }
 

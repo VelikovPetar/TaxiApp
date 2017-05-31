@@ -116,6 +116,9 @@ public class Parser {
             byte[] driverNameBytes = Arrays.copyOfRange(message, 16, 12 + lengthOfMessage - 1);
             String driverName = bytesToString(driverNameBytes);
             broadcastStatusUpdate(TCPClientIntentService.BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue(driverName, Color.GREEN));
+        // Check if it is confirmation of successful logout - SPECIAL CASE
+        } else if(message[13] == '0' && message[14] == '0' && message[15] == '0') {
+            broadcastStatusUpdate(TCPClientIntentService.BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue("Нема најавен возач", Color.YELLOW));
         } else {
             // Regular popup message
             byte[] popupMessageTextBytes = Arrays.copyOfRange(message, 13, 12 + lengthOfMessage - 1);
@@ -137,13 +140,11 @@ public class Parser {
                     break;
                 case '0': // Dispatcher
                     Log.e(DEBUG_TAG, "Dispatcher message.");
-                    // TODO Broadcast
                     popupMessageText = "Диспечер: " + popupMessageText + timeStamp;
                     broadcastMessage(BroadcastActions.ACTION_POPUP_MESSAGE, popupMessageText);
                     break;
                 case '3': // Android
                     Log.e(DEBUG_TAG, "Android message");
-                    // TODO Broadcast
                     popupMessageText = "Android: " + popupMessageText + timeStamp;
                     broadcastMessage(BroadcastActions.ACTION_POPUP_MESSAGE, popupMessageText);
                     break;
@@ -167,7 +168,7 @@ public class Parser {
             newState += (char) message[i];
         }
 
-        // TODO Proveri shto treba da se pravi so:
+        // SEGA ZA SEGA NE GI KORISTIME OVIE
         // Vreme vo sostojba?
         // message[startPos + stateLength] ?!
         // message[startPos + stateLength + 1] ?!

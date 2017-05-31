@@ -25,6 +25,7 @@ public class MessagesFragment extends ListFragment {
     private List<String> messages;
     private MessageListAdapter mla;
 
+    // Reference to MainActivity for getting the list of messages
     private MessageListProvider provider;
 
     @Override
