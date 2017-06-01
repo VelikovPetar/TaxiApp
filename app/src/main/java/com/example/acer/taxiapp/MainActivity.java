@@ -32,6 +32,7 @@ import com.example.acer.taxiapp.fragments.ConfigFragment;
 import com.example.acer.taxiapp.fragments.LoginFragment;
 import com.example.acer.taxiapp.fragments.MessagesFragment;
 import com.example.acer.taxiapp.fragments.OffersFragment;
+import com.example.acer.taxiapp.fragments.OffersStatusBarFragment;
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
 import com.example.acer.taxiapp.services.TCPClientService;
 
@@ -39,7 +40,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends Activity implements LocationListener, MessageListProvider {
+public class MainActivity extends Activity implements LocationListener,
+        MessagesFragment.MessageListProvider,
+        OffersFragment.ShortOffersListProvider {
 
     // Constants
     public static final String PREFERENCES = "my_preferences";
@@ -121,7 +124,7 @@ public class MainActivity extends Activity implements LocationListener, MessageL
         final FragmentManager fManager = getFragmentManager();
         if (savedInstanceState == null) {
             FragmentTransaction fTransaction = fManager.beginTransaction();
-            fTransaction.add(R.id.fragment_offers_container, new OffersFragment(), "TAG_OFFERS_FRAGMENT");
+            fTransaction.add(R.id.fragment_offers_container, new OffersStatusBarFragment(), "TAG_OFFERS_STATUS_BAR_FRAGMENT");
             fTransaction.add(R.id.fragment_buttons_container, new ButtonListFragment(), "TAG_BUTTONS_LIST_FRAGMENT");
             fTransaction.add(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
             fTransaction.add(R.id.fragment_status_bar_container, new StatusBarFragment(), "TAG_STATUS_BAR_FRAGMENT");
@@ -139,7 +142,8 @@ public class MainActivity extends Activity implements LocationListener, MessageL
         });
 
         // Check for location permissions
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
         }
 
@@ -152,6 +156,10 @@ public class MainActivity extends Activity implements LocationListener, MessageL
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
 
         Log.e("LIFECYCLE", "ON CREATE");
+
+        // TODO REMOVE
+        shortOffers.add(new ShortOffer(1234, (byte)'0', "Nikola Parapunov 12"));
+        shortOffers.add(new ShortOffer(1235, (byte)'3', "Bulevar Ilinden 12"));
     }
 
     public void showLoginFragment(View v) {
@@ -193,12 +201,18 @@ public class MainActivity extends Activity implements LocationListener, MessageL
         FragmentManager fManager = getFragmentManager();
         FragmentTransaction fTransaction = fManager.beginTransaction();
         MessagesFragment messagesFragment = new MessagesFragment();
-        Bundle bundle = new Bundle();
-        bundle.putStringArrayList(MessagesFragment.MESSAGES, popupMessages);
-        messagesFragment.setArguments(bundle);
         fTransaction.replace(R.id.fragment_content_container, messagesFragment, "TAG_POPUP_MESSAGES_FRAGMENT");
         fTransaction.commit();
     }
+
+    public void showOffersFragment(View view) {
+        FragmentManager fManager = getFragmentManager();
+        FragmentTransaction fTransaction = fManager.beginTransaction();
+        OffersFragment messagesFragment = new OffersFragment();
+        fTransaction.replace(R.id.fragment_content_container, messagesFragment, "TAG_OFFERS_FRAGMENT");
+        fTransaction.commit();
+    }
+
 
     @Override
     protected void onStart() {
@@ -229,6 +243,16 @@ public class MainActivity extends Activity implements LocationListener, MessageL
         intentFilter.addAction(BroadcastActions.ACTION_POPUP_MESSAGE);
         LocalBroadcastManager.getInstance(this).registerReceiver(popupMessageReceiver, intentFilter);
 
+        // register receiver for short offers
+        IntentFilter intentFilter1 = new IntentFilter();
+        intentFilter.addAction(BroadcastActions.ACTION_SHORT_OFFER);
+        LocalBroadcastManager.getInstance(this).registerReceiver(shortOfferReceiver, intentFilter1);
+
+
+        // TODO REMOVE
+        ((OffersStatusBarFragment)getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT")).setOffersCount(shortOffers.size());
+
+
         Log.e("LIFECYCLE", "ON RESUME");
         // Register network status receiver
 //        receiver = new NetworkChangeReceiver();
@@ -250,6 +274,9 @@ public class MainActivity extends Activity implements LocationListener, MessageL
 
         // Unregister popup message receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(popupMessageReceiver);
+
+        // Unregister short offers receiver
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(shortOfferReceiver);
         Log.e("LIFECYCLE", "ON PAUSE");
     }
 
@@ -459,9 +486,52 @@ public class MainActivity extends Activity implements LocationListener, MessageL
                     messagesFragment.notifyDataSetChanged();
                 }
 
+                // Update the offers status bar
+                OffersStatusBarFragment offersStatusBarFragment =
+                        (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+                if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+                    offersStatusBarFragment.setMessagesCount(popupMessages.size());
+                }
+                Log.e("BYTE", "RECEIVER CALLED");
+            }
+        }
+    }
+
+    // List that keeps current short offers
+    private ArrayList<ShortOffer> shortOffers = new ArrayList<>();
+
+    // Receiver instance
+    private ShortOfferReceiver shortOfferReceiver = new ShortOfferReceiver();
+
+    @Override
+    public List<ShortOffer> getShortOffers() {
+        return shortOffers;
+    }
+
+    // Broadcast receiver for incoming short offers
+    private class ShortOfferReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if(action.equals(BroadcastActions.ACTION_SHORT_OFFER)) {
+                long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);
+                byte offerSource = intent.getByteExtra(Parser.OFFER_SOURCE, (byte) -1);
+                String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
+                ShortOffer shortOffer = new ShortOffer(idPhoneCall, offerSource, textMessage);
+                shortOffers.add(0, shortOffer);
+
+                // If the offers fragment is visible, update the list view displaying the short offers
+                FragmentManager fManager = getFragmentManager();
                 OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
                 if(offersFragment != null && offersFragment.isVisible()) {
-                    offersFragment.setMessagesCount(popupMessages.size());
+                    offersFragment.notifyDataSetChanged();
+                }
+
+                // Update the offers status bar
+                OffersStatusBarFragment offersStatusBarFragment =
+                        (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+                if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+                    offersStatusBarFragment.setOffersCount(shortOffers.size());
                 }
             }
         }

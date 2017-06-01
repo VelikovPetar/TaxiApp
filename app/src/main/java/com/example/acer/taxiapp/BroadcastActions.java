@@ -8,4 +8,5 @@ public class BroadcastActions {
     public static final String ACTION_SERVER_STATUS = "tcpclient.broadcastactions.server";
 
     public static final String ACTION_POPUP_MESSAGE = "tcpclient.broadcastactions.popup";
+    public static final String ACTION_SHORT_OFFER = "tcpclient.broadcastactions.shortoffer";
 }

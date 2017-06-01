@@ -1,7 +1,7 @@
 package com.example.acer.taxiapp.fragments;
 
 import android.app.Activity;
-import android.app.ListFragment;
+import android.app.Fragment;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,18 +12,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
-import com.example.acer.taxiapp.MessageListProvider;
 import com.example.acer.taxiapp.R;
 
 import java.util.List;
 
-public class MessagesFragment extends ListFragment {
+public class MessagesFragment extends Fragment {
 
-    public static final String MESSAGES = "messagesfragment.messages";
+    private ListView messagesList;
     private List<String> messages;
-    private MessageListAdapter mla;
+    private MessageListAdapter adapter;
 
     // Reference to MainActivity for getting the list of messages
     private MessageListProvider provider;
@@ -65,21 +65,22 @@ public class MessagesFragment extends ListFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.e("MSG_FRAGMENT", "On Create View");
-        return inflater.inflate(R.layout.fragment_messages, container, false);
+        View view = inflater.inflate(R.layout.fragment_messages, container, false);
+        messagesList = (ListView) view.findViewById(R.id.list_view_messages);
+        return view;
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        Log.e("MSG_FRAGMENT", "On Activity Created");
         messages = provider.getMessages();
-        mla = new MessageListAdapter(getActivity(), messages);
-        setListAdapter(mla);
+        adapter = new MessageListAdapter(getActivity(), messages);
+        messagesList.setAdapter(adapter);
     }
 
     public void notifyDataSetChanged() {
-        mla.notifyDataSetChanged();
+        adapter.notifyDataSetChanged();
     }
 
     private class MessageListAdapter extends ArrayAdapter<String> {
@@ -114,6 +115,9 @@ public class MessagesFragment extends ListFragment {
             }
             return view;
         }
+    }
 
+    public interface MessageListProvider {
+        List<String> getMessages();
     }
 }

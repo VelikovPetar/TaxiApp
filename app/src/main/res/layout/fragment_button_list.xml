@@ -40,7 +40,8 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Button"/>
+            android:text="Најави"
+            android:onClick="showOffersFragment"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"

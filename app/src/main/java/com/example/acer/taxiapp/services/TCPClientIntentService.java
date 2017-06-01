@@ -18,10 +18,6 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
-/**
- * Created by Acer on 17.5.2017.
- */
-
 public class TCPClientIntentService extends IntentService {
 
 
@@ -251,12 +247,5 @@ public class TCPClientIntentService extends IntentService {
                 }
             }
         }
-    }
-
-    public static class BroadcastActions {
-        public static final String ACTION_DRIVER_STATUS = "tcpclient.broadcastactions.driver";
-        public static final String ACTION_LOCATION_STATUS = "tcpclient.broadcastactions.location";
-        public static final String ACTION_CONNECTION_STATUS = "tcpclient.broadcastactions.connection";
-        public static final String ACTION_SERVER_STATUS = "tcpclient.broadcastactions.server";
     }
 }

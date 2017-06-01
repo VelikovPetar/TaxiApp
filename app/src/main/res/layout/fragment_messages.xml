@@ -6,15 +6,10 @@
     android:paddingRight="8dp">
 
     <ListView
-        android:id="@id/android:list"
+        android:id="@+id/list_view_messages"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
     </ListView>
 
-    <TextView
-        android:id="@id/android:empty"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/no_messages"/>
 
 </LinearLayout>

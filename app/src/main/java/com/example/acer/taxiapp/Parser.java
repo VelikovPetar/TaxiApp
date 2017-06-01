@@ -8,8 +8,8 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
-import com.example.acer.taxiapp.services.TCPClientIntentService;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -27,6 +27,11 @@ public class Parser {
     // Name for broadcasts concerning status bar updates
     public static final String VALUE = "status_bar_update_value";
     public static final String COLOR = "status_bar_update_color";
+
+    // Name for extras for short offers broadcasts
+    public static final String ID_PHONE_CALL = "id_phone_call_extra";
+    public static final String OFFER_SOURCE = "offer_source_extra";
+    public static final String TEXT_MESSAGE = "text_message_extra";
 
     private Context context;
     private String deviceId;
@@ -73,6 +78,10 @@ public class Parser {
                     command = "";
                 }
                 switch(command) {
+                    case "34":
+                        Log.e(DEBUG_TAG, "Kratka najava.");
+                        parseShortOffer(message);
+                        break;
                     case "45":
                         Log.e(DEBUG_TAG, "Popup message.");
                         parsePopupMessage(message);
@@ -115,10 +124,10 @@ public class Parser {
             // Display the name of the driver on the status bar
             byte[] driverNameBytes = Arrays.copyOfRange(message, 16, 12 + lengthOfMessage - 1);
             String driverName = bytesToString(driverNameBytes);
-            broadcastStatusUpdate(TCPClientIntentService.BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue(driverName, Color.GREEN));
-        // Check if it is confirmation of successful logout - SPECIAL CASE
+            broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue(driverName, Color.GREEN));
+        // Check if it is confirmation of successful logout - SPECIAL CASE TODO Mozhebi poinaku kje se spravuvame
         } else if(message[13] == '0' && message[14] == '0' && message[15] == '0') {
-            broadcastStatusUpdate(TCPClientIntentService.BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue("Нема најавен возач", Color.YELLOW));
+            broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue("Нема најавен возач", Color.YELLOW));
         } else {
             // Regular popup message
             byte[] popupMessageTextBytes = Arrays.copyOfRange(message, 13, 12 + lengthOfMessage - 1);
@@ -134,6 +143,7 @@ public class Parser {
             switch(source) {
                 case '4': // System
                     // Don't display
+                    // TODO Kako da go prikazheme?
                     Log.e(DEBUG_TAG, "System message");
                     popupMessageText = "Систем: " + popupMessageText + timeStamp;
                     broadcastMessage(BroadcastActions.ACTION_POPUP_MESSAGE, popupMessageText);
@@ -153,7 +163,7 @@ public class Parser {
     }
 
     private void parseStatusUpdateMessage(byte[] message) {
-        int stateLength = 20;
+        final int stateLength = 20;
 
         // AAxxxxxyy(9)
         int startPos = 9;
@@ -182,6 +192,25 @@ public class Parser {
         // Show status on the Status bar
         broadcastStatusUpdate(BroadcastActions.ACTION_VEHICLE_STATE_STATUS, new StatusBarFragment.VehicleStatusValue(newState.replace("State", ""), Color.CYAN));
         Log.e(DEBUG_TAG, "STATE = " + newState);
+    }
+
+    private void parseShortOffer(byte[] message) {
+        final int idPhoneCallLength = 4;
+        final int offerSourceLength = 1;
+        final int textMessageLength = 60;
+        if(message.length < HEADER_LENGTH + idPhoneCallLength + offerSourceLength + textMessageLength + CHECKSUM_LENGTH + PADDING_LENGTH) {
+            Log.e(DEBUG_TAG, "Full message not received");
+            return;
+        }
+        byte[] tmp = new byte[idPhoneCallLength];
+        for(int i = 0; i < idPhoneCallLength; ++i) {
+            tmp[idPhoneCallLength - i - 1] = message[HEADER_LENGTH + i];
+        }
+        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
+        byte offerSource = message[HEADER_LENGTH + idPhoneCallLength];
+        tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength + offerSourceLength, HEADER_LENGTH + idPhoneCallLength + offerSourceLength + textMessageLength);
+        String textMessage = bytesToString(tmp).trim();
+        broadcastOffer(BroadcastActions.ACTION_SHORT_OFFER, idPhoneCall, offerSource, textMessage);
     }
 
     private String bytesToString(byte[] bytes) {
@@ -213,6 +242,15 @@ public class Parser {
         Intent intent = new Intent();
         intent.setAction(action);
         intent.putExtra(MESSAGE, message);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+
+    private void broadcastOffer(String action, long idPhoneCall, byte offerSource, String textMessage) {
+        Intent intent = new Intent();
+        intent.setAction(action);
+        intent.putExtra(ID_PHONE_CALL, idPhoneCall);
+        intent.putExtra(OFFER_SOURCE, offerSource);
+        intent.putExtra(TEXT_MESSAGE, textMessage);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 }

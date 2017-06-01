@@ -1,67 +1,131 @@
 package com.example.acer.taxiapp.fragments;
 
+import android.app.Activity;
 import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.acer.taxiapp.R;
+import com.example.acer.taxiapp.ShortOffer;
 
-import java.util.Locale;
+import java.util.List;
 
 public class OffersFragment extends Fragment {
 
-    private TextView offersInfoTextView;
-    private TextView messagesInfoTextView;
+    private ListView shortOffersList;
+    private List<ShortOffer> shortOffers;
+    private ShortOffersListAdapter adapter;
 
-    @Nullable
+    private ShortOffersListProvider provider;
+
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        try {
+            provider = (ShortOffersListProvider) context;
+        } catch (ClassCastException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // If the device has android version older than 6.0(Marshmallow),
+    // the method onAttach(context) doesn't get called.
+    // On devices with android version 6.0 or newer, both methods
+    // onAttach(Context) and onAttach(Activity) are called.
+    // This method performs the check so the provider doesn't get
+    // initialized twice.
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            try {
+                provider = (ShortOffersListProvider) activity;
+            } catch (ClassCastException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_offers, container, false);
-        offersInfoTextView = (TextView) view.findViewById(R.id.text_view_offers_info);
-        offersInfoTextView.setText("Нема понуди!");
-        offersInfoTextView.setOnClickListener(new View.OnClickListener(){
-
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
-
-        messagesInfoTextView = (TextView) view.findViewById(R.id.text_view_messages_info);
-        messagesInfoTextView.setText("Нема пораки!");
-        messagesInfoTextView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentManager fManager = getFragmentManager();
-                FragmentTransaction fTransaction = fManager.beginTransaction();
-                fTransaction.replace(R.id.fragment_content_container, new MessagesFragment(), "TAG_POPUP_MESSAGES_FRAGMENT");
-                fTransaction.commit();
-            }
-        });
-
+        shortOffersList = (ListView) view.findViewById(R.id.list_view_short_offers);
         return view;
     }
 
-    public void setOffersCount(int count) {
-        if(count == 0) {
-            offersInfoTextView.setText("Нема понуди!");
-        } else {
-            offersInfoTextView.setText(String.format(Locale.getDefault(), "Број на понуди: %d", count));
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        shortOffers = provider.getShortOffers();
+        adapter = new ShortOffersListAdapter(getActivity(), shortOffers);
+        shortOffersList.setAdapter(adapter);
+    }
+
+    public void notifyDataSetChanged() {
+        adapter.notifyDataSetChanged();
+    }
+
+    private class ShortOffersListAdapter extends ArrayAdapter<ShortOffer> {
+
+        private Context context;
+        private List<ShortOffer> offers;
+
+        ShortOffersListAdapter(@NonNull Context context, @NonNull List<ShortOffer> objects) {
+            super(context, 0, objects);
+            this.context = context;
+            offers = objects;
+        }
+
+        @Override
+        public int getCount() {
+            return offers.size();
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View view, @NonNull ViewGroup parent) {
+            if(view == null) {
+                view = LayoutInflater.from(context).inflate(R.layout.list_item_short_offer, parent, false);
+            }
+            TextView offerSourceTextView = (TextView) view.findViewById(R.id.text_view_list_item_short_offer_source);
+            TextView textMessageTextView = (TextView) view.findViewById(R.id.text_view_list_item_short_offer_text);
+            Button confirmButton = (Button) view.findViewById(R.id.button_short_offer_confirm);
+            Button rejectButton = (Button) view.findViewById(R.id.button_short_offer_reject);
+            ShortOffer shortOffer = getItem(position);
+            if(shortOffer != null) {
+                offerSourceTextView.setText(shortOffer.getOfferSource() == '0' ? "Андроид:" : "Диспечер:" );
+                textMessageTextView.setText(shortOffer.getTextMessage());
+                view.setTag(shortOffer.getIdPhoneCall()); // TODO
+                confirmButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                });
+                rejectButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                });
+            }
+            return view;
         }
     }
 
-    public void setMessagesCount(int count) {
-        if(count == 0) {
-            messagesInfoTextView.setText("Нема пораки!");
-        } else {
-            messagesInfoTextView.setText(String.format(Locale.getDefault(), "Број на пораки: %d", count));
-        }
+    public interface ShortOffersListProvider {
+        List<ShortOffer> getShortOffers();
     }
-
 }
