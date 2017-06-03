@@ -74,7 +74,8 @@ public class LoginFragment extends Fragment {
                         FragmentTransaction fTransaction = fManager.beginTransaction();
                         fTransaction.replace(R.id.fragment_content_container, new MapFragment());
                         fTransaction.commit();
-                        hideKeyboard();
+                        View view = getActivity().getCurrentFocus();
+                        Utils.hideKeyboard(view, getActivity());
                         errorTextView.setText(getString(R.string.login_error));
                         errorTextView.setVisibility(View.INVISIBLE);
                     } else {
@@ -114,9 +115,7 @@ public class LoginFragment extends Fragment {
     }
 
     private void setup() {
-        loginEditText.setEnabled(false);
-        loginButton.setEnabled(false);
-        noServicesTextView.setVisibility(View.VISIBLE);
+        disableViews();
         SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         if(!preferences.contains(MainActivity.RF_CARD_ID) || !preferences.contains(MainActivity.DEVICE_ID)) {
             errorTextView.setText("Уредот не е конфигуриран! Направете конфигурација пред да се логирате!");
@@ -133,15 +132,6 @@ public class LoginFragment extends Fragment {
             return;
         }
         enableViews();
-    }
-
-
-    private void hideKeyboard() {
-        View view = getActivity().getCurrentFocus();
-        if(view != null) {
-            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        }
     }
 
     private void promptLocationServices() {

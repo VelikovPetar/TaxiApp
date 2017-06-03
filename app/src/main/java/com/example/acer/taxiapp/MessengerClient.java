@@ -236,6 +236,44 @@ public class MessengerClient {
         return res;
     }
 
+    public static byte[] getShortOfferConfirmMessage(long idPhoneCall, int minutes, Context context) {
+        byte[] message = new byte[15];
+
+        // najava na poraka
+        message[0] = message[1] = 'P';
+
+        // Broj na ured
+        SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+        String deviceID = preferences.getString(MainActivity.DEVICE_ID, null);
+        byte[] bytes;
+        if(deviceID != null) {
+            bytes = deviceID.getBytes();
+        } else {
+            bytes = new byte[5];
+        }
+        message[2] = bytes[0];
+        message[3] = bytes[1];
+        message[4] = bytes[2];
+        message[5] = bytes[3];
+        message[6] = bytes[4];
+
+        // Komanda
+        message[7] = '5';
+        message[8] = '8';
+
+        // ID Phone Call
+        message[9] = (byte) (idPhoneCall);
+        message[10] = (byte) (idPhoneCall >> 8);
+        message[11] = (byte) (idPhoneCall >> 16);
+        message[12] = (byte) (idPhoneCall >> 24);
+
+        // Minutes
+        message[13] = (byte) (minutes);
+        message[14] = (byte) (minutes >> 8);
+
+        byte[] res = addChkSum(message);
+        return res;
+    }
 
 
     private static byte[] addChkSum(byte[] message) {

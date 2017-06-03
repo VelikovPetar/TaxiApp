@@ -5,6 +5,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 
 public class Utils {
 
@@ -24,7 +25,10 @@ public class Utils {
         return gpsEnabled || networkEnabled;
     }
 
-    public static void hideKeyboard(Context context) {
-
+    public static void hideKeyboard(View view, Context context) {
+        if(view != null) {
+            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 }
