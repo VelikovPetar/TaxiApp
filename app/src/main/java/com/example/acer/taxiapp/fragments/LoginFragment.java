@@ -1,12 +1,24 @@
 package com.example.acer.taxiapp.fragments;
 
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
+import android.support.annotation.StringRes;
+import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,14 +29,29 @@ import android.widget.TextView;
 
 import com.example.acer.taxiapp.MainActivity;
 import com.example.acer.taxiapp.R;
+import com.example.acer.taxiapp.Utils;
 
 public class LoginFragment extends Fragment {
 
     private EditText loginEditText;
     private TextView errorTextView;
+    private TextView noServicesTextView;
     private Button loginButton;
 
     private boolean isConfig = true;
+
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(Utils.hasInternetConnection(getActivity()) &&
+                    Utils.isLocationEnabled(getActivity())) {
+                enableViews();
+            } else {
+                disableViews();
+            }
+        }
+    };
+
 
     @Nullable
     @Override
@@ -33,6 +60,8 @@ public class LoginFragment extends Fragment {
         loginEditText = (EditText) view.findViewById(R.id.edit_text_login);
         errorTextView = (TextView) view.findViewById(R.id.text_view_error_login);
         errorTextView.setVisibility(View.INVISIBLE);
+        noServicesTextView = (TextView) view.findViewById(R.id.text_view_login_no_required_services);
+        noServicesTextView.setVisibility(View.INVISIBLE);
         loginButton = (Button) view.findViewById(R.id.button_login);
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -46,6 +75,7 @@ public class LoginFragment extends Fragment {
                         fTransaction.replace(R.id.fragment_content_container, new MapFragment());
                         fTransaction.commit();
                         hideKeyboard();
+                        errorTextView.setText(getString(R.string.login_error));
                         errorTextView.setVisibility(View.INVISIBLE);
                     } else {
                         errorTextView.setVisibility(View.VISIBLE);
@@ -58,17 +88,53 @@ public class LoginFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        intentFilter.addAction("android.location.PROVIDERS_CHANGED");
+        getActivity().registerReceiver(receiver, intentFilter);
+        setup();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        getActivity().unregisterReceiver(receiver);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
+
+    private void setup() {
+        loginEditText.setEnabled(false);
+        loginButton.setEnabled(false);
+        noServicesTextView.setVisibility(View.VISIBLE);
         SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         if(!preferences.contains(MainActivity.RF_CARD_ID) || !preferences.contains(MainActivity.DEVICE_ID)) {
             errorTextView.setText("Уредот не е конфигуриран! Направете конфигурација пред да се логирате!");
             errorTextView.setVisibility(View.VISIBLE);
             isConfig = false;
-            loginEditText.setEnabled(false);
-            loginButton.setEnabled(false);
+            return;
         }
+        if(!Utils.isLocationEnabled(getActivity())) {
+            promptLocationServices();
+            return;
+        }
+        if(!Utils.hasInternetConnection(getActivity())) {
+            promptInternetConnection();
+            return;
+        }
+        enableViews();
     }
+
 
     private void hideKeyboard() {
         View view = getActivity().getCurrentFocus();
@@ -76,5 +142,67 @@ public class LoginFragment extends Fragment {
             InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
+    }
+
+    private void promptLocationServices() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Location Services");
+        builder.setMessage("Turn on location services to enable login.");
+        builder.setPositiveButton("Turn on", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                startActivity(intent);
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Do nothing
+            }
+        });
+        builder.create().show();
+    }
+
+    private void promptInternetConnection() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Internet Connection");
+        builder.setMessage("Turn on internet connection to enable login.");
+        builder.setPositiveButton("WiFi", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
+                startActivity(intent);
+            }
+        });
+        builder.setNeutralButton("Mobile Data", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent();
+                intent.setComponent(new ComponentName(
+                            "com.android.settings",
+                            "com.android.settings.Settings$DataUsageSummaryActivity"));
+                startActivity(intent);
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.create().show();
+    }
+
+    private void enableViews() {
+        loginEditText.setEnabled(true);
+        loginButton.setEnabled(true);
+        noServicesTextView.setVisibility(View.INVISIBLE);
+    }
+
+    private void disableViews() {
+        loginEditText.setEnabled(false);
+        loginButton.setEnabled(false);
+        noServicesTextView.setVisibility(View.VISIBLE);
     }
 }
