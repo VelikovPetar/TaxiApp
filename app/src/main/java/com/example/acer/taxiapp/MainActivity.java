@@ -16,6 +16,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -157,9 +158,32 @@ public class MainActivity extends Activity implements LocationListener,
 
         Log.e("LIFECYCLE", "ON CREATE");
 
-        // TODO REMOVE
-        shortOffers.add(new ShortOffer(1234, (byte)'0', "Nikola Parapunov 12"));
-        shortOffers.add(new ShortOffer(1235, (byte)'3', "Bulevar Ilinden 12"));
+        // TODO REMOVE -----------------------------------------------------------------------------
+        final ShortOffer so1 = new ShortOffer(1234, (byte)'0', "Nikola Parapunov 12");
+        shortOffers.add(so1);
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                shortOffers.remove(so1);
+                // If the offers fragment is visible, update the list view displaying the short offers
+                FragmentManager fManager = getFragmentManager();
+                OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
+                if(offersFragment != null && offersFragment.isVisible()) {
+                    offersFragment.notifyDataSetChanged();
+                }
+
+                // Update the offers status bar
+                OffersStatusBarFragment offersStatusBarFragment =
+                        (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+                if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+                    offersStatusBarFragment.setOffersCount(shortOffers.size());
+                }
+            }
+        }, 10000);
+        ShortOffer so2 = new ShortOffer(1235, (byte)'3', "Bulevar Ilinden 12");
+        shortOffers.add(so2);
+        // TODO Remove -----------------------------------------------------------------------------
     }
 
     public void showLoginFragment(View v) {
@@ -458,14 +482,14 @@ public class MainActivity extends Activity implements LocationListener,
 //    }
 
     // List that keeps most recent popup messages
-    private ArrayList<String> popupMessages = new ArrayList<>();
+    private FixedSizeList<String> popupMessages = new FixedSizeList<>(10);
 
     // Receiver instance
     private PopupMessageReceiver popupMessageReceiver = new PopupMessageReceiver();
 
     @Override
     public List<String> getMessages() {
-        return popupMessages;
+        return popupMessages.getElements();
     }
 
     // Broadcast receiver for incoming popup messages
@@ -477,7 +501,7 @@ public class MainActivity extends Activity implements LocationListener,
             if(action.equals(BroadcastActions.ACTION_POPUP_MESSAGE)) {
                 // Add the latest message to the list
                 String message = intent.getStringExtra(Parser.MESSAGE);
-                popupMessages.add(0, message);
+                popupMessages.insert(message);
 
                 // If the message fragment is visible, update the list view displaying the messages
                 FragmentManager fManager = getFragmentManager();
@@ -517,8 +541,28 @@ public class MainActivity extends Activity implements LocationListener,
                 long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);
                 byte offerSource = intent.getByteExtra(Parser.OFFER_SOURCE, (byte) -1);
                 String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
-                ShortOffer shortOffer = new ShortOffer(idPhoneCall, offerSource, textMessage);
+                final ShortOffer shortOffer = new ShortOffer(idPhoneCall, offerSource, textMessage);
                 shortOffers.add(0, shortOffer);
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        shortOffers.remove(shortOffer);
+                        // If the offers fragment is visible, update the list view displaying the short offers
+                        FragmentManager fManager = getFragmentManager();
+                        OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
+                        if(offersFragment != null && offersFragment.isVisible()) {
+                            offersFragment.notifyDataSetChanged();
+                        }
+
+                        // Update the offers status bar
+                        OffersStatusBarFragment offersStatusBarFragment =
+                                (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+                        if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+                            offersStatusBarFragment.setOffersCount(shortOffers.size());
+                        }
+                    }
+                }, 10000);
 
                 // If the offers fragment is visible, update the list view displaying the short offers
                 FragmentManager fManager = getFragmentManager();

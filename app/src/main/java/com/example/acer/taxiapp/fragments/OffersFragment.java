@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -120,6 +121,8 @@ public class OffersFragment extends Fragment {
                         promptMinutesDialog(idPhoneCall);
                     }
                 });
+
+                // TODO Remove the button
                 rejectButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -147,11 +150,11 @@ public class OffersFragment extends Fragment {
 //                    tcpClient.sendBytes(message);
 
 
-//                    String ret = "";
-//                    for(byte b : message) {
-//                        ret += (char) b;
-//                    }
-//                    Log.e("SHORT_OFFER", "Confirm message : " + ret);
+                    String ret = "";
+                    for(byte b : message) {
+                        ret += (char) b;
+                    }
+                    Log.e("SHORT_OFFER", "Confirm message : " + ret);
                     Utils.hideKeyboard(minutesEditText, getActivity());
                 }
             });

@@ -23,4 +23,20 @@ public class ShortOffer {
     public String getTextMessage() {
         return textMessage;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ShortOffer that = (ShortOffer) o;
+
+        return idPhoneCall == that.idPhoneCall;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (idPhoneCall ^ (idPhoneCall >>> 32));
+    }
 }
