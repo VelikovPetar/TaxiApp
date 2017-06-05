@@ -114,6 +114,8 @@ public class MainActivity extends Activity implements LocationListener,
 //    private Location gpsLocation;
 //    private Location networkLocation;
 
+    // Handler for delayed actions
+    private Handler handler;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -158,10 +160,12 @@ public class MainActivity extends Activity implements LocationListener,
 
         Log.e("LIFECYCLE", "ON CREATE");
 
+        // Init handler
+        handler = new Handler();
+
         // TODO REMOVE -----------------------------------------------------------------------------
         final ShortOffer so1 = new ShortOffer(1234, (byte)'0', "Nikola Parapunov 12");
         shortOffers.add(so1);
-        Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -183,6 +187,19 @@ public class MainActivity extends Activity implements LocationListener,
         }, 10000);
         ShortOffer so2 = new ShortOffer(1235, (byte)'3', "Bulevar Ilinden 12");
         shortOffers.add(so2);
+        ShortOffer so3 = new ShortOffer(1236, (byte)'3', "Partizanska 1234");
+        shortOffers.add(so3);
+        shortOffers.add(new ShortOffer(1237, (byte) '3', "asdfdsgsdfg"));
+        shortOffers.add(new ShortOffer(1238, (byte) '3', "asdfdsgsdfg"));
+        shortOffers.add(new ShortOffer(1239, (byte) '3', "asdfdsgsdfg"));
+        shortOffers.add(new ShortOffer(12310, (byte) '3', "asdfdsgsdfg"));
+        shortOffers.add(new ShortOffer(12311, (byte) '3', "asdfdsgsdfg"));
+        shortOffers.add(new ShortOffer(12312, (byte) '3', "asdfdsgsdfg"));
+        shortOffers.add(new ShortOffer(12313, (byte) '3', "asdfdsgsdfg"));
+        shortOffers.add(new ShortOffer(12314, (byte) '3', "asdfdsgsdfg"));
+        shortOffers.add(new ShortOffer(12315, (byte) '3', "asdfdsgsdfg"));
+        shortOffers.add(new ShortOffer(12316, (byte) '3', "asdfdsgsdfg"));
+        shortOffers.add(new ShortOffer(12317, (byte) '3', "asdfdsgsdfg"));
         // TODO Remove -----------------------------------------------------------------------------
     }
 
@@ -269,13 +286,24 @@ public class MainActivity extends Activity implements LocationListener,
 
         // register receiver for short offers
         IntentFilter intentFilter1 = new IntentFilter();
-        intentFilter.addAction(BroadcastActions.ACTION_SHORT_OFFER);
+        intentFilter1.addAction(BroadcastActions.ACTION_SHORT_OFFER);
+        intentFilter1.addAction(BroadcastActions.ACTION_CANCEL_SHORT_OFFER);
         LocalBroadcastManager.getInstance(this).registerReceiver(shortOfferReceiver, intentFilter1);
 
 
-        // TODO REMOVE
+        // TODO REMOVE -----------------------------------------------------------------------------
         ((OffersStatusBarFragment)getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT")).setOffersCount(shortOffers.size());
-
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent1 = new Intent();
+                intent1.setAction(BroadcastActions.ACTION_CANCEL_SHORT_OFFER);
+                intent1.putExtra(Parser.ID_PHONE_CALL, (long)1235);
+                intent1.putExtra(Parser.TEXT_MESSAGE, "Najavata e otkazhana!");
+                LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(intent1);
+            }
+        }, 5000);
+        // TODO REMOVE -----------------------------------------------------------------------------
 
         Log.e("LIFECYCLE", "ON RESUME");
         // Register network status receiver
@@ -516,7 +544,6 @@ public class MainActivity extends Activity implements LocationListener,
                 if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
                     offersStatusBarFragment.setMessagesCount(popupMessages.size());
                 }
-                Log.e("BYTE", "RECEIVER CALLED");
             }
         }
     }
@@ -525,7 +552,7 @@ public class MainActivity extends Activity implements LocationListener,
     private ArrayList<ShortOffer> shortOffers = new ArrayList<>();
 
     // Receiver instance
-    private ShortOfferReceiver shortOfferReceiver = new ShortOfferReceiver();
+    private ShortOfferReceiver shortOfferReceiver = new ShortOfferReceiver(handler);
 
     @Override
     public List<ShortOffer> getShortOffers() {
@@ -534,6 +561,28 @@ public class MainActivity extends Activity implements LocationListener,
 
     // Broadcast receiver for incoming short offers
     private class ShortOfferReceiver extends BroadcastReceiver {
+
+        private Handler receiverHandler;
+
+        public ShortOfferReceiver(Handler handler) {
+            this.receiverHandler = handler;
+        }
+
+        private void updateFragments() {
+            FragmentManager fManager = getFragmentManager();
+            // If the offers fragment is visible, update the list view displaying the short offers
+            OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
+            if(offersFragment != null && offersFragment.isVisible()) {
+                offersFragment.notifyDataSetChanged();
+            }
+            // Update the offers status bar
+            OffersStatusBarFragment offersStatusBarFragment =
+                    (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+            if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+                offersStatusBarFragment.setOffersCount(shortOffers.size());
+            }
+        }
+
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -543,39 +592,25 @@ public class MainActivity extends Activity implements LocationListener,
                 String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
                 final ShortOffer shortOffer = new ShortOffer(idPhoneCall, offerSource, textMessage);
                 shortOffers.add(0, shortOffer);
-                Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
+                receiverHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        shortOffers.remove(shortOffer);
-                        // If the offers fragment is visible, update the list view displaying the short offers
-                        FragmentManager fManager = getFragmentManager();
-                        OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
-                        if(offersFragment != null && offersFragment.isVisible()) {
-                            offersFragment.notifyDataSetChanged();
-                        }
-
-                        // Update the offers status bar
-                        OffersStatusBarFragment offersStatusBarFragment =
-                                (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-                        if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
-                            offersStatusBarFragment.setOffersCount(shortOffers.size());
+                        if(!shortOffer.isCanceled()) {
+                            shortOffers.remove(shortOffer);
+                            updateFragments();
                         }
                     }
                 }, 10000);
-
-                // If the offers fragment is visible, update the list view displaying the short offers
-                FragmentManager fManager = getFragmentManager();
-                OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
-                if(offersFragment != null && offersFragment.isVisible()) {
-                    offersFragment.notifyDataSetChanged();
-                }
-
-                // Update the offers status bar
-                OffersStatusBarFragment offersStatusBarFragment =
-                        (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-                if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
-                    offersStatusBarFragment.setOffersCount(shortOffers.size());
+                updateFragments();
+            } else if(action.equals(BroadcastActions.ACTION_CANCEL_SHORT_OFFER)) {
+                long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);
+                String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
+                for(ShortOffer so : shortOffers) {
+                    if(so.getIdPhoneCall() == idPhoneCall) {
+                        so.cancel(textMessage);
+                        updateFragments();
+                        break;
+                    }
                 }
             }
         }

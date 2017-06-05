@@ -82,13 +82,17 @@ public class Parser {
                         Log.e(DEBUG_TAG, "Kratka najava.");
                         parseShortOffer(message);
                         break;
-                    case "45":
-                        Log.e(DEBUG_TAG, "Popup message.");
-                        parsePopupMessage(message);
+                    case "35":
+                        Log.e(DEBUG_TAG, "Brishenje na kratka najava.");
+                        parseCancelShortOffer(message);
                         break;
                     case "40":
                         Log.e(DEBUG_TAG, "Status update message.");
                         parseStatusUpdateMessage(message);
+                        break;
+                    case "45":
+                        Log.e(DEBUG_TAG, "Popup message.");
+                        parsePopupMessage(message);
                         break;
                 }
 
@@ -211,6 +215,23 @@ public class Parser {
         tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength + offerSourceLength, HEADER_LENGTH + idPhoneCallLength + offerSourceLength + textMessageLength);
         String textMessage = bytesToString(tmp).trim();
         broadcastOffer(BroadcastActions.ACTION_SHORT_OFFER, idPhoneCall, offerSource, textMessage);
+    }
+
+    private void parseCancelShortOffer(byte[] message) {
+        final int idPhoneCallLength = 4;
+        final int textMessageLength = 60;
+        if(message.length < HEADER_LENGTH + idPhoneCallLength + textMessageLength + CHECKSUM_LENGTH + PADDING_LENGTH) {
+            Log.e(DEBUG_TAG, "Full message not received");
+            return;
+        }
+        byte[] tmp = new byte[idPhoneCallLength];
+        for(int i = 0; i < idPhoneCallLength; ++i) {
+            tmp[idPhoneCallLength - i - 1] = message[HEADER_LENGTH + i];
+        }
+        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
+        tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength, HEADER_LENGTH + idPhoneCallLength + textMessageLength);
+        String textMessage = bytesToString(tmp).trim();
+        broadcastOffer(BroadcastActions.ACTION_CANCEL_SHORT_OFFER, idPhoneCall, (byte) -1, textMessage);
     }
 
     private String bytesToString(byte[] bytes) {

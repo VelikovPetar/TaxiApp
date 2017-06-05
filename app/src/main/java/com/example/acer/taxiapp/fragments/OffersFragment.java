@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -22,7 +23,6 @@ import android.widget.TextView;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
 import com.example.acer.taxiapp.ShortOffer;
-import com.example.acer.taxiapp.TCPClient;
 import com.example.acer.taxiapp.Utils;
 
 import java.util.List;
@@ -109,24 +109,25 @@ public class OffersFragment extends Fragment {
             TextView offerSourceTextView = (TextView) view.findViewById(R.id.text_view_list_item_short_offer_source);
             TextView textMessageTextView = (TextView) view.findViewById(R.id.text_view_list_item_short_offer_text);
             Button confirmButton = (Button) view.findViewById(R.id.button_short_offer_confirm);
-            Button rejectButton = (Button) view.findViewById(R.id.button_short_offer_reject);
             ShortOffer shortOffer = getItem(position);
             if(shortOffer != null) {
                 offerSourceTextView.setText(shortOffer.getOfferSource() == '0' ? "Андроид:" : "Диспечер:" );
                 textMessageTextView.setText(shortOffer.getTextMessage());
+
+                // If the offer is cancelled from the server, display it with different color and
+                // disable the confirm button
+                if(shortOffer.isCanceled()) {
+                    view.setBackgroundColor(Color.GRAY);
+                    confirmButton.setEnabled(false);
+                } else {
+                    view.setBackgroundColor(Color.TRANSPARENT);
+                    confirmButton.setEnabled(true);
+                }
                 final long idPhoneCall = shortOffer.getIdPhoneCall();
                 confirmButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         promptMinutesDialog(idPhoneCall);
-                    }
-                });
-
-                // TODO Remove the button
-                rejectButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
                     }
                 });
             }
