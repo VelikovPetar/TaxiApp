@@ -11,6 +11,9 @@ import java.util.TimeZone;
 
 public class MessengerClient {
 
+    private static final int BINARY_DATA_1 = 49;
+    private static final int BINARY_DATA_2 = 50;
+
     private static byte[] getBaseCommonMessage(Location location, Context context) {
         byte[] message = new byte[71];
 
@@ -169,10 +172,25 @@ public class MessengerClient {
         return res;
     }
 
+    public static byte[] getCommonMessage(Location location, Context context, VehicleState state) {
+        byte[] message = getBaseCommonMessage(location, context);
+        switch(state) {
+            case SLOBODEN:
+                turnOffPauseBit(message);
+                turnOnTaximeterBit(message);
+                break;
+            case KRAJ_NA_SMENA:
+                turnOnPauseBit(message);
+                turnOnTaximeterBit(message);
+        }
+        byte[] res = addChkSum(message);
+        return res;
+    }
+
     public static byte[] getLoginMessage(Location location, Context context) {
         byte[] message = getBaseCommonMessage(location, context);
-        message[49] = setBinaryData1ForLoginMessage();
-        message[50] = setBinaryData2ForLoginMessage();
+        turnOffPauseBit(message);
+        turnOnTaximeterBit(message);
 
         SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         String driverID = preferences.getString(MainActivity.RF_CARD_ID, null);
@@ -194,8 +212,8 @@ public class MessengerClient {
     // TODO CHECK?!
     public static byte[] getLogoutMessage(Location location, Context context) {
         byte[] message = getBaseCommonMessage(location, context);
-        message[49] = setBinaryData1ForLogoutMessage();
-        message[50] = setBinaryData2ForLogoutMessage();
+        turnOnPauseBit(message);
+        turnOnTaximeterBit(message);
 
         SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         String driverID = preferences.getString(MainActivity.RF_CARD_ID, null);
@@ -217,9 +235,8 @@ public class MessengerClient {
     // TODO FIX?!
     public static byte[] getPauseStartMessage(Location location, Context context) {
         byte[] message = getBaseCommonMessage(location, context);
-
-        message[49] = setBinaryData1ForLogoutMessage();
-        message[50] = setBinaryData2ForLogoutMessage();
+        turnOnPauseBit(message);
+        turnOnTaximeterBit(message);
 
         byte[] res = addChkSum(message);
         return res;
@@ -228,9 +245,8 @@ public class MessengerClient {
     // TODO FIX?!
     public static byte[] getPauseStopMessage(Location location, Context context) {
         byte[] message = getBaseCommonMessage(location, context);
-
-        message[49] = setBinaryData1ForLoginMessage();
-        message[50] = setBinaryData2ForLogoutMessage();
+        turnOffPauseBit(message);
+        turnOnTaximeterBit(message);
 
         byte[] res = addChkSum(message);
         return res;
@@ -307,26 +323,21 @@ public class MessengerClient {
         return retVal;
     }
 
-    // Za obichna poraka - Pause bit = 0
+    // Za obichna poraka fiksni polinja
     private static byte setBinaryData1ForCommonMessage() {
         byte res = 0;
         res |= 1 << 7; // FIKSNO
         res |= 1 << 6; // FIKSNO
         res |= 1; // FIKSNO
-        // Za odlogiranje
-        // res |= 1 << 5;
         return res;
     }
 
 
-    // Za obichna poraka - Taximeter bit = 1
+    // Za obichna poraka fiksni polinja
     private static byte setBinaryData2ForCommonMessage() {
         byte res = 0;
         res |= 1 << 7; // FIKSNO
         res |= 1 << 6; // FIKSNO
-        // Za iskluchen taksimetar
-        res |= 1 << 1;
-        // TODO
         return res;
     }
 
@@ -367,19 +378,19 @@ public class MessengerClient {
     }
 
     private static void turnOnPauseBit(byte[] message) {
-
+        message[BINARY_DATA_1] |= 1 << 5;
     }
 
     private static void turnOffPauseBit(byte[] message) {
-
+        message[BINARY_DATA_1] &= ~(1 << 5);
     }
 
     private static void turnOnTaximeterBit(byte[] message) {
-
+        message[BINARY_DATA_2] |= 1 << 1;
     }
 
     private static void turnOffTaximeterBit(byte[] message) {
-
+        message[BINARY_DATA_2] &= ~(1 << 1);
     }
 
 }

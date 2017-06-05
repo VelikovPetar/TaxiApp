@@ -63,6 +63,8 @@ public class MainActivity extends Activity implements LocationListener,
 
     // Thread for automatically sending periodical location updates
     private LocationUpdater locationUpdater;
+    // State of the vehicle
+    private VehicleState state = VehicleState.SLOBODEN;
 
     // Communicating with the TcpClientService
     private TCPClientService tcpClientService;
@@ -284,12 +286,16 @@ public class MainActivity extends Activity implements LocationListener,
         intentFilter.addAction(BroadcastActions.ACTION_POPUP_MESSAGE);
         LocalBroadcastManager.getInstance(this).registerReceiver(popupMessageReceiver, intentFilter);
 
-        // register receiver for short offers
+        // Register receiver for short offers
         IntentFilter intentFilter1 = new IntentFilter();
         intentFilter1.addAction(BroadcastActions.ACTION_SHORT_OFFER);
         intentFilter1.addAction(BroadcastActions.ACTION_CANCEL_SHORT_OFFER);
         LocalBroadcastManager.getInstance(this).registerReceiver(shortOfferReceiver, intentFilter1);
 
+        // Register receiver for vehicle state updates
+        IntentFilter intentFilter2 = new IntentFilter();
+        intentFilter2.addAction(BroadcastActions.ACTION_VEHICLE_STATE_FOR_LOCATION_UPDATES);
+        LocalBroadcastManager.getInstance(this).registerReceiver(vehicleStateReceiver, intentFilter2);
 
         // TODO REMOVE -----------------------------------------------------------------------------
         ((OffersStatusBarFragment)getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT")).setOffersCount(shortOffers.size());
@@ -329,6 +335,10 @@ public class MainActivity extends Activity implements LocationListener,
 
         // Unregister short offers receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(shortOfferReceiver);
+
+        // Unregister vehicle state receiver
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(vehicleStateReceiver);
+
         Log.e("LIFECYCLE", "ON PAUSE");
     }
 
@@ -611,6 +621,26 @@ public class MainActivity extends Activity implements LocationListener,
                         updateFragments();
                         break;
                     }
+                }
+            }
+        }
+    }
+
+
+    // receiver instance
+    private VehicleStateReceiver vehicleStateReceiver = new VehicleStateReceiver();
+
+    // Broadcast receiver for vehicle state updates
+    // Used for generating the correct message for periodical location updates
+    private class VehicleStateReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if(action.equals(BroadcastActions.ACTION_VEHICLE_STATE_FOR_LOCATION_UPDATES)) {
+                int stateId = intent.getIntExtra(Parser.VEHICLE_STATE, -1);
+                if(stateId != -1) {
+                    VehicleState state = VehicleState.getByValue(stateId);
+                    locationUpdater.setState(state);
                 }
             }
         }

@@ -10,4 +10,6 @@ public class BroadcastActions {
     public static final String ACTION_POPUP_MESSAGE = "tcpclient.broadcastactions.popup";
     public static final String ACTION_SHORT_OFFER = "tcpclient.broadcastactions.shortoffer";
     public static final String ACTION_CANCEL_SHORT_OFFER = "tcpclient.broadcastactions.cancelshortoffer";
+
+    public static final String ACTION_VEHICLE_STATE_FOR_LOCATION_UPDATES = "broadcastactions.vehiclestateforlocationupdates";
 }

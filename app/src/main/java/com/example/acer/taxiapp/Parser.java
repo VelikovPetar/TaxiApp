@@ -24,6 +24,9 @@ public class Parser {
     // Name for the messages that are broadcast by the TcpClient
     public static final String MESSAGE = "broadcast_message";
 
+    // Name for broadcasts concerning global vehicle state updates
+    public static final String VEHICLE_STATE = "vehicle_state";
+
     // Name for broadcasts concerning status bar updates
     public static final String VALUE = "status_bar_update_value";
     public static final String COLOR = "status_bar_update_color";
@@ -192,9 +195,11 @@ public class Parser {
 
         // Sostojba?
         // message[startPos + stateLength + 3] ?!
+        broadcastVehicleStateUpdate((int) message[startPos + stateLength + 3]);
 
         // Show status on the Status bar
         broadcastStatusUpdate(BroadcastActions.ACTION_VEHICLE_STATE_STATUS, new StatusBarFragment.VehicleStatusValue(newState.replace("State", ""), Color.CYAN));
+
         Log.e(DEBUG_TAG, "STATE = " + newState);
     }
 
@@ -272,6 +277,13 @@ public class Parser {
         intent.putExtra(ID_PHONE_CALL, idPhoneCall);
         intent.putExtra(OFFER_SOURCE, offerSource);
         intent.putExtra(TEXT_MESSAGE, textMessage);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+
+    private void broadcastVehicleStateUpdate(int state) {
+        Intent intent = new Intent();
+        intent.setAction(BroadcastActions.ACTION_VEHICLE_STATE_FOR_LOCATION_UPDATES);
+        intent.putExtra(VEHICLE_STATE, state);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 }

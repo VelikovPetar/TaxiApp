@@ -19,6 +19,7 @@ public class LocationUpdater {
     private ScheduledExecutorService scheduler;
     private ScheduledFuture scheduledFuture;
     private Location lastLocation;
+    private VehicleState state;
 
     private volatile boolean isRunning;
 
@@ -30,6 +31,7 @@ public class LocationUpdater {
         this.tcpClient = TCPClient.getInstance(context);
         this.scheduler = Executors.newScheduledThreadPool(1);
         this.isRunning = false;
+        this.state = VehicleState.SLOBODEN;
     }
 
     public void start() {
@@ -46,6 +48,10 @@ public class LocationUpdater {
         }
     }
 
+    public void setState(VehicleState state) {
+        this.state = state;
+    }
+
     public void execute(Location location) {
 
     }
@@ -60,9 +66,8 @@ public class LocationUpdater {
         @Override
         public void run() {
             if(lastLocation != null) {
-                byte[] message = MessengerClient.getCommonMessage(lastLocation, context);
+                byte[] message = MessengerClient.getCommonMessage(lastLocation, context, state);
                 tcpClient.sendBytes(message);
-
             }
         }
     }
