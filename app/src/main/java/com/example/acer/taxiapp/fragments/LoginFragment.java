@@ -72,7 +72,7 @@ public class LoginFragment extends Fragment {
                     if(driverID != null && driverID.equals(loginEditText.getText().toString().trim())) {
                         FragmentManager fManager = getFragmentManager();
                         FragmentTransaction fTransaction = fManager.beginTransaction();
-                        fTransaction.replace(R.id.fragment_content_container, new MapFragment());
+                        fTransaction.replace(R.id.fragment_content_container, new MapFragment(), "TAG_MAP_FRAGMENT");
                         fTransaction.commit();
                         View view = getActivity().getCurrentFocus();
                         Utils.hideKeyboard(view, getActivity());

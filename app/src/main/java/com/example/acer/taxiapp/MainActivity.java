@@ -31,6 +31,7 @@ import android.widget.Toast;
 import com.example.acer.taxiapp.fragments.ButtonListFragment;
 import com.example.acer.taxiapp.fragments.ConfigFragment;
 import com.example.acer.taxiapp.fragments.LoginFragment;
+import com.example.acer.taxiapp.fragments.MapFragment;
 import com.example.acer.taxiapp.fragments.MessagesFragment;
 import com.example.acer.taxiapp.fragments.OffersFragment;
 import com.example.acer.taxiapp.fragments.OffersStatusBarFragment;
@@ -308,9 +309,15 @@ public class MainActivity extends Activity implements LocationListener,
             @Override
             public void run() {
                 Parser parser = new Parser(MainActivity.this);
-                parser.broadcastLongOffer(12345, 42.0065f, 21.318f, (byte)'1', "Nikola Parapunov 27");
+                parser.broadcastLongOffer(12345, 42.00653f, 21.382f, (byte)'1', "Nikola Parapunov 27");
             }
         }, 5000);
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+
+            }
+        }, 7500);
         // TODO REMOVE -----------------------------------------------------------------------------
 
         Log.e("LIFECYCLE", "ON RESUME");
@@ -374,7 +381,12 @@ public class MainActivity extends Activity implements LocationListener,
     public void onLocationChanged(Location location) {
         this.lastLocation = location;
         Toast.makeText(this, lastLocation.getLatitude() + " " + lastLocation.getLongitude() + " from " + lastLocation.getProvider(), Toast.LENGTH_SHORT).show();
-
+        // TODO Replace with boolean isMapVisible
+        FragmentManager fManager = getFragmentManager();
+        MapFragment mapFragment = (MapFragment) fManager.findFragmentByTag("TAG_MAP_FRAGMENT");
+        if(mapFragment != null && mapFragment.isVisible()) {
+            mapFragment.updateLocation((float) lastLocation.getLatitude(), (float)lastLocation.getLongitude());
+        }
     }
 
     // Displaying the changes in status of the location services
@@ -612,6 +624,7 @@ public class MainActivity extends Activity implements LocationListener,
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            // TODO Deaktiviraj ja aktivnata dolga najava
             String action = intent.getAction();
             if(action.equals(BroadcastActions.ACTION_SHORT_OFFER)) {
                 long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);

@@ -3,6 +3,8 @@ package com.example.acer.taxiapp.fragments;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
@@ -94,16 +96,24 @@ public class OffersFragment extends Fragment {
         adapter.notifyDataSetChanged();
     }
 
-    public void displayLongOffer(LongOffer longOffer) {
+    public void displayLongOffer(LongOffer _longOffer) {
+        longOffer = _longOffer;
         TextView offerSourceTextView = (TextView) longOfferLayout.findViewById(R.id.text_view_long_offer_source);
         TextView textMessageTextView = (TextView) longOfferLayout.findViewById(R.id.text_view_long_offer_text);
         Button confirmButton = (Button) longOfferLayout.findViewById(R.id.button_long_offer_confirm);
         offerSourceTextView.setText(longOffer.getOfferSource() == '0' ? "Андроид:" : "Диспечер:");
         textMessageTextView.setText(longOffer.getTextMessage());
+        final float latitude = longOffer.getLatitude();
+        final float longitude = longOffer.getLongitude();
         confirmButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                FragmentManager fManager = getFragmentManager();
+                FragmentTransaction fTransaction = fManager.beginTransaction();
+                MapFragment mapFragment = new MapFragment();
+                mapFragment.setCustomerLatLng(latitude, longitude);
+                fTransaction.replace(R.id.fragment_content_container, mapFragment, "TAG_MAP_FRAGMENT");
+                fTransaction.commit();
             }
         });
         longOfferLayout.setVisibility(View.VISIBLE);
