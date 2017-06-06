@@ -67,6 +67,7 @@ public class StatusBarFragment extends Fragment {
         LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(receiver);
     }
 
+    // TODO Register it in MainActivity
     private class StatusBarUpdatesBroadcastReceiver extends BroadcastReceiver {
 
         @Override

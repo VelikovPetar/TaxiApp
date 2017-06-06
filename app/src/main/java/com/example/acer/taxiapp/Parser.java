@@ -10,6 +10,7 @@ import android.util.Log;
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -27,12 +28,14 @@ public class Parser {
     // Name for broadcasts concerning global vehicle state updates
     public static final String VEHICLE_STATE = "vehicle_state";
 
-    // Name for broadcasts concerning status bar updates
+    // Names for broadcasts concerning status bar updates
     public static final String VALUE = "status_bar_update_value";
     public static final String COLOR = "status_bar_update_color";
 
-    // Name for extras for short offers broadcasts
+    // Names for extras for offers broadcasts
     public static final String ID_PHONE_CALL = "id_phone_call_extra";
+    public static final String LATITUDE = "latitude_extra";
+    public static final String LONGITUDE = "longitude_extra";
     public static final String OFFER_SOURCE = "offer_source_extra";
     public static final String TEXT_MESSAGE = "text_message_extra";
 
@@ -54,7 +57,7 @@ public class Parser {
 //        for(byte b : message) {
 //            Log.e(DEBUG_TAG, b + "\t" + (char)b);
 //        }
-        // Check if it is OK message ot heartbeat message
+        // Check if it is OK message or heartbeat message
         if(message.length <= 2) {
             // OK <- successful connection
             // or
@@ -88,6 +91,10 @@ public class Parser {
                     case "35":
                         Log.e(DEBUG_TAG, "Brishenje na kratka najava.");
                         parseCancelShortOffer(message);
+                        break;
+                    case "36":
+                        Log.e(DEBUG_TAG, "Dolga najava.");
+                        parseLongOffer(message);
                         break;
                     case "40":
                         Log.e(DEBUG_TAG, "Status update message.");
@@ -211,11 +218,14 @@ public class Parser {
             Log.e(DEBUG_TAG, "Full message not received");
             return;
         }
-        byte[] tmp = new byte[idPhoneCallLength];
-        for(int i = 0; i < idPhoneCallLength; ++i) {
-            tmp[idPhoneCallLength - i - 1] = message[HEADER_LENGTH + i];
-        }
-        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
+//        byte[] tmp = new byte[idPhoneCallLength];
+//        for(int i = 0; i < idPhoneCallLength; ++i) {
+//            tmp[idPhoneCallLength - i - 1] = message[HEADER_LENGTH + i];
+//        }
+//        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
+        byte[] tmp = Arrays.copyOfRange(message, HEADER_LENGTH, HEADER_LENGTH + idPhoneCallLength);
+        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getLong();
+
         byte offerSource = message[HEADER_LENGTH + idPhoneCallLength];
         tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength + offerSourceLength, HEADER_LENGTH + idPhoneCallLength + offerSourceLength + textMessageLength);
         String textMessage = bytesToString(tmp).trim();
@@ -229,14 +239,84 @@ public class Parser {
             Log.e(DEBUG_TAG, "Full message not received");
             return;
         }
-        byte[] tmp = new byte[idPhoneCallLength];
-        for(int i = 0; i < idPhoneCallLength; ++i) {
-            tmp[idPhoneCallLength - i - 1] = message[HEADER_LENGTH + i];
-        }
-        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
+//        byte[] tmp = new byte[idPhoneCallLength];
+//        for(int i = 0; i < idPhoneCallLength; ++i) {
+//            tmp[idPhoneCallLength - i - 1] = message[HEADER_LENGTH + i];
+//        }
+//        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
+        byte[] tmp = Arrays.copyOfRange(message, HEADER_LENGTH, HEADER_LENGTH + idPhoneCallLength);
+        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getLong();
+
         tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength, HEADER_LENGTH + idPhoneCallLength + textMessageLength);
         String textMessage = bytesToString(tmp).trim();
         broadcastOffer(BroadcastActions.ACTION_CANCEL_SHORT_OFFER, idPhoneCall, (byte) -1, textMessage);
+    }
+
+    private void parseLongOffer(byte[] message) {
+        final int idPhoneCallLength = 4;
+        final int latDegreesLength = 2;
+        final int latMinutesLength = 4;
+        final int lonDegreesLength = 2;
+        final int lonMinutesLength = 4;
+        final int validityLength = 1;
+        final int offerSourceLength = 1;
+        final int textMessageLength = 180;
+
+        if(message.length < HEADER_LENGTH + idPhoneCallLength + latDegreesLength + latMinutesLength +
+                lonDegreesLength + lonMinutesLength + validityLength + offerSourceLength +
+                textMessageLength + CHECKSUM_LENGTH + PADDING_LENGTH) {
+            Log.e(DEBUG_TAG, "Full message not received");
+            return;
+        }
+        // ID Phone Call
+//        byte[] tmp = new byte[idPhoneCallLength];
+//        for(int i = 0; i < idPhoneCallLength; ++i) {
+//            tmp[idPhoneCallLength - i - 1] = message[HEADER_LENGTH + i];
+//        }
+//        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
+        byte[] tmp = Arrays.copyOfRange(message, HEADER_LENGTH, HEADER_LENGTH + idPhoneCallLength);
+        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getLong();
+
+        // Latitude degrees
+        tmp = new byte[4];
+        tmp[0] = message[HEADER_LENGTH + idPhoneCallLength];
+        tmp[1] = message[HEADER_LENGTH + idPhoneCallLength + 1];
+        int latDegrees = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getInt();
+
+        // Latitude minutes
+        tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength + latDegreesLength,
+                HEADER_LENGTH + idPhoneCallLength + latDegreesLength + latMinutesLength);
+        float latMinutes = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+
+        // Longitude degrees
+        tmp = new byte[4];
+        tmp[0] = message[HEADER_LENGTH + idPhoneCallLength + latDegreesLength + latMinutesLength];
+        tmp[1] = message[HEADER_LENGTH + idPhoneCallLength + latDegreesLength + latMinutesLength + 1];
+        int lonDegrees = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getInt();
+
+        // Longitude minutes
+        tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength + latDegreesLength + latMinutesLength + lonDegreesLength,
+                HEADER_LENGTH + idPhoneCallLength + latDegreesLength + latMinutesLength + lonDegreesLength + lonMinutesLength);
+        float lonMinutes = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+
+        // Validity
+        // Ignore
+
+        // Source of the offer
+        byte offerSource = message[HEADER_LENGTH + idPhoneCallLength + latDegreesLength + latMinutesLength
+                + lonDegreesLength + lonMinutesLength + validityLength];
+
+        // Text message
+        tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength + latDegreesLength + latMinutesLength
+                + lonDegreesLength + lonMinutesLength + validityLength + offerSourceLength,
+                HEADER_LENGTH + idPhoneCallLength + latDegreesLength + latMinutesLength
+                        + lonDegreesLength + lonMinutesLength + validityLength + offerSourceLength + textMessageLength);
+        String textMessage = bytesToString(tmp).trim();
+
+        float latitude = (float) latDegrees + latMinutes / 60;
+        float longitude = (float) lonDegrees + lonMinutes / 60;
+
+        broadcastLongOffer(idPhoneCall, latitude, longitude, offerSource, textMessage);
     }
 
     private String bytesToString(byte[] bytes) {
@@ -275,6 +355,17 @@ public class Parser {
         Intent intent = new Intent();
         intent.setAction(action);
         intent.putExtra(ID_PHONE_CALL, idPhoneCall);
+        intent.putExtra(OFFER_SOURCE, offerSource);
+        intent.putExtra(TEXT_MESSAGE, textMessage);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+
+    public void broadcastLongOffer(long idPhoneCall, float latitude, float longitude, byte offerSource, String textMessage) {
+        Intent intent = new Intent();
+        intent.setAction(BroadcastActions.ACTION_LONG_OFFER);
+        intent.putExtra(ID_PHONE_CALL, idPhoneCall);
+        intent.putExtra(LATITUDE, latitude);
+        intent.putExtra(LONGITUDE, longitude);
         intent.putExtra(OFFER_SOURCE, offerSource);
         intent.putExtra(TEXT_MESSAGE, textMessage);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);

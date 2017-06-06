@@ -17,9 +17,11 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.example.acer.taxiapp.LongOffer;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
 import com.example.acer.taxiapp.ShortOffer;
@@ -34,6 +36,9 @@ public class OffersFragment extends Fragment {
     private ShortOffersListAdapter adapter;
 
     private ShortOffersListProvider provider;
+
+    private LinearLayout longOfferLayout;
+    private LongOffer longOffer;
 
     @Override
     public void onAttach(Context context) {
@@ -68,6 +73,7 @@ public class OffersFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_offers, container, false);
         shortOffersList = (ListView) view.findViewById(R.id.list_view_short_offers);
+        longOfferLayout = (LinearLayout) view.findViewById(R.id.linear_layout_long_offer);
         return view;
     }
 
@@ -78,10 +84,30 @@ public class OffersFragment extends Fragment {
         shortOffers = provider.getShortOffers();
         adapter = new ShortOffersListAdapter(getActivity(), shortOffers);
         shortOffersList.setAdapter(adapter);
+        longOffer = provider.getLongOffer();
+        if(longOffer != null) {
+            displayLongOffer(longOffer);
+        }
     }
 
     public void notifyDataSetChanged() {
         adapter.notifyDataSetChanged();
+    }
+
+    public void displayLongOffer(LongOffer longOffer) {
+        TextView offerSourceTextView = (TextView) longOfferLayout.findViewById(R.id.text_view_long_offer_source);
+        TextView textMessageTextView = (TextView) longOfferLayout.findViewById(R.id.text_view_long_offer_text);
+        Button confirmButton = (Button) longOfferLayout.findViewById(R.id.button_long_offer_confirm);
+        offerSourceTextView.setText(longOffer.getOfferSource() == '0' ? "Андроид:" : "Диспечер:");
+        textMessageTextView.setText(longOffer.getTextMessage());
+        confirmButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+        longOfferLayout.setVisibility(View.VISIBLE);
+        Log.e("LONG OFFER", "Display called");
     }
 
     private class ShortOffersListAdapter extends ArrayAdapter<ShortOffer> {
@@ -111,7 +137,7 @@ public class OffersFragment extends Fragment {
             Button confirmButton = (Button) view.findViewById(R.id.button_short_offer_confirm);
             ShortOffer shortOffer = getItem(position);
             if(shortOffer != null) {
-                offerSourceTextView.setText(shortOffer.getOfferSource() == '0' ? "Андроид:" : "Диспечер:" );
+                offerSourceTextView.setText(shortOffer.getOfferSource() == '0' ? "Андроид:" : "Диспечер:");
                 textMessageTextView.setText(shortOffer.getTextMessage());
 
                 // If the offer is cancelled from the server, display it with different color and
@@ -173,5 +199,6 @@ public class OffersFragment extends Fragment {
 
     public interface ShortOffersListProvider {
         List<ShortOffer> getShortOffers();
+        LongOffer getLongOffer();
     }
 }

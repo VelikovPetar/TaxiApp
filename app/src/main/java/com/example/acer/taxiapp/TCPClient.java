@@ -122,6 +122,9 @@ public class TCPClient implements Runnable {
                     Log.e("MSG", "No connection");
                     return;
                 }
+                if(message == null) {
+                    return;
+                }
                 if(writer != null) {
                     writer.write(message);
                     writer.flush();
@@ -223,7 +226,7 @@ public class TCPClient implements Runnable {
 //                        message += (char) b;
 //                    }
 
-                    char[] buffer = new char[256];
+                    char[] buffer = new char[512];
                     int readChars = reader.read(buffer);
                     for(int i = 0; i < readChars; ++i) {
                         // Case when multiple messages come appended to each other

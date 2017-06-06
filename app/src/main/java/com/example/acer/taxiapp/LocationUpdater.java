@@ -25,6 +25,7 @@ public class LocationUpdater {
 
 
     private final Object locationLock = new Object();
+    private final Object stateLock = new Object();
 
     public LocationUpdater(Context context) {
         this.context = context;
@@ -49,7 +50,9 @@ public class LocationUpdater {
     }
 
     public void setState(VehicleState state) {
-        this.state = state;
+        synchronized (stateLock) {
+            this.state = state;
+        }
     }
 
     public void execute(Location location) {
@@ -65,10 +68,16 @@ public class LocationUpdater {
     private class ScheduledUpdateTask implements Runnable {
         @Override
         public void run() {
-            if(lastLocation != null) {
-                byte[] message = MessengerClient.getCommonMessage(lastLocation, context, state);
-                tcpClient.sendBytes(message);
+            // Avoiding nested synchronized blocks
+            byte[] message = null;
+            Location current = null;
+            synchronized (locationLock) {
+                current = new Location(lastLocation);
             }
+            synchronized (stateLock) {
+                message = MessengerClient.getCommonMessage(current, context, state);
+            }
+            tcpClient.sendBytes(message);
         }
     }
 }
