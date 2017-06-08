@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 
 
 public class TCPClient implements Runnable {
@@ -37,6 +38,9 @@ public class TCPClient implements Runnable {
     // Indicates whether the service should run uninterrupted and automatically attempt
     // to reconnect if it disconnects
     private volatile boolean shouldAutomaticallyReconnect;
+
+    // Attempts to reconnect to server
+    private int serverReconnectAttempts = 0;
 
     // Reader and writer from the socket
 //    private InputStream reader;
@@ -183,12 +187,33 @@ public class TCPClient implements Runnable {
             isWaitingData = true;
             broadcastStatusUpdate(BroadcastActions.ACTION_CONNECTION_STATUS, StatusBarFragment.ConnectionStatusValues.CONNECTED);
 
+            if(serverReconnectAttempts == 3) {
+                serverReconnectAttempts = 0;
+                broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.NOT_CONNECTED);
+                try {
+                    Thread.sleep(60000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else if(serverReconnectAttempts > 0 && serverReconnectAttempts < 3){
+                broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.CONNECTING);
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+
             if(debug)Log.e(DEBUG_TAG, "Has connection");
 
             try {
                 // Open the socket
                 socket = new Socket(SERVER_IP, SERVER_PORT);
                 socket.setSoTimeout(TIMEOUT);
+
+                // If the socket is opened display that the server is OK
+                broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.CONNECTED);
 
                 if(debug)Log.e(DEBUG_TAG, "Socket established");
 
@@ -212,7 +237,7 @@ public class TCPClient implements Runnable {
 //                    byte[] buffer = new byte[256];
 //                    byte[] receivedMessage = new byte[0];
 //                    int count = 0;
-//                    while((count = reader.read(buffer)) > 0) {
+//                    while((count = socket.getInputStream().read(buffer, 0, buffer.length)) > 0) {
 //                        byte[] tmp = new byte[receivedMessage.length + count];
 //                        for(int i = 0; i < receivedMessage.length; ++i) {
 //                            tmp[i] = receivedMessage[i];
@@ -226,30 +251,29 @@ public class TCPClient implements Runnable {
 //                        message += (char) b;
 //                    }
 
-                    char[] buffer = new char[512];
-                    int readChars = reader.read(buffer);
-                    for(int i = 0; i < readChars; ++i) {
+                    byte[] buffer = new byte[512];
+
+                    int readBytes = socket.getInputStream().read(buffer);
+                    ArrayList<Byte> bytes = new ArrayList<>();
+                    for(int i = 0; i < readBytes; ++i) {
                         // Case when multiple messages come appended to each other
-                        if(i < readChars - 1) {
+                        if(i < readBytes - 1) {
                             if((buffer[i] == 'A' && buffer[i + 1] == 'A') || (buffer[i] == 'B' && buffer[i + 1] == 'B')) {
-                                if(message.length() > 0) {
-                                    if(debug)Log.e(DEBUG_TAG, "RECEIVED: " + message);
-                                    parser.parse(message.getBytes());
-                                    message = "";
+                                if(bytes.size() > 0) {
+                                    parser.parse(listToArray(bytes));
+                                    bytes = new ArrayList<>();
                                 }
                             }
                         }
-                        message += buffer[i];
+                        bytes.add(buffer[i]);
                     }
-
                     // Parse the received message
-                    parser.parse(message.getBytes());
+                    parser.parse(listToArray(bytes));
                     if(debug)Log.e(DEBUG_TAG, "RECEIVED: " + message);
 
                 }
             } catch (SocketTimeoutException e) {
                 e.printStackTrace();
-                // TODO
                 // Notify user that there is probably server-side problem
                 if(debug) Log.e(DEBUG_TAG, "SocketException");
             } catch (IOException e) {
@@ -257,6 +281,7 @@ public class TCPClient implements Runnable {
                 // Identify the problem
                 if(Utils.hasInternetConnection(context)) {
                     // TODO Notify of probable server error
+                    serverReconnectAttempts ++;
                 } else {
                     // TODO Notify that connection was lost on the local device
                 }
@@ -287,5 +312,13 @@ public class TCPClient implements Runnable {
                 }
             }
         }
+    }
+
+    private byte[] listToArray(ArrayList<Byte> bytes) {
+        byte[] ret = new byte[bytes.size()];
+        for(int i = 0; i < bytes.size(); ++i) {
+            ret[i] = bytes.get(i);
+        }
+        return ret;
     }
 }

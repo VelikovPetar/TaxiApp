@@ -224,8 +224,9 @@ public class Parser {
 //        }
 //        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
         byte[] tmp = Arrays.copyOfRange(message, HEADER_LENGTH, HEADER_LENGTH + idPhoneCallLength);
-        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getLong();
 
+        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getInt();
+        Log.e(DEBUG_TAG, "ID phonecall = " + idPhoneCall);
         byte offerSource = message[HEADER_LENGTH + idPhoneCallLength];
         tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength + offerSourceLength, HEADER_LENGTH + idPhoneCallLength + offerSourceLength + textMessageLength);
         String textMessage = bytesToString(tmp).trim();
@@ -245,7 +246,7 @@ public class Parser {
 //        }
 //        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
         byte[] tmp = Arrays.copyOfRange(message, HEADER_LENGTH, HEADER_LENGTH + idPhoneCallLength);
-        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getLong();
+        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getInt(); // Int because 4 bytes
 
         tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength, HEADER_LENGTH + idPhoneCallLength + textMessageLength);
         String textMessage = bytesToString(tmp).trim();
@@ -275,7 +276,7 @@ public class Parser {
 //        }
 //        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
         byte[] tmp = Arrays.copyOfRange(message, HEADER_LENGTH, HEADER_LENGTH + idPhoneCallLength);
-        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getLong();
+        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getInt();
 
         // Latitude degrees
         tmp = new byte[4];
@@ -315,7 +316,6 @@ public class Parser {
 
         float latitude = (float) latDegrees + latMinutes / 60;
         float longitude = (float) lonDegrees + lonMinutes / 60;
-
         broadcastLongOffer(idPhoneCall, latitude, longitude, offerSource, textMessage);
     }
 

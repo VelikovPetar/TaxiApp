@@ -167,45 +167,45 @@ public class MainActivity extends Activity implements LocationListener,
         handler = new Handler();
 
         // TODO REMOVE -----------------------------------------------------------------------------
-        final ShortOffer so1 = new ShortOffer(1234, (byte)'0', "Nikola Parapunov 12");
-        shortOffers.add(so1);
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
+//        final ShortOffer so1 = new ShortOffer(1234, (byte)'0', "Nikola Parapunov 12");
+//        shortOffers.add(so1);
+//        handler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
 //                if (!so1.isCanceled()) {
-                    shortOffers.remove(so1);
-                    // If the offers fragment is visible, update the list view displaying the short offers
-                    FragmentManager fManager = getFragmentManager();
-                    OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
-                    if (offersFragment != null && offersFragment.isVisible()) {
-                        offersFragment.notifyDataSetChanged();
-                    }
-
-                    // Update the offers status bar
-                    OffersStatusBarFragment offersStatusBarFragment =
-                            (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-                    if (offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
-                        offersStatusBarFragment.setOffersCount(shortOffers.size());
-                    }
-                    Log.e(DEBUG_TAG, "Runnable called");
+//                    shortOffers.remove(so1);
+//                     If the offers fragment is visible, update the list view displaying the short offers
+//                    FragmentManager fManager = getFragmentManager();
+//                    OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
+//                    if (offersFragment != null && offersFragment.isVisible()) {
+//                        offersFragment.notifyDataSetChanged();
+//                    }
+//
+//                     Update the offers status bar
+//                    OffersStatusBarFragment offersStatusBarFragment =
+//                            (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+//                    if (offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+//                        offersStatusBarFragment.setOffersCount(shortOffers.size());
+//                    }
+//                    Log.e(DEBUG_TAG, "Runnable called");
 //                }
-            }
-        }, 10000);
-        ShortOffer so2 = new ShortOffer(1235, (byte)'3', "Bulevar Ilinden 12");
-        shortOffers.add(so2);
-        ShortOffer so3 = new ShortOffer(1236, (byte)'3', "Partizanska 1234");
-        shortOffers.add(so3);
-        shortOffers.add(new ShortOffer(1237, (byte) '3', "Bakalnska"));
-        shortOffers.add(new ShortOffer(1238, (byte) '3', "Goce delchev"));
-        shortOffers.add(new ShortOffer(1239, (byte) '3', "Butel 23"));
-        shortOffers.add(new ShortOffer(12310, (byte) '3', "mavrovka 12"));
-        shortOffers.add(new ShortOffer(12311, (byte) '3', "Ulica makedonija"));
-        shortOffers.add(new ShortOffer(12312, (byte) '3', "Rekord 12"));
-        shortOffers.add(new ShortOffer(12313, (byte) '3', "Shutka 1234"));
-        shortOffers.add(new ShortOffer(12314, (byte) '3', "City Mall"));
-        shortOffers.add(new ShortOffer(12315, (byte) '3', "Arhiv"));
-        shortOffers.add(new ShortOffer(12316, (byte) '3', "Zhdanec"));
-        shortOffers.add(new ShortOffer(12317, (byte) '3', "Porta Vlae"));
+//            }
+//        }, 10000);
+//        ShortOffer so2 = new ShortOffer(1235, (byte)'3', "Bulevar Ilinden 12");
+//        shortOffers.add(so2);
+//        ShortOffer so3 = new ShortOffer(1236, (byte)'3', "Partizanska 1234");
+//        shortOffers.add(so3);
+//        shortOffers.add(new ShortOffer(1237, (byte) '3', "Bakalnska"));
+//        shortOffers.add(new ShortOffer(1238, (byte) '3', "Goce delchev"));
+//        shortOffers.add(new ShortOffer(1239, (byte) '3', "Butel 23"));
+//        shortOffers.add(new ShortOffer(12310, (byte) '3', "mavrovka 12"));
+//        shortOffers.add(new ShortOffer(12311, (byte) '3', "Ulica makedonija"));
+//        shortOffers.add(new ShortOffer(12312, (byte) '3', "Rekord 12"));
+//        shortOffers.add(new ShortOffer(12313, (byte) '3', "Shutka 1234"));
+//        shortOffers.add(new ShortOffer(12314, (byte) '3', "City Mall"));
+//        shortOffers.add(new ShortOffer(12315, (byte) '3', "Arhiv"));
+//        shortOffers.add(new ShortOffer(12316, (byte) '3', "Zhdanec"));
+//        shortOffers.add(new ShortOffer(12317, (byte) '3', "Porta Vlae"));
         // TODO Remove -----------------------------------------------------------------------------
     }
 
@@ -304,20 +304,20 @@ public class MainActivity extends Activity implements LocationListener,
         LocalBroadcastManager.getInstance(this).registerReceiver(vehicleStateReceiver, intentFilter2);
 
         // TODO REMOVE -----------------------------------------------------------------------------
-        ((OffersStatusBarFragment)getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT")).setOffersCount(shortOffers.size());
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Parser parser = new Parser(MainActivity.this);
-                parser.broadcastLongOffer(12345, 42.00653f, 21.382f, (byte)'1', "Nikola Parapunov 27");
-            }
-        }, 5000);
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-
-            }
-        }, 7500);
+//        ((OffersStatusBarFragment)getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT")).setOffersCount(shortOffers.size());
+//        handler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                Parser parser = new Parser(MainActivity.this);
+//                parser.broadcastLongOffer(12345, 42.00653f, 21.382f, (byte)'1', "Nikola Parapunov 27");
+//            }
+//        }, 5000);
+//        handler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//
+//            }
+//        }, 7500);
         // TODO REMOVE -----------------------------------------------------------------------------
 
         Log.e("LIFECYCLE", "ON RESUME");
@@ -363,6 +363,15 @@ public class MainActivity extends Activity implements LocationListener,
         super.onDestroy();
         unbindService(serviceConnection);
         Log.e("LIFECYCLE", "ON DESTROY");
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(getFragmentManager().getBackStackEntryCount() > 0) {
+            getFragmentManager().popBackStack();
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override
@@ -640,7 +649,7 @@ public class MainActivity extends Activity implements LocationListener,
                             updateFragments(null);
                         }
                     }
-                }, 10000);
+                }, 45000);
                 updateFragments(null);
             } else if(action.equals(BroadcastActions.ACTION_CANCEL_SHORT_OFFER)) {
                 long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);
