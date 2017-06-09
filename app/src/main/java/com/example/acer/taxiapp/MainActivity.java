@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -44,7 +45,8 @@ import java.util.List;
 
 public class MainActivity extends Activity implements LocationListener,
         MessagesFragment.MessageListProvider,
-        OffersFragment.ShortOffersListProvider {
+        OffersFragment.ShortOffersListProvider,
+        LoginFragment.LoginCallbacks{
 
     // Constants
     public static final String PREFERENCES = "my_preferences";
@@ -120,6 +122,9 @@ public class MainActivity extends Activity implements LocationListener,
     // Handler for delayed actions
     private Handler handler;
 
+    // Indicator whether the driver is logged in
+    private boolean isLoggedIn = false;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -141,9 +146,13 @@ public class MainActivity extends Activity implements LocationListener,
         configButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FragmentTransaction fTransaction = fManager.beginTransaction();
-                fTransaction.replace(R.id.fragment_content_container, new ConfigFragment(), "TAG_CONFIG_FRAGMENT");
-                fTransaction.commit();
+                ConfigFragment configFragment = (ConfigFragment) fManager.findFragmentByTag("TAG_CONFIG_FRAGMENT");
+                if(configFragment == null || !configFragment.isVisible()) {
+                    FragmentTransaction fTransaction = fManager.beginTransaction();
+                    fTransaction.replace(R.id.fragment_content_container, new ConfigFragment(), "TAG_CONFIG_FRAGMENT");
+                    fTransaction.addToBackStack(null);
+                    fTransaction.commit();
+                }
             }
         });
 
@@ -211,9 +220,13 @@ public class MainActivity extends Activity implements LocationListener,
 
     public void showLoginFragment(View v) {
         FragmentManager fManager = getFragmentManager();
-        FragmentTransaction fTransaction = fManager.beginTransaction();
-        fTransaction.replace(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
-        fTransaction.commit();
+        LoginFragment loginFragment = (LoginFragment) fManager.findFragmentByTag("TAG_LOGIN_FRAGMENT");
+        if(loginFragment == null || !loginFragment.isVisible()) {
+            FragmentTransaction fTransaction = fManager.beginTransaction();
+            fTransaction.replace(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
+            fTransaction.addToBackStack(null);
+            fTransaction.commit();
+        }
     }
 
     public void sendLoginMessage(View view) {
@@ -265,6 +278,15 @@ public class MainActivity extends Activity implements LocationListener,
     protected void onStart() {
         super.onStart();
         Log.e("LIFECYCLE", "ON START");
+
+        // Register receiver for status bar updates
+        IntentFilter intentFilter3 = new IntentFilter();
+        intentFilter3.addAction(BroadcastActions.ACTION_DRIVER_STATUS);
+        intentFilter3.addAction(BroadcastActions.ACTION_VEHICLE_STATE_STATUS);
+        intentFilter3.addAction(BroadcastActions.ACTION_LOCATION_STATUS);
+        intentFilter3.addAction(BroadcastActions.ACTION_CONNECTION_STATUS);
+        intentFilter3.addAction(BroadcastActions.ACTION_SERVER_STATUS);
+        LocalBroadcastManager.getInstance(this).registerReceiver(statusBarUpdatesBroadcastReceiver, intentFilter3);
     }
 
     @Override
@@ -356,6 +378,8 @@ public class MainActivity extends Activity implements LocationListener,
     protected void onStop() {
         super.onStop();
         Log.e("LIFECYCLE", "ON STOP");
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(statusBarUpdatesBroadcastReceiver);
+
     }
 
     @Override
@@ -698,4 +722,35 @@ public class MainActivity extends Activity implements LocationListener,
         }
     }
 
+
+
+    // Receiver instance
+    private StatusBarUpdatesBroadcastReceiver statusBarUpdatesBroadcastReceiver = new StatusBarUpdatesBroadcastReceiver();
+
+    // Broadcast receiver for status bar updates
+    private class StatusBarUpdatesBroadcastReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            String value = intent.getStringExtra(TCPClient.VALUE);
+            int color = intent.getIntExtra(TCPClient.COLOR, Color.GRAY);
+            StatusBarFragment statusBarFragment = (StatusBarFragment) getFragmentManager().findFragmentByTag("TAG_STATUS_BAR_FRAGMENT");
+            statusBarFragment.update(action, value, color);
+        }
+    }
+
+
+    @Override
+    public void onSuccessfulLogin() {
+        isLoggedIn = true;
+        isMapVisible = true;
+        FragmentManager fManager = getFragmentManager();
+        fManager.popBackStackImmediate();
+        FragmentTransaction fTransaction = fManager.beginTransaction();
+        fTransaction.replace(R.id.fragment_content_container, new MapFragment(), "TAG_MAP_FRAGMENT");
+        fTransaction.commit();
+        TCPClient tcpClient = TCPClient.getInstance(this);
+        tcpClient.sendBytes(MessengerClient.getLoginMessage(lastLocation, this));
+    }
 }

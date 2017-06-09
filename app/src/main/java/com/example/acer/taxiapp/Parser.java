@@ -316,6 +316,8 @@ public class Parser {
 
         float latitude = (float) latDegrees + latMinutes / 60;
         float longitude = (float) lonDegrees + lonMinutes / 60;
+        Log.e(DEBUG_TAG, latMinutes+"");
+        Log.e(DEBUG_TAG, latMinutes+"");
         broadcastLongOffer(idPhoneCall, latitude, longitude, offerSource, textMessage);
     }
 

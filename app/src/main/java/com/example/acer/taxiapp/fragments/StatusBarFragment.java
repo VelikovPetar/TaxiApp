@@ -28,8 +28,6 @@ public class StatusBarFragment extends Fragment {
     private TextView connectionStatus;
     private TextView serverStatus;
 
-    // Broadcast receiver
-    private StatusBarUpdatesBroadcastReceiver receiver;
 
     @Nullable
     @Override
@@ -51,55 +49,37 @@ public class StatusBarFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        receiver = new StatusBarUpdatesBroadcastReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BroadcastActions.ACTION_DRIVER_STATUS);
-        intentFilter.addAction(BroadcastActions.ACTION_VEHICLE_STATE_STATUS);
-        intentFilter.addAction(BroadcastActions.ACTION_LOCATION_STATUS);
-        intentFilter.addAction(BroadcastActions.ACTION_CONNECTION_STATUS);
-        intentFilter.addAction(BroadcastActions.ACTION_SERVER_STATUS);
-        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(receiver, intentFilter);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(receiver);
     }
 
-    // TODO Register it in MainActivity
-    private class StatusBarUpdatesBroadcastReceiver extends BroadcastReceiver {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            String value = intent.getStringExtra(TCPClient.VALUE);
-            int color = intent.getIntExtra(TCPClient.COLOR, Color.GRAY);
-            switch(action) {
-                case BroadcastActions.ACTION_DRIVER_STATUS:
-                    driverStatus.setText(value);
-                    driverStatus.setTextColor(color);
-                    break;
-                case BroadcastActions.ACTION_VEHICLE_STATE_STATUS:
-                    vehicleStatus.setText(value);
-                    vehicleStatus.setTextColor(color);
-                    break;
-                case BroadcastActions.ACTION_LOCATION_STATUS:
-                    locationStatus.setText(value);
-                    locationStatus.setTextColor(color);
-                    break;
-                case BroadcastActions.ACTION_CONNECTION_STATUS:
-                    connectionStatus.setText(value);
-                    connectionStatus.setTextColor(color);
-                    break;
-                case BroadcastActions.ACTION_SERVER_STATUS:
-                    serverStatus.setText(value);
-                    serverStatus.setTextColor(color);
-                    break;
-            }
+    public void update(String action, String value, int color) {
+        switch(action) {
+            case BroadcastActions.ACTION_DRIVER_STATUS:
+                driverStatus.setText(value);
+                driverStatus.setTextColor(color);
+                break;
+            case BroadcastActions.ACTION_VEHICLE_STATE_STATUS:
+                vehicleStatus.setText(value);
+                vehicleStatus.setTextColor(color);
+                break;
+            case BroadcastActions.ACTION_LOCATION_STATUS:
+                locationStatus.setText(value);
+                locationStatus.setTextColor(color);
+                break;
+            case BroadcastActions.ACTION_CONNECTION_STATUS:
+                connectionStatus.setText(value);
+                connectionStatus.setTextColor(color);
+                break;
+            case BroadcastActions.ACTION_SERVER_STATUS:
+                serverStatus.setText(value);
+                serverStatus.setTextColor(color);
+                break;
         }
     }
-
 
     public interface StatusUpdate {
         String getValue();

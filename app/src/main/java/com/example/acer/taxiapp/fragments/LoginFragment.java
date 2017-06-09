@@ -195,4 +195,8 @@ public class LoginFragment extends Fragment {
         loginButton.setEnabled(false);
         noServicesTextView.setVisibility(View.VISIBLE);
     }
+
+    public interface LoginCallbacks {
+        void onSuccessfulLogin();
+    }
 }

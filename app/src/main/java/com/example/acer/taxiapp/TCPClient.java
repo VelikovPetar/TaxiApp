@@ -10,6 +10,7 @@ import com.example.acer.taxiapp.fragments.StatusBarFragment;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -45,7 +46,7 @@ public class TCPClient implements Runnable {
     // Reader and writer from the socket
 //    private InputStream reader;
 //    private OutputStream writer;
-    private BufferedReader reader;
+    private InputStream reader;
     private DataOutputStream writer;
 
     // Context of the foreground activity
@@ -186,7 +187,9 @@ public class TCPClient implements Runnable {
             // Notify user that internet connection WAS established
             isWaitingData = true;
             broadcastStatusUpdate(BroadcastActions.ACTION_CONNECTION_STATUS, StatusBarFragment.ConnectionStatusValues.CONNECTED);
+            if(debug)Log.e(DEBUG_TAG, "Has connection");
 
+            Log.e("SERVERATT", ""+serverReconnectAttempts);
             if(serverReconnectAttempts == 3) {
                 serverReconnectAttempts = 0;
                 broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.NOT_CONNECTED);
@@ -204,9 +207,6 @@ public class TCPClient implements Runnable {
                 }
             }
 
-
-            if(debug)Log.e(DEBUG_TAG, "Has connection");
-
             try {
                 // Open the socket
                 socket = new Socket(SERVER_IP, SERVER_PORT);
@@ -218,7 +218,7 @@ public class TCPClient implements Runnable {
                 if(debug)Log.e(DEBUG_TAG, "Socket established");
 
                 // Open reader
-                reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                reader = socket.getInputStream();
 
                 // Open writer
                 writer = new DataOutputStream(socket.getOutputStream());
@@ -252,8 +252,7 @@ public class TCPClient implements Runnable {
 //                    }
 
                     byte[] buffer = new byte[512];
-
-                    int readBytes = socket.getInputStream().read(buffer);
+                    int readBytes = reader.read(buffer);
                     ArrayList<Byte> bytes = new ArrayList<>();
                     for(int i = 0; i < readBytes; ++i) {
                         // Case when multiple messages come appended to each other
@@ -309,6 +308,9 @@ public class TCPClient implements Runnable {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                }
+                if(!shouldAutomaticallyReconnect) {
+                    serverReconnectAttempts = 0;
                 }
             }
         }
