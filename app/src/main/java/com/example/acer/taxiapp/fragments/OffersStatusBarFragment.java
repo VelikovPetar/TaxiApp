@@ -29,8 +29,10 @@ public class OffersStatusBarFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 FragmentManager fManager = getFragmentManager();
+                fManager.popBackStackImmediate();
                 FragmentTransaction fTransaction = fManager.beginTransaction();
                 fTransaction.replace(R.id.fragment_content_container, new OffersFragment(), "TAG_OFFERS_FRAGMENT");
+                fTransaction.addToBackStack(null);
                 fTransaction.commit();
             }
         });
@@ -41,8 +43,10 @@ public class OffersStatusBarFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 FragmentManager fManager = getFragmentManager();
+                fManager.popBackStackImmediate();
                 FragmentTransaction fTransaction = fManager.beginTransaction();
                 fTransaction.replace(R.id.fragment_content_container, new MessagesFragment(), "TAG_POPUP_MESSAGES_FRAGMENT");
+                fTransaction.addToBackStack(null);
                 fTransaction.commit();
             }
         });

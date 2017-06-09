@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 public class LocationUpdater {
 
-    private static final int INTERVAL = 10;
+    private static final int INTERVAL = 15;
 
     private Context context;
     private TCPClient tcpClient;
@@ -37,7 +37,7 @@ public class LocationUpdater {
 
     public void start() {
         if(!isRunning) {
-            scheduledFuture = scheduler.scheduleWithFixedDelay(new ScheduledUpdateTask(), 10, INTERVAL, TimeUnit.SECONDS);
+            scheduledFuture = scheduler.scheduleWithFixedDelay(new ScheduledUpdateTask(), 5, INTERVAL, TimeUnit.SECONDS);
             isRunning = true;
         }
     }
@@ -53,6 +53,10 @@ public class LocationUpdater {
         synchronized (stateLock) {
             this.state = state;
         }
+    }
+
+    public boolean isRunning() {
+        return isRunning;
     }
 
     public void execute(Location location) {

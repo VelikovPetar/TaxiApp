@@ -142,6 +142,8 @@ public class MainActivity extends Activity implements LocationListener,
             fTransaction.commit();
         }
 
+        // TODO Naming
+        // TODO Disable the button when a driver is logged in
         ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
         configButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -150,7 +152,7 @@ public class MainActivity extends Activity implements LocationListener,
                 if(configFragment == null || !configFragment.isVisible()) {
                     FragmentTransaction fTransaction = fManager.beginTransaction();
                     fTransaction.replace(R.id.fragment_content_container, new ConfigFragment(), "TAG_CONFIG_FRAGMENT");
-                    fTransaction.addToBackStack(null);
+                    fTransaction.addToBackStack("frag_conf");
                     fTransaction.commit();
                 }
             }
@@ -174,6 +176,9 @@ public class MainActivity extends Activity implements LocationListener,
 
         // Init handler
         handler = new Handler();
+
+        // Init location updater
+        locationUpdater = new LocationUpdater(this);
 
         // TODO REMOVE -----------------------------------------------------------------------------
 //        final ShortOffer so1 = new ShortOffer(1234, (byte)'0', "Nikola Parapunov 12");
@@ -220,12 +225,18 @@ public class MainActivity extends Activity implements LocationListener,
 
     public void showLoginFragment(View v) {
         FragmentManager fManager = getFragmentManager();
-        LoginFragment loginFragment = (LoginFragment) fManager.findFragmentByTag("TAG_LOGIN_FRAGMENT");
-        if(loginFragment == null || !loginFragment.isVisible()) {
-            FragmentTransaction fTransaction = fManager.beginTransaction();
-            fTransaction.replace(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
-            fTransaction.addToBackStack(null);
-            fTransaction.commit();
+        boolean isPopped = fManager.popBackStackImmediate("frag_conf", FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        if(!isPopped) {
+            Log.e("POPPING", "Not in stack");
+            LoginFragment loginFragment = (LoginFragment) fManager.findFragmentByTag("TAG_LOGIN_FRAGMENT");
+            if(loginFragment == null || !loginFragment.isVisible()) {
+                FragmentTransaction fTransaction = fManager.beginTransaction();
+                fTransaction.replace(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
+                fTransaction.addToBackStack(null);
+                fTransaction.commit();
+            }
+        } else {
+            Log.e("POPPING", "IN stack");
         }
     }
 
@@ -280,6 +291,21 @@ public class MainActivity extends Activity implements LocationListener,
         Log.e("LIFECYCLE", "ON START");
 
         // Register receiver for status bar updates
+//        IntentFilter intentFilter3 = new IntentFilter();
+//        intentFilter3.addAction(BroadcastActions.ACTION_DRIVER_STATUS);
+//        intentFilter3.addAction(BroadcastActions.ACTION_VEHICLE_STATE_STATUS);
+//        intentFilter3.addAction(BroadcastActions.ACTION_LOCATION_STATUS);
+//        intentFilter3.addAction(BroadcastActions.ACTION_CONNECTION_STATUS);
+//        intentFilter3.addAction(BroadcastActions.ACTION_SERVER_STATUS);
+//        LocalBroadcastManager.getInstance(this).registerReceiver(statusBarUpdatesBroadcastReceiver, intentFilter3);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // TODO Konsultiraj se shto da pravi aplikacijata ako e vo pozadina!
+
+        // Register receiver for status bar updates
         IntentFilter intentFilter3 = new IntentFilter();
         intentFilter3.addAction(BroadcastActions.ACTION_DRIVER_STATUS);
         intentFilter3.addAction(BroadcastActions.ACTION_VEHICLE_STATE_STATUS);
@@ -287,13 +313,6 @@ public class MainActivity extends Activity implements LocationListener,
         intentFilter3.addAction(BroadcastActions.ACTION_CONNECTION_STATUS);
         intentFilter3.addAction(BroadcastActions.ACTION_SERVER_STATUS);
         LocalBroadcastManager.getInstance(this).registerReceiver(statusBarUpdatesBroadcastReceiver, intentFilter3);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // TODO Konsultiraj se shto da pravi aplikacijata ako e vo pozadina!
-        locationUpdater = new LocationUpdater(this);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -303,8 +322,10 @@ public class MainActivity extends Activity implements LocationListener,
             updateStatusBarLocation();
 
             // Start the thread that sends periodical location updates
-            locationUpdater.setLastLocation(lastLocation);
-            locationUpdater.start();
+            if(isLoggedIn && !locationUpdater.isRunning()) {
+                locationUpdater.setLastLocation(lastLocation);
+                locationUpdater.start();
+            }
         }
 
         // Register receiver for popup messages
@@ -325,7 +346,7 @@ public class MainActivity extends Activity implements LocationListener,
         intentFilter2.addAction(BroadcastActions.ACTION_VEHICLE_STATE_FOR_LOCATION_UPDATES);
         LocalBroadcastManager.getInstance(this).registerReceiver(vehicleStateReceiver, intentFilter2);
 
-        // TODO REMOVE -----------------------------------------------------------------------------
+        //  TODO REMOVE -----------------------------------------------------------------------------
 //        ((OffersStatusBarFragment)getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT")).setOffersCount(shortOffers.size());
 //        handler.postDelayed(new Runnable() {
 //            @Override
@@ -358,7 +379,9 @@ public class MainActivity extends Activity implements LocationListener,
 //        unregisterReceiver(receiver);
 
         // Stop the thread sending periodical location updates
-        locationUpdater.stop();
+        if(isLoggedIn && locationUpdater.isRunning()) {
+            locationUpdater.stop();
+        }
         locationManager.removeUpdates(this);
 
         // Unregister popup message receiver
@@ -370,6 +393,9 @@ public class MainActivity extends Activity implements LocationListener,
         // Unregister vehicle state receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(vehicleStateReceiver);
 
+        // Unregister status bar updates receiver
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(statusBarUpdatesBroadcastReceiver);
+
         Log.e("LIFECYCLE", "ON PAUSE");
     }
 
@@ -378,13 +404,18 @@ public class MainActivity extends Activity implements LocationListener,
     protected void onStop() {
         super.onStop();
         Log.e("LIFECYCLE", "ON STOP");
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(statusBarUpdatesBroadcastReceiver);
+//        LocalBroadcastManager.getInstance(this).unregisterReceiver(statusBarUpdatesBroadcastReceiver);
 
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if(isLoggedIn) {
+            TCPClient client = TCPClient.getInstance(this);
+            client.sendBytes(MessengerClient.getLogoutMessage(lastLocation, this));
+            isLoggedIn = false;
+        }
         unbindService(serviceConnection);
         Log.e("LIFECYCLE", "ON DESTROY");
     }
@@ -752,5 +783,9 @@ public class MainActivity extends Activity implements LocationListener,
         fTransaction.commit();
         TCPClient tcpClient = TCPClient.getInstance(this);
         tcpClient.sendBytes(MessengerClient.getLoginMessage(lastLocation, this));
+
+        // Start the thread that sends periodical location updates
+        locationUpdater.setLastLocation(lastLocation);
+        locationUpdater.start();
     }
 }

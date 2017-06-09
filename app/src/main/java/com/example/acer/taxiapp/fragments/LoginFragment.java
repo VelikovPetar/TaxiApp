@@ -1,5 +1,6 @@
 package com.example.acer.taxiapp.fragments;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -39,6 +40,7 @@ public class LoginFragment extends Fragment {
     private Button loginButton;
 
     private boolean isConfig = true;
+    private LoginCallbacks callbacks;
 
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
@@ -52,6 +54,37 @@ public class LoginFragment extends Fragment {
         }
     };
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        try {
+            callbacks = (LoginCallbacks) context;
+        } catch (ClassCastException e) {
+            e.printStackTrace();
+            Log.e("LOGIN_FRAGMENT", "Class Cast Exception");
+        }
+    }
+
+    // If the device has android version older than 6.0(Marshmallow),
+    // the method onAttach(context) doesn't get called.
+    // On devices with android version 6.0 or newer, both methods
+    // onAttach(Context) and onAttach(Activity) are called.
+    // This method performs the check so the provider doesn't get
+    // initialized twice.
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            Log.e("LOGIN_FRAGMENT", "On Attach(activity)");
+            try {
+                callbacks = (LoginCallbacks) activity;
+            } catch (ClassCastException e) {
+                e.printStackTrace();
+                Log.e("LOGIN_FRAGMENT", "Class Cast Exception");
+            }
+        }
+    }
 
     @Nullable
     @Override
@@ -70,14 +103,11 @@ public class LoginFragment extends Fragment {
                     SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
                     String driverID = preferences.getString(MainActivity.RF_CARD_ID, null);
                     if(driverID != null && driverID.equals(loginEditText.getText().toString().trim())) {
-                        FragmentManager fManager = getFragmentManager();
-                        FragmentTransaction fTransaction = fManager.beginTransaction();
-                        fTransaction.replace(R.id.fragment_content_container, new MapFragment(), "TAG_MAP_FRAGMENT");
-                        fTransaction.commit();
                         View view = getActivity().getCurrentFocus();
                         Utils.hideKeyboard(view, getActivity());
                         errorTextView.setText(getString(R.string.login_error));
                         errorTextView.setVisibility(View.INVISIBLE);
+                        callbacks.onSuccessfulLogin();
                     } else {
                         errorTextView.setVisibility(View.VISIBLE);
                     }
@@ -124,11 +154,11 @@ public class LoginFragment extends Fragment {
             return;
         }
         if(!Utils.isLocationEnabled(getActivity())) {
-            promptLocationServices();
+//            promptLocationServices();
             return;
         }
         if(!Utils.hasInternetConnection(getActivity())) {
-            promptInternetConnection();
+//            promptInternetConnection();
             return;
         }
         enableViews();

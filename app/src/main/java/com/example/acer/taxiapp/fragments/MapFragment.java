@@ -1,9 +1,13 @@
 package com.example.acer.taxiapp.fragments;
 
+import android.Manifest;
 import android.app.Fragment;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +33,7 @@ public class MapFragment extends Fragment {
     private MapView mapView;
     private GoogleMap googleMap;
     private LatLng customerLatLng;
+    private LatLng currentLatLng;
     private Marker currentLocationMarker;
 
     // For tracking the route
@@ -56,13 +61,20 @@ public class MapFragment extends Fragment {
             public void onMapReady(GoogleMap _googleMap) {
                 googleMap = _googleMap;
 
-//                if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-//                    googleMap.setMyLocationEnabled(true);
+                if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    googleMap.setMyLocationEnabled(true);
 //                    googleMap.addMarker(new MarkerOptions().position(new LatLng(42, 21)).title("Test Location"));
 //                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(new LatLng(42, 21)).zoom(12).build()));
 //                } else {
 //                    ActivityCompat.requestPermissions(getActivity(), new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, 1234);
-//                }
+                }
+
+                // Display current position if it is already known
+                if (currentLatLng != null) {
+                    googleMap.addMarker(new MarkerOptions().position(currentLatLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(currentLatLng).zoom(16).build()));
+                }
+
                 // Display position of the customer if there is one waiting for the driver
                 if(customerLatLng != null) {
                     googleMap.addMarker(new MarkerOptions().position(customerLatLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)));
@@ -73,9 +85,21 @@ public class MapFragment extends Fragment {
         return rootView;
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Log.e("LIFECYCLE", "On destroy view");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.e("C", "On destroy");
+    }
+
     public void updateLocation(float lat, float lng) {
 //        googleMap.clear();
-        LatLng currentLatLng = new LatLng(lat, lng);
+        currentLatLng = new LatLng(lat, lng);
         if(currentLocationMarker != null) {
             currentLocationMarker.remove();
         }

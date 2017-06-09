@@ -110,9 +110,17 @@ public class OffersFragment extends Fragment {
             public void onClick(View v) {
                 FragmentManager fManager = getFragmentManager();
                 FragmentTransaction fTransaction = fManager.beginTransaction();
-                MapFragment mapFragment = new MapFragment();
+                MapFragment mapFragment = (MapFragment) fManager.findFragmentByTag("TAG_MAP_FRAGMENT");
                 mapFragment.setCustomerLatLng(latitude, longitude);
-                fTransaction.replace(R.id.fragment_content_container, mapFragment, "TAG_MAP_FRAGMENT");
+//                if(mapFragment.isAdded()) {
+//                    fTransaction.show(mapFragment);
+//                } else {
+//                    fTransaction.replace(R.id.fragment_content_container, mapFragment, "TAG_MAP_FRAGMENT");
+//                }
+
+                // Popni ja poslednata transakcija od stackot, bidejki pod nea se naogja mapata
+                // Nikogash nema da ima povekje od edna transakcija na stackot, a najdole sekad e mapata
+                fManager.popBackStack();
                 fTransaction.commit();
             }
         });
