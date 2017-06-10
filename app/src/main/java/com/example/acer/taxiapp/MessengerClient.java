@@ -100,7 +100,12 @@ public class MessengerClient {
         message[36] = (byte) (bits >> 24);
 
         // Number of satellites
-        int satellites = location.getExtras().getInt("satellites");
+        int satellites;
+        if(location.getExtras() == null) {
+            satellites = 0;
+        } else {
+            satellites = location.getExtras().getInt("satellites");
+        }
         message[37] = (byte) (satellites);
         message[38] = (byte) (satellites >> 8);
 

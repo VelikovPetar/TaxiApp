@@ -2,6 +2,7 @@ package com.example.acer.taxiapp;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
@@ -9,6 +10,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -22,6 +24,7 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
@@ -46,7 +49,8 @@ import java.util.List;
 public class MainActivity extends Activity implements LocationListener,
         MessagesFragment.MessageListProvider,
         OffersFragment.ShortOffersListProvider,
-        LoginFragment.LoginCallbacks{
+        LoginFragment.LoginCallbacks {
+
 
     // Constants
     public static final String PREFERENCES = "my_preferences";
@@ -68,6 +72,7 @@ public class MainActivity extends Activity implements LocationListener,
     private LocationUpdater locationUpdater;
     // State of the vehicle
     private VehicleState state = VehicleState.SLOBODEN;
+
 
     // Communicating with the TcpClientService
     private TCPClientService tcpClientService;
@@ -142,6 +147,7 @@ public class MainActivity extends Activity implements LocationListener,
             fTransaction.commit();
         }
 
+
         // TODO Naming
         // TODO Disable the button when a driver is logged in
         ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
@@ -149,7 +155,7 @@ public class MainActivity extends Activity implements LocationListener,
             @Override
             public void onClick(View v) {
                 ConfigFragment configFragment = (ConfigFragment) fManager.findFragmentByTag("TAG_CONFIG_FRAGMENT");
-                if(configFragment == null || !configFragment.isVisible()) {
+                if (configFragment == null || !configFragment.isVisible()) {
                     FragmentTransaction fTransaction = fManager.beginTransaction();
                     fTransaction.replace(R.id.fragment_content_container, new ConfigFragment(), "TAG_CONFIG_FRAGMENT");
                     fTransaction.addToBackStack("frag_conf");
@@ -159,10 +165,10 @@ public class MainActivity extends Activity implements LocationListener,
         });
 
         // Check for location permissions
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
-        }
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+//                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
+//        }
 
         // Initialize the Location manager
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -226,10 +232,10 @@ public class MainActivity extends Activity implements LocationListener,
     public void showLoginFragment(View v) {
         FragmentManager fManager = getFragmentManager();
         boolean isPopped = fManager.popBackStackImmediate("frag_conf", FragmentManager.POP_BACK_STACK_INCLUSIVE);
-        if(!isPopped) {
+        if (!isPopped) {
             Log.e("POPPING", "Not in stack");
             LoginFragment loginFragment = (LoginFragment) fManager.findFragmentByTag("TAG_LOGIN_FRAGMENT");
-            if(loginFragment == null || !loginFragment.isVisible()) {
+            if (loginFragment == null || !loginFragment.isVisible()) {
                 FragmentTransaction fTransaction = fManager.beginTransaction();
                 fTransaction.replace(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
                 fTransaction.addToBackStack(null);
@@ -241,28 +247,28 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
     public void sendLoginMessage(View view) {
-        if(lastLocation != null) {
+        if (lastLocation != null) {
             byte[] message = MessengerClient.getLoginMessage(lastLocation, this);
             tcpClientService.sendBytes(message);
         }
     }
 
     public void sendLogoutMessage(View view) {
-        if(lastLocation != null) {
+        if (lastLocation != null) {
             byte[] message = MessengerClient.getLogoutMessage(lastLocation, this);
             tcpClientService.sendBytes(message);
         }
     }
 
     public void sendPauseStartMessage(View view) {
-        if(lastLocation != null) {
+        if (lastLocation != null) {
             byte[] message = MessengerClient.getPauseStartMessage(lastLocation, this);
             tcpClientService.sendBytes(message);
         }
     }
 
     public void sendPauseStopMessage(View view) {
-        if(lastLocation != null) {
+        if (lastLocation != null) {
             byte[] message = MessengerClient.getPauseStopMessage(lastLocation, this);
             tcpClientService.sendBytes(message);
         }
@@ -314,20 +320,6 @@ public class MainActivity extends Activity implements LocationListener,
         intentFilter3.addAction(BroadcastActions.ACTION_SERVER_STATUS);
         LocalBroadcastManager.getInstance(this).registerReceiver(statusBarUpdatesBroadcastReceiver, intentFilter3);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, this);
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 0, this);
-            lastLocation = getLastKnownLocation();
-            updateStatusBarLocation();
-
-            // Start the thread that sends periodical location updates
-            if(isLoggedIn && !locationUpdater.isRunning()) {
-                locationUpdater.setLastLocation(lastLocation);
-                locationUpdater.start();
-            }
-        }
-
         // Register receiver for popup messages
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BroadcastActions.ACTION_POPUP_MESSAGE);
@@ -345,6 +337,22 @@ public class MainActivity extends Activity implements LocationListener,
         IntentFilter intentFilter2 = new IntentFilter();
         intentFilter2.addAction(BroadcastActions.ACTION_VEHICLE_STATE_FOR_LOCATION_UPDATES);
         LocalBroadcastManager.getInstance(this).registerReceiver(vehicleStateReceiver, intentFilter2);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, this);
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 0, this);
+            lastLocation = getLastKnownLocation();
+            updateStatusBarLocation();
+            // Start the thread that sends periodical location updates
+            if (isLoggedIn && !locationUpdater.isRunning()) {
+                locationUpdater.setLastLocation(lastLocation);
+                locationUpdater.start();
+            }
+
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
+        }
 
         //  TODO REMOVE -----------------------------------------------------------------------------
 //        ((OffersStatusBarFragment)getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT")).setOffersCount(shortOffers.size());
@@ -379,7 +387,7 @@ public class MainActivity extends Activity implements LocationListener,
 //        unregisterReceiver(receiver);
 
         // Stop the thread sending periodical location updates
-        if(isLoggedIn && locationUpdater.isRunning()) {
+        if (isLoggedIn && locationUpdater.isRunning()) {
             locationUpdater.stop();
         }
         locationManager.removeUpdates(this);
@@ -404,14 +412,14 @@ public class MainActivity extends Activity implements LocationListener,
     protected void onStop() {
         super.onStop();
         Log.e("LIFECYCLE", "ON STOP");
-//        LocalBroadcastManager.getInstance(this).unregisterReceiver(statusBarUpdatesBroadcastReceiver);
 
+//        LocalBroadcastManager.getInstance(this).unregisterReceiver(statusBarUpdatesBroadcastReceiver);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(isLoggedIn) {
+        if (isLoggedIn) {
             TCPClient client = TCPClient.getInstance(this);
             client.sendBytes(MessengerClient.getLogoutMessage(lastLocation, this));
             isLoggedIn = false;
@@ -422,7 +430,7 @@ public class MainActivity extends Activity implements LocationListener,
 
     @Override
     public void onBackPressed() {
-        if(getFragmentManager().getBackStackEntryCount() > 0) {
+        if (getFragmentManager().getBackStackEntryCount() > 0) {
             getFragmentManager().popBackStack();
         } else {
             super.onBackPressed();
@@ -448,8 +456,8 @@ public class MainActivity extends Activity implements LocationListener,
         // TODO Replace with boolean isMapVisible
         FragmentManager fManager = getFragmentManager();
         MapFragment mapFragment = (MapFragment) fManager.findFragmentByTag("TAG_MAP_FRAGMENT");
-        if(mapFragment != null && mapFragment.isVisible()) {
-            mapFragment.updateLocation((float) lastLocation.getLatitude(), (float)lastLocation.getLongitude());
+        if (mapFragment != null && mapFragment.isVisible()) {
+            mapFragment.updateLocation((float) lastLocation.getLatitude(), (float) lastLocation.getLongitude());
         }
     }
 
@@ -458,7 +466,7 @@ public class MainActivity extends Activity implements LocationListener,
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
-        Log.e("LOCATION", "STATUS of " + provider + " CHANGED");
+        Log.e("LOCATION", "STATUS of " + provider + " CHANGED TO : " + status);
         switch (provider) {
             case LocationManager.GPS_PROVIDER:
                 switch (status) {
@@ -543,9 +551,9 @@ public class MainActivity extends Activity implements LocationListener,
                 return null;
             }
             Location tmp = locationManager.getLastKnownLocation(provider);
-            if(tmp == null)
+            if (tmp == null)
                 continue;
-            if(bestLocation == null || bestLocation.getAccuracy() > tmp.getAccuracy()) {
+            if (bestLocation == null || bestLocation.getAccuracy() > tmp.getAccuracy()) {
                 bestLocation = tmp;
             }
         }
@@ -596,7 +604,6 @@ public class MainActivity extends Activity implements LocationListener,
 //            }
 //        }
 //    }
-
 
 
     // List that keeps most recent popup messages
@@ -659,6 +666,35 @@ public class MainActivity extends Activity implements LocationListener,
         return longOffer;
     }
 
+    // TODO Koga treba da se povika?
+    @Override
+    public void onLongOfferFinished() {
+        longOffer = null;
+        updateFragments(null);
+    }
+
+    private void updateFragments(LongOffer longOffer) {
+        FragmentManager fManager = getFragmentManager();
+        // If the offers fragment is visible, update the list view displaying the short offers
+        OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
+        if(offersFragment != null && offersFragment.isVisible()) {
+            offersFragment.notifyDataSetChanged();
+            if(longOffer != null) {
+                offersFragment.displayLongOffer(longOffer);
+            }
+        }
+        // Update the offers status bar
+        OffersStatusBarFragment offersStatusBarFragment =
+                (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+        if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+            if(longOffer != null) {
+                offersStatusBarFragment.setOffersCount(-1);
+            } else {
+                offersStatusBarFragment.setOffersCount(shortOffers.size());
+            }
+        }
+    }
+
     // Broadcast receiver for incoming short offers
     private class OffersReceiver extends BroadcastReceiver {
 
@@ -668,29 +704,13 @@ public class MainActivity extends Activity implements LocationListener,
             this.receiverHandler = handler;
         }
 
-        private void updateFragments(LongOffer longOffer) {
-            FragmentManager fManager = getFragmentManager();
-            // If the offers fragment is visible, update the list view displaying the short offers
-            OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
-            if(offersFragment != null && offersFragment.isVisible()) {
-                offersFragment.notifyDataSetChanged();
-                if(longOffer != null) {
-                    offersFragment.displayLongOffer(longOffer);
-                }
-            }
-            // Update the offers status bar
-            OffersStatusBarFragment offersStatusBarFragment =
-                    (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-            if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
-                offersStatusBarFragment.setOffersCount(shortOffers.size());
-            }
-        }
-
         @Override
         public void onReceive(Context context, Intent intent) {
-            // TODO Deaktiviraj ja aktivnata dolga najava
             String action = intent.getAction();
             if(action.equals(BroadcastActions.ACTION_SHORT_OFFER)) {
+                // If there is an active long offer, ignore incoming short offers
+                if(longOffer != null)
+                    return;
                 long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);
                 byte offerSource = intent.getByteExtra(Parser.OFFER_SOURCE, (byte) -1);
                 String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
@@ -707,13 +727,22 @@ public class MainActivity extends Activity implements LocationListener,
                 }, 45000);
                 updateFragments(null);
             } else if(action.equals(BroadcastActions.ACTION_CANCEL_SHORT_OFFER)) {
+                // If there is an active long offer, ignore incoming cancels of short offers
+                if(longOffer != null)
+                    return;
                 long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);
                 String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
-                for(ShortOffer so : shortOffers) {
+                for(final ShortOffer so : shortOffers) {
                     if(so.getIdPhoneCall() == idPhoneCall) {
                         so.cancel(textMessage);
+                        receiverHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                shortOffers.remove(so);
+                                updateFragments(null);
+                            }
+                        }, 10000);
                         updateFragments(null);
-                        break;
                     }
                 }
             } else if(action.equals(BroadcastActions.ACTION_LONG_OFFER)) {

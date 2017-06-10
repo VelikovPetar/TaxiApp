@@ -71,15 +71,29 @@ public class MapFragment extends Fragment {
 
                 // Display current position if it is already known
                 if (currentLatLng != null) {
-                    googleMap.addMarker(new MarkerOptions().position(currentLatLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(currentLatLng).zoom(16).build()));
+                    currentLocationMarker = googleMap.addMarker(new MarkerOptions().position(currentLatLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(currentLatLng).zoom(14).build()));
                 }
 
                 // Display position of the customer if there is one waiting for the driver
                 if(customerLatLng != null) {
                     googleMap.addMarker(new MarkerOptions().position(customerLatLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)));
-                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(customerLatLng).zoom(16).build()));
+                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(customerLatLng).zoom(14).build()));
+                    // Redraw the polyline if there was a polyline already
+                    if(points.size() > 0) {
+                        if (line != null) {
+                            line.remove();
+                        }
+                        PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE);
+                        points.add(currentLatLng);
+                        for (LatLng latLng : points) {
+                            options.add(latLng);
+                        }
+                        line = googleMap.addPolyline(options);
+                    }
                 }
+
+
             }
         });
         return rootView;
@@ -114,10 +128,19 @@ public class MapFragment extends Fragment {
             for (LatLng latLng : points) {
                 options.add(latLng);
             }
-            line = googleMap.addPolyline(options);
+            // Edge case where the location is updaafter the fragmted ent is drawn,
+            // But before the map is loaded
+            if(googleMap != null) {
+                line = googleMap.addPolyline(options);
+            }
         }
-        currentLocationMarker = googleMap.addMarker(new MarkerOptions().position(currentLatLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(currentLatLng).zoom(16).build()));
+
+        // Edge case where the location is updaafter the fragmted ent is drawn,
+        // But before the map is loaded
+        if(googleMap != null) {
+            currentLocationMarker = googleMap.addMarker(new MarkerOptions().position(currentLatLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(currentLatLng).zoom(14).build()));
+        }
     }
 
     public void setCustomerLatLng(float lat, float lng) {

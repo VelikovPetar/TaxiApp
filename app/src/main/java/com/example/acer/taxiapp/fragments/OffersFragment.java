@@ -128,6 +128,11 @@ public class OffersFragment extends Fragment {
         Log.e("LONG OFFER", "Display called");
     }
 
+    public void hideLongOffer() {
+        longOffer = null;
+        longOfferLayout.setVisibility(View.GONE);
+    }
+
     private class ShortOffersListAdapter extends ArrayAdapter<ShortOffer> {
 
         private Context context;
@@ -218,5 +223,6 @@ public class OffersFragment extends Fragment {
     public interface ShortOffersListProvider {
         List<ShortOffer> getShortOffers();
         LongOffer getLongOffer();
+        void onLongOfferFinished();
     }
 }

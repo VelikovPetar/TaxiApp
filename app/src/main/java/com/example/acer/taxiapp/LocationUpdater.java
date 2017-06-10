@@ -37,6 +37,7 @@ public class LocationUpdater {
 
     public void start() {
         if(!isRunning) {
+            scheduler = Executors.newScheduledThreadPool(1);
             scheduledFuture = scheduler.scheduleWithFixedDelay(new ScheduledUpdateTask(), 5, INTERVAL, TimeUnit.SECONDS);
             isRunning = true;
         }
@@ -76,6 +77,8 @@ public class LocationUpdater {
             byte[] message = null;
             Location current = null;
             synchronized (locationLock) {
+                if(lastLocation == null)
+                    return;
                 current = new Location(lastLocation);
             }
             synchronized (stateLock) {

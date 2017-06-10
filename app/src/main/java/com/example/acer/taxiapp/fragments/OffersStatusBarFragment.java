@@ -56,9 +56,11 @@ public class OffersStatusBarFragment extends Fragment {
 
     public void setOffersCount(int count) {
         if(count == 0) {
-            offersInfoTextView.setText("Нема понуди!");
+            offersInfoTextView.setText("Нема најави!");
+        } else if(count == -1) {
+            offersInfoTextView.setText("Активна долга најава!");
         } else {
-            offersInfoTextView.setText(String.format(Locale.getDefault(), "Број на понуди: %d", count));
+            offersInfoTextView.setText(String.format(Locale.getDefault(), "Број на најави: %d", count));
         }
     }
 
