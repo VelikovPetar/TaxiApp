@@ -2,7 +2,6 @@ package com.example.acer.taxiapp;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Dialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
@@ -10,7 +9,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.IntentSender;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -24,7 +22,6 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
@@ -149,7 +146,6 @@ public class MainActivity extends Activity implements LocationListener,
 
 
         // TODO Naming
-        // TODO Disable the button when a driver is logged in
         ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
         configButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -185,51 +181,13 @@ public class MainActivity extends Activity implements LocationListener,
 
         // Init location updater
         locationUpdater = new LocationUpdater(this);
-
-        // TODO REMOVE -----------------------------------------------------------------------------
-//        final ShortOffer so1 = new ShortOffer(1234, (byte)'0', "Nikola Parapunov 12");
-//        shortOffers.add(so1);
-//        handler.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                if (!so1.isCanceled()) {
-//                    shortOffers.remove(so1);
-//                     If the offers fragment is visible, update the list view displaying the short offers
-//                    FragmentManager fManager = getFragmentManager();
-//                    OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
-//                    if (offersFragment != null && offersFragment.isVisible()) {
-//                        offersFragment.notifyDataSetChanged();
-//                    }
-//
-//                     Update the offers status bar
-//                    OffersStatusBarFragment offersStatusBarFragment =
-//                            (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-//                    if (offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
-//                        offersStatusBarFragment.setOffersCount(shortOffers.size());
-//                    }
-//                    Log.e(DEBUG_TAG, "Runnable called");
-//                }
-//            }
-//        }, 10000);
-//        ShortOffer so2 = new ShortOffer(1235, (byte)'3', "Bulevar Ilinden 12");
-//        shortOffers.add(so2);
-//        ShortOffer so3 = new ShortOffer(1236, (byte)'3', "Partizanska 1234");
-//        shortOffers.add(so3);
-//        shortOffers.add(new ShortOffer(1237, (byte) '3', "Bakalnska"));
-//        shortOffers.add(new ShortOffer(1238, (byte) '3', "Goce delchev"));
-//        shortOffers.add(new ShortOffer(1239, (byte) '3', "Butel 23"));
-//        shortOffers.add(new ShortOffer(12310, (byte) '3', "mavrovka 12"));
-//        shortOffers.add(new ShortOffer(12311, (byte) '3', "Ulica makedonija"));
-//        shortOffers.add(new ShortOffer(12312, (byte) '3', "Rekord 12"));
-//        shortOffers.add(new ShortOffer(12313, (byte) '3', "Shutka 1234"));
-//        shortOffers.add(new ShortOffer(12314, (byte) '3', "City Mall"));
-//        shortOffers.add(new ShortOffer(12315, (byte) '3', "Arhiv"));
-//        shortOffers.add(new ShortOffer(12316, (byte) '3', "Zhdanec"));
-//        shortOffers.add(new ShortOffer(12317, (byte) '3', "Porta Vlae"));
-        // TODO Remove -----------------------------------------------------------------------------
     }
 
     public void showLoginFragment(View v) {
+        if(isLoggedIn) {
+            Toast.makeText(this, "Веќе сте најавени.", Toast.LENGTH_LONG).show();
+            return;
+        }
         FragmentManager fManager = getFragmentManager();
         boolean isPopped = fManager.popBackStackImmediate("frag_conf", FragmentManager.POP_BACK_STACK_INCLUSIVE);
         if (!isPopped) {
@@ -295,15 +253,6 @@ public class MainActivity extends Activity implements LocationListener,
     protected void onStart() {
         super.onStart();
         Log.e("LIFECYCLE", "ON START");
-
-        // Register receiver for status bar updates
-//        IntentFilter intentFilter3 = new IntentFilter();
-//        intentFilter3.addAction(BroadcastActions.ACTION_DRIVER_STATUS);
-//        intentFilter3.addAction(BroadcastActions.ACTION_VEHICLE_STATE_STATUS);
-//        intentFilter3.addAction(BroadcastActions.ACTION_LOCATION_STATUS);
-//        intentFilter3.addAction(BroadcastActions.ACTION_CONNECTION_STATUS);
-//        intentFilter3.addAction(BroadcastActions.ACTION_SERVER_STATUS);
-//        LocalBroadcastManager.getInstance(this).registerReceiver(statusBarUpdatesBroadcastReceiver, intentFilter3);
     }
 
     @Override
@@ -354,29 +303,7 @@ public class MainActivity extends Activity implements LocationListener,
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
         }
 
-        //  TODO REMOVE -----------------------------------------------------------------------------
-//        ((OffersStatusBarFragment)getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT")).setOffersCount(shortOffers.size());
-//        handler.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                Parser parser = new Parser(MainActivity.this);
-//                parser.broadcastLongOffer(12345, 42.00653f, 21.382f, (byte)'1', "Nikola Parapunov 27");
-//            }
-//        }, 5000);
-//        handler.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//
-//            }
-//        }, 7500);
-        // TODO REMOVE -----------------------------------------------------------------------------
-
         Log.e("LIFECYCLE", "ON RESUME");
-        // Register network status receiver
-//        receiver = new NetworkChangeReceiver();
-//        IntentFilter intentFilter = new IntentFilter();
-//        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-//        registerReceiver(receiver, intentFilter);
     }
 
     @Override
@@ -816,5 +743,9 @@ public class MainActivity extends Activity implements LocationListener,
         // Start the thread that sends periodical location updates
         locationUpdater.setLastLocation(lastLocation);
         locationUpdater.start();
+
+        // Disable the config button
+        ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
+        configButton.setEnabled(false);
     }
 }

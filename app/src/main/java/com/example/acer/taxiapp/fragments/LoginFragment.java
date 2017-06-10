@@ -30,6 +30,7 @@ import android.widget.TextView;
 
 import com.example.acer.taxiapp.MainActivity;
 import com.example.acer.taxiapp.R;
+import com.example.acer.taxiapp.TCPClient;
 import com.example.acer.taxiapp.Utils;
 
 public class LoginFragment extends Fragment {
@@ -45,12 +46,15 @@ public class LoginFragment extends Fragment {
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.e("LOGIN", "RECEVED");
             if(Utils.hasInternetConnection(getActivity()) &&
-                    Utils.isLocationEnabled(getActivity())) {
+                    Utils.isLocationEnabled(getActivity())
+                    ) {
                 enableViews();
             } else {
                 disableViews();
             }
+            errorTextView.setVisibility(View.INVISIBLE);
         }
     };
 
@@ -126,11 +130,11 @@ public class LoginFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        setup();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         intentFilter.addAction("android.location.PROVIDERS_CHANGED");
         getActivity().registerReceiver(receiver, intentFilter);
-        setup();
     }
 
     @Override
@@ -155,10 +159,13 @@ public class LoginFragment extends Fragment {
         }
         if(!Utils.isLocationEnabled(getActivity())) {
 //            promptLocationServices();
+            Log.e("LOGIN", 1+"");
             return;
         }
         if(!Utils.hasInternetConnection(getActivity())) {
 //            promptInternetConnection();
+            Log.e("LOGIN", 2+"");
+
             return;
         }
         enableViews();

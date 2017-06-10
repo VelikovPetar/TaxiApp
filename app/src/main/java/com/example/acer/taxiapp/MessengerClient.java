@@ -171,12 +171,6 @@ public class MessengerClient {
         return message;
     }
 
-    public static byte[] getCommonMessage(Location location, Context context) {
-        byte[] message = getBaseCommonMessage(location, context);
-        byte[] res = addChkSum(message);
-        return res;
-    }
-
     public static byte[] getCommonMessage(Location location, Context context, VehicleState state) {
         byte[] message = getBaseCommonMessage(location, context);
         switch(state) {
@@ -187,6 +181,12 @@ public class MessengerClient {
             case KRAJ_NA_SMENA:
                 turnOnPauseBit(message);
                 turnOnTaximeterBit(message);
+                break;
+            // TODO Other states
+            default:
+                turnOffPauseBit(message);
+                turnOnTaximeterBit(message);
+                break;
         }
         byte[] res = addChkSum(message);
         return res;

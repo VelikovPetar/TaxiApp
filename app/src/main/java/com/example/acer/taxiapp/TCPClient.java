@@ -42,6 +42,7 @@ public class TCPClient implements Runnable {
 
     // Attempts to reconnect to server
     private int serverReconnectAttempts = 0;
+    private volatile boolean serverAvailable = false;
 
     // Reader and writer from the socket
 //    private InputStream reader;
@@ -120,6 +121,10 @@ public class TCPClient implements Runnable {
         }
     }
 
+    public boolean isServerAvailable() {
+        return serverAvailable;
+    }
+
     public void sendBytes(byte[] message) {
         synchronized (this) {
             try {
@@ -156,7 +161,6 @@ public class TCPClient implements Runnable {
     @Override
     public void run() {
 
-        // TODO Handle server errors
         shouldAutomaticallyReconnect = true;
 
         if(debug)Log.e(DEBUG_TAG, "sar = " + shouldAutomaticallyReconnect);
@@ -165,7 +169,6 @@ public class TCPClient implements Runnable {
 
             if(debug)Log.e(DEBUG_TAG, "Client started");
 
-            // TODO Treba da se osmisli podobro ako e vozmozhno!!!
             // Wait for internet connection
             int attempts = 0;
             while(!Utils.hasInternetConnection(context)) {
@@ -182,6 +185,14 @@ public class TCPClient implements Runnable {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                // Edge case
+                // If the internet connection is lost, and the app is closed, but still in memory,
+                // The thread may remain alive, and if connection is obtained, a tcp connection to the server may be
+                // established. Because closing the app sets shouldAutomaticallyReconnect to false,
+                // this will make sure the thread finishes working.
+                if(!shouldAutomaticallyReconnect) {
+                    return;
+                }
             }
 
             // Notify user that internet connection WAS established
@@ -189,9 +200,13 @@ public class TCPClient implements Runnable {
             broadcastStatusUpdate(BroadcastActions.ACTION_CONNECTION_STATUS, StatusBarFragment.ConnectionStatusValues.CONNECTED);
             if(debug)Log.e(DEBUG_TAG, "Has connection");
 
+            // Connecting to server
+            broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.CONNECTING);
             Log.e("SERVERATT", ""+serverReconnectAttempts);
             if(serverReconnectAttempts == 3) {
+                // If there were 3 failed reconnects, wait 1 minute before trying again
                 serverReconnectAttempts = 0;
+                serverAvailable = false;
                 broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.NOT_CONNECTED);
                 try {
                     Thread.sleep(60000);
@@ -199,12 +214,21 @@ public class TCPClient implements Runnable {
                     e.printStackTrace();
                 }
             } else if(serverReconnectAttempts > 0 && serverReconnectAttempts < 3){
-                broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.CONNECTING);
+                serverAvailable = false;
+                // Try to connect to server after waiting 3 seconds
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+            }
+            // Edge case
+            // If the connection to the server is lost, and the app is closed, but still in memory,
+            // The thread may remain alive, and if connection is obtained, a tcp connection to the server may be
+            // established. Because closing the app sets shouldAutomaticallyReconnect to false,
+            // this will make sure the thread finishes working.
+            if(!shouldAutomaticallyReconnect) {
+                return;
             }
 
             try {
@@ -213,6 +237,8 @@ public class TCPClient implements Runnable {
                 socket.setSoTimeout(TIMEOUT);
 
                 // If the socket is opened display that the server is OK
+                serverReconnectAttempts = 0;
+                serverAvailable = true;
                 broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.CONNECTED);
 
                 if(debug)Log.e(DEBUG_TAG, "Socket established");
@@ -278,8 +304,14 @@ public class TCPClient implements Runnable {
             } catch (IOException e) {
                 e.printStackTrace();
                 // Identify the problem
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
                 if(Utils.hasInternetConnection(context)) {
                     // TODO Notify of probable server error
+                    Log.e("SERVERATT", "HERE");
                     serverReconnectAttempts ++;
                 } else {
                     // TODO Notify that connection was lost on the local device
