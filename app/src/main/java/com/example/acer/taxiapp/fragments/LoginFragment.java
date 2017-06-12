@@ -108,7 +108,7 @@ public class LoginFragment extends Fragment {
                     String driverID = preferences.getString(MainActivity.RF_CARD_ID, null);
                     if(driverID != null && driverID.equals(loginEditText.getText().toString().trim())) {
                         View view = getActivity().getCurrentFocus();
-                        Utils.hideKeyboard(view, getActivity());
+                        Utils.hideKeyboard(view);
                         errorTextView.setText(getString(R.string.login_error));
                         errorTextView.setVisibility(View.INVISIBLE);
                         callbacks.onSuccessfulLogin();

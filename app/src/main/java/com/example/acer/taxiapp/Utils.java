@@ -25,10 +25,10 @@ public class Utils {
         return gpsEnabled || networkEnabled;
     }
 
-    public static void hideKeyboard(View view, Context context) {
+    public static void hideKeyboard(View view) {
         if(view != null) {
-            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            InputMethodManager imm = (InputMethodManager) view.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         }
     }
 }

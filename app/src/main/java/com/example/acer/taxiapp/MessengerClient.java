@@ -260,7 +260,7 @@ public class MessengerClient {
     public static byte[] getShortOfferConfirmMessage(long idPhoneCall, int minutes, Context context) {
         byte[] message = new byte[15];
 
-        // najava na poraka
+        // Najava na poraka
         message[0] = message[1] = 'P';
 
         // Broj na ured
@@ -296,6 +296,134 @@ public class MessengerClient {
         return res;
     }
 
+    public static byte[] getRequestStatusMessage(String text, Context context) {
+        byte[] message = new byte[42];
+
+        // Najava na poraka
+        message[0] = message[1] = 'P';
+
+        // Broj na ured
+        SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+        String deviceId = preferences.getString(MainActivity.DEVICE_ID, null);
+        byte[] bytes;
+        if(deviceId != null) {
+            bytes = deviceId.getBytes();
+        } else {
+            bytes = new byte[5];
+        }
+        message[2] = bytes[0];
+        message[3] = bytes[1];
+        message[4] = bytes[2];
+        message[5] = bytes[3];
+        message[6] = bytes[4];
+
+        // Komanda
+        message[7] = '7';
+        message[8] = '3';
+
+        // Kod na baranje
+        message[9] = '1';
+
+        // Vrednost
+        message[10] = 0;
+        message[11] = 0;
+
+        // Tekst za baranje
+        for(int i = 12; i < 42; ++i) {
+            if(i - 12 < text.length()) {
+                message[i] = (byte) text.charAt(i - 12);
+            } else {
+                // TODO Check the padding character
+                message[i] = (byte) ' ';
+            }
+        }
+
+        byte[] res = addChkSum(message);
+        return res;
+    }
+
+    public static byte[] getRegisterForRegionMessage(int region, Context context) {
+        byte[] message = new byte[42];
+
+        // Najava na poraka
+        message[0] = message[1] = 'P';
+
+        // Broj na ured
+        SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+        String deviceId = preferences.getString(MainActivity.DEVICE_ID, null);
+        byte[] bytes;
+        if(deviceId != null) {
+            bytes = deviceId.getBytes();
+        } else {
+            bytes = new byte[5];
+        }
+        message[2] = bytes[0];
+        message[3] = bytes[1];
+        message[4] = bytes[2];
+        message[5] = bytes[3];
+        message[6] = bytes[4];
+
+        // Komanda
+        message[7] = '7';
+        message[8] = '3';
+
+        // Kod na baranje
+        message[9] = '2';
+
+        // Vrednost
+        message[10] = (byte) (region);
+        message[11] = (byte) (region >> 8);
+
+        // Tekst za baranje
+        for(int i = 12; i < 42; ++i) {
+            // TODO Check the padding character
+            message[i] = (byte) ' ';
+        }
+
+        byte[] res = addChkSum(message);
+        return res;
+    }
+
+    public static byte[] getInfoByRegionMessage(Context context) {
+        byte[] message = new byte[42];
+
+        // Najava na poraka
+        message[0] = message[1] = 'P';
+
+        // Broj na ured
+        SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+        String deviceId = preferences.getString(MainActivity.DEVICE_ID, null);
+        byte[] bytes;
+        if(deviceId != null) {
+            bytes = deviceId.getBytes();
+        } else {
+            bytes = new byte[5];
+        }
+        message[2] = bytes[0];
+        message[3] = bytes[1];
+        message[4] = bytes[2];
+        message[5] = bytes[3];
+        message[6] = bytes[4];
+
+        // Komanda
+        message[7] = '7';
+        message[8] = '3';
+
+        // Kod na baranje
+        message[9] = '4';
+
+        // Vrednost
+        message[10] = 0;
+        message[11] = 0;
+
+        // Tekst za baranje
+        for(int i = 12; i < 42; ++i) {
+            message[i] = (byte) ' ';
+        }
+
+        byte[] res = addChkSum(message);
+        return res;
+    }
 
     private static byte[] addChkSum(byte[] message) {
         byte[] retVal = new byte[message.length + 2];

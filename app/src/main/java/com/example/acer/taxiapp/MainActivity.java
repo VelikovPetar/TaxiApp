@@ -2,11 +2,13 @@ package com.example.acer.taxiapp;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -24,8 +26,11 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -39,9 +44,11 @@ import com.example.acer.taxiapp.fragments.OffersStatusBarFragment;
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
 import com.example.acer.taxiapp.services.TCPClientService;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-
 
 public class MainActivity extends Activity implements LocationListener,
         MessagesFragment.MessageListProvider,
@@ -208,6 +215,7 @@ public class MainActivity extends Activity implements LocationListener,
         if (lastLocation != null) {
             byte[] message = MessengerClient.getLoginMessage(lastLocation, this);
             tcpClientService.sendBytes(message);
+            isLoggedIn = true;
         }
     }
 
@@ -215,6 +223,7 @@ public class MainActivity extends Activity implements LocationListener,
         if (lastLocation != null) {
             byte[] message = MessengerClient.getLogoutMessage(lastLocation, this);
             tcpClientService.sendBytes(message);
+            isLoggedIn = false;
         }
     }
 
@@ -230,6 +239,105 @@ public class MainActivity extends Activity implements LocationListener,
             byte[] message = MessengerClient.getPauseStopMessage(lastLocation, this);
             tcpClientService.sendBytes(message);
         }
+    }
+
+    public void requestStatus(View view) {
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
+        final View dialogLayout = layoutInflater.inflate(R.layout.dialog_status_request, null);
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogLayout)
+                .setPositiveButton("Испрати", null)
+                .setNegativeButton("Откажи", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .create();
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(final DialogInterface _dialog) {
+                Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                positiveButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        EditText editText = (EditText) dialogLayout.findViewById(R.id.edit_text_status_request);
+                        String text = editText.getText().toString();
+                        if(text.trim().equals("")) {
+                            editText.setHint("Мора да внесете текст!");
+                            editText.setHintTextColor(Color.RED);
+                            return;
+                        }
+                        byte[] message = MessengerClient.getRequestStatusMessage(text.trim(), MainActivity.this);
+//                TCPClient tcpClient = TCPClient.getInstance(MainActivity.this);
+//                tcpClient.sendBytes(message);
+                        String msg = "";
+                        for(byte b : message)
+                            msg += (char) b;
+                        Log.e("DIALOGS", msg);
+                        dialog.dismiss();
+                    }
+                });
+            }
+        });
+        dialog.show();
+    }
+
+    public void getInfoByRegion(View view) {
+        byte[] message = MessengerClient.getInfoByRegionMessage(this);
+//        TCPClient tcpClient = TCPClient.getInstance(this);
+//        tcpClient.sendBytes(message);
+        String msg = "";
+        for(byte b : message)
+            msg += (char) b;
+        Log.e("DIALOGS", msg);
+    }
+
+    public void registerForRegion(View view) {
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
+        final View dialogLayout = layoutInflater.inflate(R.layout.dialog_register_for_region, null);
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogLayout)
+                .setPositiveButton("Испрати", null)
+                .setNegativeButton("Откажи", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .create();
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface _dialog) {
+                Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
+                positiveButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        EditText regionEditText = (EditText) dialogLayout.findViewById(R.id.edit_text_register_for_region);
+                        String regionText = regionEditText.getText().toString();
+                        if(regionText.trim().equals("")) {
+                            regionEditText.setHint("Мора да внесете регион!");
+                            regionEditText.setHintTextColor(Color.RED);
+                            return;
+                        }
+                        int region = Integer.parseInt(regionText.trim());
+                        byte[] message = MessengerClient.getRegisterForRegionMessage(region, MainActivity.this);
+//                        TCPClient tcpClient = TCPClient.getInstance(MainActivity.this);
+//                        tcpClient.sendBytes(message);
+                        String msg = "";
+                        for(byte b : message)
+                            msg += (char) b;
+                        byte[] tmp = new byte[4];
+                        tmp[0] = message[10];
+                        tmp[1] = message[11];
+                        long l = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getInt();
+                        Log.e("DIALOGS", msg + " " + l);
+                        dialog.dismiss();
+                    }
+                });
+            }
+        });
+        dialog.show();
     }
 
     public void showMessagesFragment(View view) {

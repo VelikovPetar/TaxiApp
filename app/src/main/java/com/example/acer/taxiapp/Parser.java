@@ -147,6 +147,16 @@ public class Parser {
             byte[] popupMessageTextBytes = Arrays.copyOfRange(message, 13, 12 + lengthOfMessage - 1);
             String popupMessageText = bytesToString(popupMessageTextBytes);
 
+            // Special case
+            // If the message contains "(Ne igraj so kartickata !)", that means that the driver is already
+            // logged in. If the driver was remained logged in the previous usage of the application,
+            // display his name in the status bar
+            Log.e(DEBUG_TAG, popupMessageText);
+            if(popupMessageText.contains("(Ne igraj so kartickata !)")) {
+                broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS,
+                        new StatusBarFragment.DriverStatusValue(popupMessageText.replace("(Ne igraj so kartickata !)", ""), Color.GREEN));
+            }
+
             // Append time to the message text
             Date date = new Date();
             Calendar cal = Calendar.getInstance();

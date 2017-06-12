@@ -201,12 +201,12 @@ public class TCPClient implements Runnable {
             if(debug)Log.e(DEBUG_TAG, "Has connection");
 
             // Connecting to server
+            serverAvailable = false;
             broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.CONNECTING);
             Log.e("SERVERATT", ""+serverReconnectAttempts);
             if(serverReconnectAttempts == 3) {
                 // If there were 3 failed reconnects, wait 1 minute before trying again
                 serverReconnectAttempts = 0;
-                serverAvailable = false;
                 broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.NOT_CONNECTED);
                 try {
                     Thread.sleep(60000);

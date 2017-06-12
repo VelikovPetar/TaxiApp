@@ -1,8 +1,10 @@
 package com.example.acer.taxiapp.fragments;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -11,6 +13,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -67,6 +70,27 @@ public class MessagesFragment extends Fragment {
         Log.e("MSG_FRAGMENT", "On Create View");
         View view = inflater.inflate(R.layout.fragment_messages, container, false);
         messagesList = (ListView) view.findViewById(R.id.list_view_messages);
+        messagesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setTitle("Целосна порака");
+                String fullMessage = adapter.getItem(position);
+                if(fullMessage != null) {
+                    fullMessage = fullMessage.substring(0, fullMessage.length() - 8);
+                } else {
+                    fullMessage = "Проблем при вчитувањето на пораката!";
+                }
+                builder.setMessage(fullMessage);
+                builder.setNegativeButton("Затвори", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                builder.create().show();
+            }
+        });
         return view;
     }
 
@@ -110,7 +134,7 @@ public class MessagesFragment extends Fragment {
 
             String message = getItem(position);
             if(message != null) {
-                messageTextView.setText(message.substring(0, message.length() - 8));
+                messageTextView.setText(message.substring(0, message.length() - 8).substring(0, 30) + "...");
                 timeTextView.setText(message.substring(message.length() - 8, message.length()));
             }
             return view;

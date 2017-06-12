@@ -9,13 +9,16 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="3"
-        android:textSize="20sp" />
+        android:textSize="30sp"
+        android:maxLines="1"
+        android:padding="8dp"/>
 
     <TextView
         android:id="@+id/text_view_list_item_message_time"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textSize="20sp"/>
+        android:textSize="30sp"
+        android:padding="8dp"/>
 
 </LinearLayout>

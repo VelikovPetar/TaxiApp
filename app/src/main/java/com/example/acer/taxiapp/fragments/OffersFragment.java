@@ -27,8 +27,12 @@ import com.example.acer.taxiapp.LongOffer;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
 import com.example.acer.taxiapp.ShortOffer;
+import com.example.acer.taxiapp.TCPClient;
 import com.example.acer.taxiapp.Utils;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.List;
 
 public class OffersFragment extends Fragment {
@@ -184,39 +188,47 @@ public class OffersFragment extends Fragment {
         }
 
         private void promptMinutesDialog(final long idPhoneCall) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            LayoutInflater inflater = LayoutInflater.from(getActivity());
-            final View view = inflater.inflate(R.layout.dialog_enter_minutes, null);
-            builder.setView(view);
-            builder.setPositiveButton("Испрати", new DialogInterface.OnClickListener() {
+            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            final View dialogLayout = layoutInflater.inflate(R.layout.dialog_enter_minutes, null);
+            final AlertDialog dialog = new AlertDialog.Builder(getActivity())
+                    .setView(dialogLayout)
+                    .setPositiveButton("Испрати", null)
+                    .setNegativeButton("Откажи", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    })
+                    .create();
+            dialog.setOnShowListener(new DialogInterface.OnShowListener() {
                 @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    EditText minutesEditText = (EditText) view.findViewById(R.id.edit_text_minutes);
-                    String minutesText = minutesEditText.getText().toString();
-                    // TODO Validate minutesText
-                    int minutes = Integer.parseInt(minutesText);
-                    byte[] message = MessengerClient.getShortOfferConfirmMessage(idPhoneCall, minutes, context);
-//                    TCPClient tcpClient = TCPClient.getInstance(getActivity());
-//                    tcpClient.sendBytes(message);
-
-
-                    String ret = "";
-                    for(byte b : message) {
-                        ret += (char) b;
-                    }
-                    Log.e("SHORT_OFFER", "Confirm message : " + ret);
-                    Utils.hideKeyboard(minutesEditText, getActivity());
+                public void onShow(DialogInterface _dialog) {
+                    Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
+                    positiveButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            EditText minutesEditText = (EditText) dialogLayout.findViewById(R.id.edit_text_minutes);
+                            String minutesText = minutesEditText.getText().toString();
+                            if(minutesText.trim().equals("")) {
+                                minutesEditText.setHint("Мора да внесете минути!");
+                                minutesEditText.setHintTextColor(Color.RED);
+                                return;
+                            }
+                            int minutes = Integer.parseInt(minutesText.trim());
+                            byte[] message = MessengerClient.getShortOfferConfirmMessage(idPhoneCall, minutes, context);
+//                            TCPClient tcpClient = TCPClient.getInstance(context);
+//                            tcpClient.sendBytes(message);
+                            String msg = "";
+                            for(byte b : message)
+                                msg += (char) b;
+                            long l = ByteBuffer.wrap(Arrays.copyOfRange(message, 9, 13)).order(ByteOrder.LITTLE_ENDIAN).getInt();
+                            Log.e("DIALOGS", msg + " " + l);
+                            dialog.dismiss();
+                        }
+                    });
                 }
             });
-            builder.setNegativeButton("Откажи", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    EditText minutesEditText = (EditText) view.findViewById(R.id.edit_text_minutes);
-                    Utils.hideKeyboard(minutesEditText, getActivity());
-                    dialog.cancel();
-                }
-            });
-            builder.create().show();
+            dialog.show();
         }
     }
 

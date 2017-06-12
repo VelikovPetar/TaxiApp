@@ -20,7 +20,7 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Send Logout"
+            android:text="Одјава"
             android:onClick="sendLogoutMessage"/>
         <Button
             android:layout_width="match_parent"
@@ -45,15 +45,18 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Button"/>
+            android:text="Пријава за регион"
+            android:onClick="registerForRegion"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Button"/>
+            android:text="Барање статус"
+            android:onClick="requestStatus"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Button"/>
+            android:text="Инфо по региони"
+            android:onClick="getInfoByRegion"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"

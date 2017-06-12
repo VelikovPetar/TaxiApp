@@ -59,7 +59,7 @@ public class ConfigFragment extends Fragment {
 
                     // Hide keyboard
                     View view = getActivity().getCurrentFocus();
-                    Utils.hideKeyboard(view, getActivity());
+                    Utils.hideKeyboard(view);
                 }
             }
         });
