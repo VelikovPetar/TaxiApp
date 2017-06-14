@@ -425,6 +425,58 @@ public class MessengerClient {
         return res;
     }
 
+    public static byte[] getGeneratedMessage(byte destination, char priority, String text, Context context) {
+        int totalLength = 9 + 2 + 1 + 1 + text.length();
+        byte[] message = new byte[totalLength];
+
+        // Najava na poraka
+        message[0] = message[1] = 'P';
+
+        // Broj na ured
+        SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+        String deviceId = preferences.getString(MainActivity.DEVICE_ID, null);
+        byte[] bytes;
+        if(deviceId != null) {
+            bytes = deviceId.getBytes();
+        } else {
+            bytes = new byte[5];
+        }
+        message[2] = bytes[0];
+        message[3] = bytes[1];
+        message[4] = bytes[2];
+        message[5] = bytes[3];
+        message[6] = bytes[4];
+
+        // Komanda
+        message[7] = '7';
+        message[8] = '4';
+
+        // Broj na bajti vo porakata
+        int msgLength = 1 + 1 + text.length();
+        String tmp = msgLength + "";
+        if(tmp.length() == 1) {
+            message[9] = '0';
+            message[10] = (byte) tmp.charAt(0);
+        } else {
+            message[9] = (byte) tmp.charAt(0);
+            message[10] = (byte) tmp.charAt(1);
+        }
+
+        // Kon kogo e porakata
+        message[11] = destination;
+
+        // Prioritet na porakata
+        message[12] = (byte) priority;
+
+        // Tekst na porakata
+        for(int i = 0; i < text.length(); ++i) {
+            message[13 + i] = (byte) text.charAt(i);
+        }
+
+        byte[] res = addChkSum(message);
+        return res;
+    }
+
     private static byte[] addChkSum(byte[] message) {
         byte[] retVal = new byte[message.length + 2];
 //        byte[] retVal = new byte[message.length + 7];

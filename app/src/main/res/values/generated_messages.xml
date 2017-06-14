@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="categories">
+        <item>Помош за повик</item>
+        <item>Сервис</item>
+        <item>Повик</item>
+        <item>Состојба</item>
+        <item>Интервентни</item>
+        <item>Информативни</item>
+        <item>Слободен текст</item>
+    </string-array>
+    <string-array name="pomosh_za_povik">
+        <item>da</item>
+        <item>ne</item>
+        <item>objasnuvanje za adresa</item>
+        <item>objasnuvanje za objekt</item>
+        <item>objasnuvanje za brojot</item>
+        <item>nejasen povik</item>
+        <item>rezerviran sum</item>
+        <item>proverka</item>
+        <item>nema patnici</item>
+        <item>nema patnici</item>
+        <item>primen e povikot</item>
+        <item>vo sprotiven pravec sum</item>
+        <item>vo ednosmerna sum</item>
+        <item>zatvorena ulica</item>
+        <item>praten sum na povik</item>
+        <item>ima shtrajk</item>
+        <item>ima golema guzhva</item>
+    </string-array>
+    <string-array name="servis">
+        <item>defekt so vozilo</item>
+        <item>defekt so taksimetar</item>
+        <item>defekt so displej</item>
+        <item>defekt so chitach</item>
+        <item>da mi se javi serviserot</item>
+        <item>mi se dupna guma</item>
+    </string-array>
+    <string-array name="povik">
+        <item>stignuvam za ...min</item>
+        <item>isprati drugo vozilo</item>
+        <item>od koja strana da zastanam</item>
+        <item>zemav pogreshni patnici</item>
+        <item>pred koj vlez</item>
+        <item>kukja ili zgrada</item>
+        <item>nepoznat piom</item>
+        <item>ne mi e poznato</item>
+        <item>baraj drugo vozilo</item>
+        <item>dali mozhe da napushtam?</item>
+        <item>najavi kasnenje</item>
+        <item>zemav patnik uspatno</item>
+        <item>stopiran sum baram zamena</item>
+        <item>ne mi dozvoluvaat da zastanam</item>
+        <item>me sopre policija</item>
+        <item>me brka policija</item>
+        <item>vo sprotiven pravec sum</item>
+    </string-array>
+    <string-array name="sostojba">
+        <item>prati ushte edna kola</item>
+        <item>prati povekje koli</item>
+        <item>logiran li sum</item>
+        <item>ne sum prva kola</item>
+        <item>najbliska slobodna stanica</item>
+        <item>imam patnici</item>
+        <item>povratna li e vozhnjata</item>
+        <item>imam zakazhana vozhnja</item>
+        <item>zavrshuvam so smena</item>
+        <item>odam na pauza</item>
+        <item>peram kola</item>
+        <item>ne mozham</item>
+        <item>odam vo toalet</item>
+    </string-array>
+    <string-array name="interventni">
+        <item>baram govor</item>
+        <item>problem so patnik</item>
+        <item>pijani patnici</item>
+        <item>mi treba vnatreshna</item>
+        <item>mi treba smenovoditel</item>
+        <item>mi treba ratko</item>
+        <item>mi treba donka</item>
+        <item>imam napad</item>
+        <item>imam krazhba</item>
+        <item>imam soobrakjajka</item>
+        <item>povikaj policija</item>
+        <item>povikaj lupus</item>
+        <item>povikaj kolegi</item>
+        <item>mi izbegaa patnici</item>
+    </string-array>
+    <string-array name="informativni">
+        <item>imam patnik za petrovec</item>
+        <item>imam patnik za nadvor</item>
+        <item>potrebna mi e cena za patnik</item>
+        <item>do kade odat patnicite</item>
+        <item>prodolzhuvam so patnicite</item>
+        <item>nevalidna kartichka</item>
+        <item>vleguvam vo stanica</item>
+        <item>izleguvam od stanica</item>
+        <item>prva kola sum</item>
+        <item>ne sum prva kola</item>
+        <item>povreden sum</item>
+        <item>pokrivam tugj povik</item>
+        <item>nema mesto na stanica</item>
+        <item>nemozham da parkiram</item>
+        <item>odam so patnici kon....(reon)</item>
+        <item>polnam gorivo</item>
+    </string-array>
+</resources>

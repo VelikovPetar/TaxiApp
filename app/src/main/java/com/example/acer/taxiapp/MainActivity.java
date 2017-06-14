@@ -36,6 +36,7 @@ import android.widget.Toast;
 
 import com.example.acer.taxiapp.fragments.ButtonListFragment;
 import com.example.acer.taxiapp.fragments.ConfigFragment;
+import com.example.acer.taxiapp.fragments.GeneratedMessagesFragment;
 import com.example.acer.taxiapp.fragments.LoginFragment;
 import com.example.acer.taxiapp.fragments.MapFragment;
 import com.example.acer.taxiapp.fragments.MessagesFragment;
@@ -167,6 +168,13 @@ public class MainActivity extends Activity implements LocationListener,
             }
         });
 
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
+        }
+
         // Check for location permissions
 //        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
 //                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -246,8 +254,8 @@ public class MainActivity extends Activity implements LocationListener,
         final View dialogLayout = layoutInflater.inflate(R.layout.dialog_status_request, null);
         final AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogLayout)
-                .setPositiveButton("Испрати", null)
-                .setNegativeButton("Откажи", new DialogInterface.OnClickListener() {
+                .setPositiveButton(getResources().getString(R.string.send), null)
+                .setNegativeButton(getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
@@ -262,13 +270,13 @@ public class MainActivity extends Activity implements LocationListener,
                     @Override
                     public void onClick(View v) {
                         EditText editText = (EditText) dialogLayout.findViewById(R.id.edit_text_status_request);
-                        String text = editText.getText().toString();
-                        if(text.trim().equals("")) {
-                            editText.setHint("Мора да внесете текст!");
+                        String text = editText.getText().toString().trim();
+                        if(text.equals("")) {
+                            editText.setHint(getResources().getString(R.string.error_enter_text));
                             editText.setHintTextColor(Color.RED);
                             return;
                         }
-                        byte[] message = MessengerClient.getRequestStatusMessage(text.trim(), MainActivity.this);
+                        byte[] message = MessengerClient.getRequestStatusMessage(text, MainActivity.this);
 //                TCPClient tcpClient = TCPClient.getInstance(MainActivity.this);
 //                tcpClient.sendBytes(message);
                         String msg = "";
@@ -298,8 +306,8 @@ public class MainActivity extends Activity implements LocationListener,
         final View dialogLayout = layoutInflater.inflate(R.layout.dialog_register_for_region, null);
         final AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogLayout)
-                .setPositiveButton("Испрати", null)
-                .setNegativeButton("Откажи", new DialogInterface.OnClickListener() {
+                .setPositiveButton(getResources().getString(R.string.send), null)
+                .setNegativeButton(getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
@@ -314,9 +322,9 @@ public class MainActivity extends Activity implements LocationListener,
                     @Override
                     public void onClick(View v) {
                         EditText regionEditText = (EditText) dialogLayout.findViewById(R.id.edit_text_register_for_region);
-                        String regionText = regionEditText.getText().toString();
-                        if(regionText.trim().equals("")) {
-                            regionEditText.setHint("Мора да внесете регион!");
+                        String regionText = regionEditText.getText().toString().trim();
+                        if(regionText.equals("")) {
+                            regionEditText.setHint(R.string.error_enter_region);
                             regionEditText.setHintTextColor(Color.RED);
                             return;
                         }
@@ -353,6 +361,14 @@ public class MainActivity extends Activity implements LocationListener,
         FragmentTransaction fTransaction = fManager.beginTransaction();
         OffersFragment messagesFragment = new OffersFragment();
         fTransaction.replace(R.id.fragment_content_container, messagesFragment, "TAG_OFFERS_FRAGMENT");
+        fTransaction.commit();
+    }
+
+    public void showGeneratedMessagesFragment(View view) {
+        FragmentManager fManager = getFragmentManager();
+        FragmentTransaction fTransaction = fManager.beginTransaction();
+        GeneratedMessagesFragment generatedMessagesFragment = new GeneratedMessagesFragment();
+        fTransaction.replace(R.id.fragment_content_container, generatedMessagesFragment, "TAG_GENERATED_MESSAGES_FRAGMENT");
         fTransaction.commit();
     }
 
