@@ -18,6 +18,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.example.acer.taxiapp.MessageListProvider;
 import com.example.acer.taxiapp.R;
 
 import java.util.List;
@@ -141,7 +142,4 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-    public interface MessageListProvider {
-        List<String> getMessages();
-    }
 }

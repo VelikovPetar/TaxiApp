@@ -1,9 +1,12 @@
 package com.example.acer.taxiapp.fragments;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -18,9 +21,15 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.example.acer.taxiapp.MessageListProvider;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
 import com.example.acer.taxiapp.TCPClient;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 public class GeneratedMessagesFragment extends Fragment {
 
@@ -34,6 +43,43 @@ public class GeneratedMessagesFragment extends Fragment {
 
     private String[] categoriesNames;
     private String[] categoryItems;
+
+    // Reference to MainActivity for getting the list of messages
+    private MessageListProvider provider;
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        Log.e("MSG_FRAGMENT", "On Attach(context)");
+        try {
+            provider = (MessageListProvider) context;
+        } catch(ClassCastException e) {
+            e.printStackTrace();
+            Log.e("MSG_FRAGMENT", "Class Cast Exception");
+        }
+    }
+
+
+    // If the device has android version older than 6.0(Marshmallow),
+    // the method onAttach(context) doesn't get called.
+    // On devices with android version 6.0 or newer, both methods
+    // onAttach(Context) and onAttach(Activity) are called.
+    // This method performs the check so the provider doesn't get
+    // initialized twice.
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            Log.e("MSG_FRAGMENT", "On Attach(activity)");
+            try {
+                provider = (MessageListProvider) activity;
+            } catch (ClassCastException e) {
+                e.printStackTrace();
+                Log.e("MSG_FRAGMENT", "Class Cast Exception");
+            }
+        }
+    }
 
     @Nullable
     @Override
@@ -139,7 +185,8 @@ public class GeneratedMessagesFragment extends Fragment {
                             messageEditText.setHintTextColor(Color.RED);
                             return;
                         }
-                        byte[] message = MessengerClient.getGeneratedMessage((byte)'0', '7', text, getActivity());
+                        byte destination = calculateDestination();
+                        byte[] message = MessengerClient.getGeneratedMessage(destination, '7', text, getActivity());
 //                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
 //                        tcpClient.sendBytes(message);
                         String msg = "";
@@ -152,6 +199,40 @@ public class GeneratedMessagesFragment extends Fragment {
             }
         });
         dialog.show();
+    }
+
+    private byte calculateDestination() {
+        List<String> messages = provider.getMessages();
+        if(messages.size() < 1)
+            return '0';
+        String lastMessage = messages.get(0);
+        String lastMessageTime = lastMessage.substring(lastMessage.length() - 8, lastMessage.length());
+        Date date = new Date();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        String currentTime = String.format(Locale.getDefault(), "%02d:%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND));
+        int differenceInSeconds = differenceInSeconds(lastMessageTime, currentTime);
+        if(differenceInSeconds > 3 * 60)
+            return '0';
+        if(lastMessage.startsWith("Android"))
+            return '3';
+        return '0';
+    }
+
+    private int differenceInSeconds(String time1, String time2) {
+        String[] part = time1.split(":");
+        int inSeconds1 = Integer.parseInt(part[0]) * 60 * 60
+                + Integer.parseInt(part[1]) * 60
+                +Integer.parseInt(part[2]);
+        part = time2.split(":");
+        int inSeconds2 = Integer.parseInt(part[0]) * 60 * 60
+                + Integer.parseInt(part[1]) * 60
+                +Integer.parseInt(part[2]);
+        if(inSeconds2 < inSeconds1) {
+            inSeconds2 += 86400;
+        }
+        Log.e("DIALOGS", (inSeconds2-inSeconds1) +"");
+        return inSeconds2 - inSeconds1;
     }
 
     private class OnCategoryClickListener implements AdapterView.OnItemClickListener {
