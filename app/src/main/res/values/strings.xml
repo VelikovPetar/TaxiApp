@@ -13,15 +13,16 @@
     <string name="no_messages">Нема пораки!</string>
     <string name="send">Испрати</string>
     <string name="cancel">Откажи</string>
-    <string name="error_enter_text">Мора да внесете текст!</string>
-    <string name="error_enter_region">Мора да внесете регион!</string>
     <string name="already_logged_in">Веќе сте најавени.</string>
     <string name="rf_card_error">Бројот на Rf картичката мора да е со должина 4.</string>
     <string name="device_id_error">Бројот на уредот мора да е со должина 5.</string>
     <string name="configuration_success">Успешна конфигурација!</string>
     <string name="override_prev_configuration">Уредот е веќе конфигуриран. Внесување нови вредности ќе ги препокрие старите.</string>
+    <string name="minutes">Минути</string>
     <string name="enter_text">Внесете тект:</string>
     <string name="enter_region">Внесете регион:</string>
     <string name="enter_minutes">Внесете минути:</string>
-    <string name="minutes">Минути</string>
+    <string name="error_enter_text">Мора да внесете текст!</string>
+    <string name="error_enter_region">Мора да внесете регион!</string>
+    <string name="error_enter_minutes">Мора да внесете минути!</string>
 </resources>

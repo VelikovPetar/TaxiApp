@@ -192,8 +192,8 @@ public class OffersFragment extends Fragment {
             final View dialogLayout = layoutInflater.inflate(R.layout.dialog_enter_minutes, null);
             final AlertDialog dialog = new AlertDialog.Builder(getActivity())
                     .setView(dialogLayout)
-                    .setPositiveButton("Испрати", null)
-                    .setNegativeButton("Откажи", new DialogInterface.OnClickListener() {
+                    .setPositiveButton(R.string.send, null)
+                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             dialog.cancel();
@@ -210,7 +210,7 @@ public class OffersFragment extends Fragment {
                             EditText minutesEditText = (EditText) dialogLayout.findViewById(R.id.edit_text_minutes);
                             String minutesText = minutesEditText.getText().toString();
                             if(minutesText.trim().equals("")) {
-                                minutesEditText.setHint("Мора да внесете минути!");
+                                minutesEditText.setHint(R.string.error_enter_minutes);
                                 minutesEditText.setHintTextColor(Color.RED);
                                 return;
                             }

@@ -251,8 +251,8 @@ public class MainActivity extends Activity implements LocationListener,
 
     public void getInfoByRegion(View view) {
         byte[] message = MessengerClient.getInfoByRegionMessage(this);
-//        TCPClient tcpClient = TCPClient.getInstance(this);
-//        tcpClient.sendBytes(message);
+        TCPClient tcpClient = TCPClient.getInstance(this);
+        tcpClient.sendBytes(message);
         String msg = "";
         for(byte b : message)
             msg += (char) b;
@@ -811,7 +811,9 @@ public class MainActivity extends Activity implements LocationListener,
             FragmentManager fManager = getFragmentManager();
             fManager.popBackStackImmediate();
             FragmentTransaction fTransaction = fManager.beginTransaction();
-            fTransaction.replace(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
+            LoginFragment loginFragment = new LoginFragment();
+            loginFragment.initLocation(lastLocation);
+            fTransaction.replace(R.id.fragment_content_container, loginFragment, "TAG_LOGIN_FRAGMENT");
             fTransaction.commit();
 
             // Stop the thread that send periodical updates

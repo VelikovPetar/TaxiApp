@@ -287,10 +287,14 @@ public class TCPClient implements Runnable {
                                 if(bytes.size() > 0) {
                                     parser.parse(listToArray(bytes));
                                     bytes = new ArrayList<>();
+
+                                    Log.e(DEBUG_TAG, message);
+                                    message = "";
                                 }
                             }
                         }
                         bytes.add(buffer[i]);
+                        message += (char) buffer[i];
                     }
                     // Parse the received message
                     parser.parse(listToArray(bytes));

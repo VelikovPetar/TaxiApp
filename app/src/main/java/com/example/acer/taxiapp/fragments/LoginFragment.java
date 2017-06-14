@@ -51,8 +51,8 @@ public class LoginFragment extends Fragment {
         public void onReceive(Context context, Intent intent) {
             Log.e("LOGIN", "RECEVED");
             if(Utils.hasInternetConnection(getActivity()) &&
-                    Utils.isLocationEnabled(getActivity())
-                    ) {
+                    Utils.isLocationEnabled(getActivity()) &&
+                    location != null) {
                 enableViews();
             } else {
                 disableViews();
@@ -80,7 +80,7 @@ public class LoginFragment extends Fragment {
                     if(driverID != null && driverID.equals(loginEditText.getText().toString().trim())) {
                         View view = getActivity().getCurrentFocus();
                         Utils.hideKeyboard(view);
-                        errorTextView.setText(getString(R.string.login_error));
+                        errorTextView.setText(getString(R.string.login_error1));
                         errorTextView.setVisibility(View.INVISIBLE);
 //                        callbacks.onSuccessfulLogin();
                         TCPClient tcpClient = TCPClient.getInstance(getActivity());
@@ -123,7 +123,8 @@ public class LoginFragment extends Fragment {
 
     public void initLocation(Location location) {
         this.location = location;
-        setup();
+        if(isResumed())
+            setup();
     }
 
     private void setup() {
