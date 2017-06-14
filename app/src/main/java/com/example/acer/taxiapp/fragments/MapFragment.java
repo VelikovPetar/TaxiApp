@@ -62,7 +62,7 @@ public class MapFragment extends Fragment {
                 googleMap = _googleMap;
 
                 if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    googleMap.setMyLocationEnabled(true);
+//                    googleMap.setMyLocationEnabled(true);
 //                    googleMap.addMarker(new MarkerOptions().position(new LatLng(42, 21)).title("Test Location"));
 //                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(new LatLng(42, 21)).zoom(12).build()));
 //                } else {
@@ -109,6 +109,10 @@ public class MapFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         Log.e("C", "On destroy");
+    }
+
+    public void initLocation(float lat, float lng) {
+        currentLatLng = new LatLng(lat, lng);
     }
 
     public void updateLocation(float lat, float lng) {

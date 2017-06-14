@@ -39,6 +39,9 @@ public class Parser {
     public static final String OFFER_SOURCE = "offer_source_extra";
     public static final String TEXT_MESSAGE = "text_message_extra";
 
+    // Name for driver login status broadcasts
+    public static final String LOGIN_STATUS = "login_status";
+
     private Context context;
     private String deviceId;
 
@@ -139,9 +142,11 @@ public class Parser {
             byte[] driverNameBytes = Arrays.copyOfRange(message, 16, 12 + lengthOfMessage - 1);
             String driverName = bytesToString(driverNameBytes);
             broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue(driverName, Color.GREEN));
+            broadcastLoginAction(true);
         // Check if it is confirmation of successful logout - SPECIAL CASE TODO Mozhebi poinaku kje se spravuvame
         } else if(message[13] == '0' && message[14] == '0' && message[15] == '0') {
             broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue("Нема најавен возач", Color.YELLOW));
+            broadcastLoginAction(false);
         } else {
             // Regular popup message
             byte[] popupMessageTextBytes = Arrays.copyOfRange(message, 13, 12 + lengthOfMessage - 1);
@@ -154,7 +159,8 @@ public class Parser {
             Log.e(DEBUG_TAG, popupMessageText);
             if(popupMessageText.contains("(Ne igraj so kartickata !)")) {
                 broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS,
-                        new StatusBarFragment.DriverStatusValue(popupMessageText.replace("(Ne igraj so kartickata !)", ""), Color.GREEN));
+                        new StatusBarFragment.DriverStatusValue(popupMessageText.replace("(Ne igraj so kartickata !)", "").trim(), Color.GREEN));
+                broadcastLoginAction(true);
             }
 
             // Append time to the message text
@@ -166,8 +172,6 @@ public class Parser {
             byte source = message[12 + lengthOfMessage - 1];
             switch(source) {
                 case '4': // System
-                    // Don't display
-                    // TODO Kako da go prikazheme?
                     Log.e(DEBUG_TAG, "System message");
                     popupMessageText = "Систем: " + popupMessageText + timeStamp;
                     broadcastMessage(BroadcastActions.ACTION_POPUP_MESSAGE, popupMessageText);
@@ -346,6 +350,13 @@ public class Parser {
         }
         byte[] deviceIdBytes = Arrays.copyOfRange(message, 2, 7);
         return deviceId.equals(bytesToString(deviceIdBytes));
+    }
+
+    private void broadcastLoginAction(boolean loggedIn) {
+        Intent intent = new Intent();
+        intent.setAction(BroadcastActions.ACTION_DRIVER_LOGIN_STATUS);
+        intent.putExtra(LOGIN_STATUS, loggedIn);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
     private void broadcastStatusUpdate(String action, StatusBarFragment.StatusUpdate statusUpdate) {

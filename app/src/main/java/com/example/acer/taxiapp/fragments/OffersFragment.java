@@ -170,7 +170,7 @@ public class OffersFragment extends Fragment {
                 // If the offer is cancelled from the server, display it with different color and
                 // disable the confirm button
                 if(shortOffer.isCanceled()) {
-                    view.setBackgroundColor(Color.GRAY);
+                    view.setBackgroundColor(Color.DKGRAY);
                     confirmButton.setEnabled(false);
                 } else {
                     view.setBackgroundColor(Color.TRANSPARENT);

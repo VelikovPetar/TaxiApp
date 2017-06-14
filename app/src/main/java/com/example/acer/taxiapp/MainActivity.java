@@ -48,14 +48,12 @@ import com.example.acer.taxiapp.services.TCPClientService;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends Activity implements LocationListener,
         MessageListProvider,
         OffersFragment.ShortOffersListProvider,
-        LoginFragment.LoginCallbacks {
-
+        LoginCallbacks {
 
     // Constants
     public static final String PREFERENCES = "my_preferences";
@@ -70,6 +68,9 @@ public class MainActivity extends Activity implements LocationListener,
     private LocationManager locationManager;
     // Last known location
     private Location lastLocation;
+    // Was received location update for first time
+    // Prevents sending messages without ever having read location
+    private boolean hasInitialLocation = false;
 
     boolean isMapVisible;
 
@@ -93,41 +94,6 @@ public class MainActivity extends Activity implements LocationListener,
             tcpClientService = null;
         }
     };
-//    private boolean isBound = false;
-
-    // Communicating with the TcpClientIntentService
-//    private TCPClientIntentService tcpClientIntentService;
-//    private ServiceConnection serviceConnection = new ServiceConnection() {
-//        @Override
-//        public void onServiceConnected(ComponentName name, IBinder service) {
-//            tcpClientIntentService = ((TCPClientIntentService.TCPServiceBinder) service).getService();
-//        }
-//
-//        @Override
-//        public void onServiceDisconnected(ComponentName name) {
-//            tcpClientIntentService = null;
-//        }
-//    };
-//    private boolean isBound = false;
-//
-//    private void doBind() {
-//        if(!isBound) {
-//            bindService(new Intent(MainActivity.this, TCPClientIntentService.class), serviceConnection, BIND_AUTO_CREATE);
-//            isBound = true;
-//        }
-//    }
-
-//    private void doUnbind() {
-//        if(isBound) {
-//            unbindService(serviceConnection);
-//            isBound = false;
-//        }
-//    }
-//
-//    NetworkChangeReceiver receiver;
-
-//    private Location gpsLocation;
-//    private Location networkLocation;
 
     // Handler for delayed actions
     private Handler handler;
@@ -152,7 +118,6 @@ public class MainActivity extends Activity implements LocationListener,
             fTransaction.commit();
         }
 
-
         // TODO Naming
         ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
         configButton.setOnClickListener(new View.OnClickListener() {
@@ -168,10 +133,8 @@ public class MainActivity extends Activity implements LocationListener,
             }
         });
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-        } else {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
         }
 
@@ -185,11 +148,8 @@ public class MainActivity extends Activity implements LocationListener,
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         // bind to the Tcp client service
-        Log.e(DEBUG_TAG, "BINDING");
         Intent intent = new Intent(this, TCPClientService.class);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-
-        Log.e("LIFECYCLE", "ON CREATE");
 
         // Init handler
         handler = new Handler();
@@ -200,7 +160,7 @@ public class MainActivity extends Activity implements LocationListener,
 
     public void showLoginFragment(View v) {
         if(isLoggedIn) {
-            Toast.makeText(this, "Веќе сте најавени.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.already_logged_in, Toast.LENGTH_LONG).show();
             return;
         }
         FragmentManager fManager = getFragmentManager();
@@ -223,7 +183,6 @@ public class MainActivity extends Activity implements LocationListener,
         if (lastLocation != null) {
             byte[] message = MessengerClient.getLoginMessage(lastLocation, this);
             tcpClientService.sendBytes(message);
-            isLoggedIn = true;
         }
     }
 
@@ -231,7 +190,6 @@ public class MainActivity extends Activity implements LocationListener,
         if (lastLocation != null) {
             byte[] message = MessengerClient.getLogoutMessage(lastLocation, this);
             tcpClientService.sendBytes(message);
-            isLoggedIn = false;
         }
     }
 
@@ -272,7 +230,7 @@ public class MainActivity extends Activity implements LocationListener,
                         EditText editText = (EditText) dialogLayout.findViewById(R.id.edit_text_status_request);
                         String text = editText.getText().toString().trim();
                         if(text.equals("")) {
-                            editText.setHint(getResources().getString(R.string.error_enter_text));
+                            editText.setHint(R.string.error_enter_text);
                             editText.setHintTextColor(Color.RED);
                             return;
                         }
@@ -306,8 +264,8 @@ public class MainActivity extends Activity implements LocationListener,
         final View dialogLayout = layoutInflater.inflate(R.layout.dialog_register_for_region, null);
         final AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogLayout)
-                .setPositiveButton(getResources().getString(R.string.send), null)
-                .setNegativeButton(getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.send, null)
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
@@ -353,6 +311,7 @@ public class MainActivity extends Activity implements LocationListener,
         FragmentTransaction fTransaction = fManager.beginTransaction();
         MessagesFragment messagesFragment = new MessagesFragment();
         fTransaction.replace(R.id.fragment_content_container, messagesFragment, "TAG_POPUP_MESSAGES_FRAGMENT");
+        fTransaction.addToBackStack(null);
         fTransaction.commit();
     }
 
@@ -361,6 +320,7 @@ public class MainActivity extends Activity implements LocationListener,
         FragmentTransaction fTransaction = fManager.beginTransaction();
         OffersFragment messagesFragment = new OffersFragment();
         fTransaction.replace(R.id.fragment_content_container, messagesFragment, "TAG_OFFERS_FRAGMENT");
+        fTransaction.addToBackStack(null);
         fTransaction.commit();
     }
 
@@ -369,14 +329,8 @@ public class MainActivity extends Activity implements LocationListener,
         FragmentTransaction fTransaction = fManager.beginTransaction();
         GeneratedMessagesFragment generatedMessagesFragment = new GeneratedMessagesFragment();
         fTransaction.replace(R.id.fragment_content_container, generatedMessagesFragment, "TAG_GENERATED_MESSAGES_FRAGMENT");
+        fTransaction.addToBackStack(null);
         fTransaction.commit();
-    }
-
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Log.e("LIFECYCLE", "ON START");
     }
 
     @Override
@@ -384,6 +338,10 @@ public class MainActivity extends Activity implements LocationListener,
         super.onResume();
         // TODO Konsultiraj se shto da pravi aplikacijata ako e vo pozadina!
 
+        // register receiver for driver login status
+        IntentFilter intentFilter4 = new IntentFilter();
+        intentFilter4.addAction(BroadcastActions.ACTION_DRIVER_LOGIN_STATUS);
+        LocalBroadcastManager.getInstance(this).registerReceiver(loginStatusReceiver, intentFilter4);
         // Register receiver for status bar updates
         IntentFilter intentFilter3 = new IntentFilter();
         intentFilter3.addAction(BroadcastActions.ACTION_DRIVER_STATUS);
@@ -391,7 +349,7 @@ public class MainActivity extends Activity implements LocationListener,
         intentFilter3.addAction(BroadcastActions.ACTION_LOCATION_STATUS);
         intentFilter3.addAction(BroadcastActions.ACTION_CONNECTION_STATUS);
         intentFilter3.addAction(BroadcastActions.ACTION_SERVER_STATUS);
-        LocalBroadcastManager.getInstance(this).registerReceiver(statusBarUpdatesBroadcastReceiver, intentFilter3);
+        LocalBroadcastManager.getInstance(this).registerReceiver(statusBarUpdatesReceiver, intentFilter3);
 
         // Register receiver for popup messages
         IntentFilter intentFilter = new IntentFilter();
@@ -417,6 +375,14 @@ public class MainActivity extends Activity implements LocationListener,
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 0, this);
             lastLocation = getLastKnownLocation();
             updateStatusBarLocation();
+
+            if(!hasInitialLocation) {
+                LoginFragment loginFragment = (LoginFragment) getFragmentManager().findFragmentByTag("TAG_LOGIN_FRAGMENT");
+                if (loginFragment != null && lastLocation != null) {
+                    loginFragment.initLocation(lastLocation);
+                    hasInitialLocation = true;
+                }
+            }
             // Start the thread that sends periodical location updates
             if (isLoggedIn && !locationUpdater.isRunning()) {
                 locationUpdater.setLastLocation(lastLocation);
@@ -427,21 +393,20 @@ public class MainActivity extends Activity implements LocationListener,
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
         }
 
-        Log.e("LIFECYCLE", "ON RESUME");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        // Unregister network status receiver
-//        unregisterReceiver(receiver);
-
         // Stop the thread sending periodical location updates
         if (isLoggedIn && locationUpdater.isRunning()) {
             locationUpdater.stop();
         }
         locationManager.removeUpdates(this);
+
+        // Unregister login status receiver
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(loginStatusReceiver);
 
         // Unregister popup message receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(popupMessageReceiver);
@@ -453,18 +418,8 @@ public class MainActivity extends Activity implements LocationListener,
         LocalBroadcastManager.getInstance(this).unregisterReceiver(vehicleStateReceiver);
 
         // Unregister status bar updates receiver
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(statusBarUpdatesBroadcastReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(statusBarUpdatesReceiver);
 
-        Log.e("LIFECYCLE", "ON PAUSE");
-    }
-
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.e("LIFECYCLE", "ON STOP");
-
-//        LocalBroadcastManager.getInstance(this).unregisterReceiver(statusBarUpdatesBroadcastReceiver);
     }
 
     @Override
@@ -476,7 +431,6 @@ public class MainActivity extends Activity implements LocationListener,
             isLoggedIn = false;
         }
         unbindService(serviceConnection);
-        Log.e("LIFECYCLE", "ON DESTROY");
     }
 
     @Override
@@ -502,8 +456,15 @@ public class MainActivity extends Activity implements LocationListener,
 
     @Override
     public void onLocationChanged(Location location) {
+        // Initialize the location for the login message
+//        if(!hasInitialLocation) {
+            LoginFragment loginFragment = (LoginFragment) getFragmentManager().findFragmentByTag("TAG_LOGIN_FRAGMENT");
+            if(loginFragment != null && loginFragment.isVisible()) {
+                loginFragment.initLocation(location);
+                hasInitialLocation = true;
+            }
+//        }
         this.lastLocation = location;
-        Toast.makeText(this, lastLocation.getLatitude() + " " + lastLocation.getLongitude() + " from " + lastLocation.getProvider(), Toast.LENGTH_SHORT).show();
         // TODO Replace with boolean isMapVisible
         FragmentManager fManager = getFragmentManager();
         MapFragment mapFragment = (MapFragment) fManager.findFragmentByTag("TAG_MAP_FRAGMENT");
@@ -517,7 +478,6 @@ public class MainActivity extends Activity implements LocationListener,
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
-        Log.e("LOCATION", "STATUS of " + provider + " CHANGED TO : " + status);
         switch (provider) {
             case LocationManager.GPS_PROVIDER:
                 switch (status) {
@@ -623,45 +583,8 @@ public class MainActivity extends Activity implements LocationListener,
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
-    // Listener for changes in network connection
-//    private class NetworkChangeReceiver extends BroadcastReceiver {
-//
-//        @Override
-//        public void onReceive(Context context, Intent _intent) {
-//            Log.e(DEBUG_TAG, "IN LOCAL ON RECEIVED");
-//            if(Utils.hasInternetConnection(context)) {
-//                Intent intent = new Intent(context, TCPClientIntentService.class);
-//                startService(intent);
-//                doBind();
-//                Log.e(DEBUG_TAG, "Started service");
-//                Intent broadcast = new Intent();
-//                broadcast.setAction(BroadcastActions.ACTION_CONNECTION_STATUS);
-//                broadcast.putExtra(TCPClientIntentService.VALUE, "Connected");
-//                broadcast.putExtra(TCPClientIntentService.COLOR, Color.GREEN);
-//                LocalBroadcastManager.getInstance(context).sendBroadcast(broadcast);
-//                Log.e(DEBUG_TAG, "Broadcast sent");
-//
-//            } else {
-//                doUnbind();
-//                Intent intent = new Intent(context, TCPClientIntentService.class);
-//                stopService(intent);
-//                Log.e(DEBUG_TAG, "Stopped service");
-//                Intent broadcast = new Intent();
-//                broadcast.setAction(BroadcastActions.ACTION_CONNECTION_STATUS);
-//                broadcast.putExtra(TCPClientIntentService.VALUE, "No connection");
-//                broadcast.putExtra(TCPClientIntentService.COLOR, Color.RED);
-//                LocalBroadcastManager.getInstance(context).sendBroadcast(broadcast);
-//                Log.e(DEBUG_TAG, "Sent broadcast");
-//            }
-//        }
-//    }
-
-
     // List that keeps most recent popup messages
     private FixedSizeList<String> popupMessages = new FixedSizeList<>(10);
-
-    // Receiver instance
-    private PopupMessageReceiver popupMessageReceiver = new PopupMessageReceiver();
 
     @Override
     public List<String> getMessages() {
@@ -669,8 +592,7 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
     // Broadcast receiver for incoming popup messages
-    private class PopupMessageReceiver extends BroadcastReceiver {
-
+    private BroadcastReceiver popupMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -694,7 +616,7 @@ public class MainActivity extends Activity implements LocationListener,
                 }
             }
         }
-    }
+    };
 
 
 
@@ -814,12 +736,9 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
 
-    // Receiver instance
-    private VehicleStateReceiver vehicleStateReceiver = new VehicleStateReceiver();
-
     // Broadcast receiver for vehicle state updates
     // Used for generating the correct message for periodical location updates
-    private class VehicleStateReceiver extends BroadcastReceiver {
+    private BroadcastReceiver vehicleStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -831,16 +750,10 @@ public class MainActivity extends Activity implements LocationListener,
                 }
             }
         }
-    }
-
-
-
-    // Receiver instance
-    private StatusBarUpdatesBroadcastReceiver statusBarUpdatesBroadcastReceiver = new StatusBarUpdatesBroadcastReceiver();
+    };
 
     // Broadcast receiver for status bar updates
-    private class StatusBarUpdatesBroadcastReceiver extends BroadcastReceiver {
-
+    private BroadcastReceiver statusBarUpdatesReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -849,27 +762,64 @@ public class MainActivity extends Activity implements LocationListener,
             StatusBarFragment statusBarFragment = (StatusBarFragment) getFragmentManager().findFragmentByTag("TAG_STATUS_BAR_FRAGMENT");
             statusBarFragment.update(action, value, color);
         }
-    }
+    };
 
+    // Broadcast receiver for login status updates (Successfully logged in/Successfully logged out)
+    private BroadcastReceiver loginStatusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if(action.equals(BroadcastActions.ACTION_DRIVER_LOGIN_STATUS)) {
+                boolean login = intent.getBooleanExtra(Parser.LOGIN_STATUS, false);
+                Log.e("LOGGING", "Loged " + login);
+                if(login) {
+                    onSuccessfulLogin();
+                } else {
+                    onSuccessfulLogout();
+                }
+            }
+        }
+    };
 
     @Override
     public void onSuccessfulLogin() {
-        isLoggedIn = true;
-        isMapVisible = true;
-        FragmentManager fManager = getFragmentManager();
-        fManager.popBackStackImmediate();
-        FragmentTransaction fTransaction = fManager.beginTransaction();
-        fTransaction.replace(R.id.fragment_content_container, new MapFragment(), "TAG_MAP_FRAGMENT");
-        fTransaction.commit();
-        TCPClient tcpClient = TCPClient.getInstance(this);
-        tcpClient.sendBytes(MessengerClient.getLoginMessage(lastLocation, this));
+        if(!isLoggedIn) {
+            isLoggedIn = true;
+            isMapVisible = true;
+            FragmentManager fManager = getFragmentManager();
+            FragmentTransaction fTransaction = fManager.beginTransaction();
+            MapFragment mapFragment = new MapFragment();
+            mapFragment.initLocation((float) lastLocation.getLatitude(), (float) lastLocation.getLongitude());
+            fTransaction.replace(R.id.fragment_content_container, mapFragment, "TAG_MAP_FRAGMENT");
+            fTransaction.commit();
 
-        // Start the thread that sends periodical location updates
-        locationUpdater.setLastLocation(lastLocation);
-        locationUpdater.start();
+            // Start the thread that sends periodical location updates
+            locationUpdater.setLastLocation(lastLocation);
+            locationUpdater.start();
 
-        // Disable the config button
-        ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
-        configButton.setEnabled(false);
+            // Disable the config button
+            ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
+            configButton.setEnabled(false);
+        }
+    }
+
+    @Override
+    public void onSuccessfulLogout() {
+        if(isLoggedIn) {
+            isLoggedIn = false;
+            isMapVisible = false;
+            FragmentManager fManager = getFragmentManager();
+            fManager.popBackStackImmediate();
+            FragmentTransaction fTransaction = fManager.beginTransaction();
+            fTransaction.replace(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
+            fTransaction.commit();
+
+            // Stop the thread that send periodical updates
+            locationUpdater.stop();
+
+            // Enable the config button
+            ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
+            configButton.setEnabled(false);
+        }
     }
 }

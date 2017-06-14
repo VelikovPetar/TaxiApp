@@ -182,6 +182,9 @@ public class MessengerClient {
                 turnOnPauseBit(message);
                 turnOnTaximeterBit(message);
                 break;
+            case ZAFATEN:
+                turnOffPauseBit(message);
+                turnOffTaximeterBit(message);
             // TODO Other states
             default:
                 turnOffPauseBit(message);

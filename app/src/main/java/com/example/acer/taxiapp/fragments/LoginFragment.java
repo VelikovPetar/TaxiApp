@@ -12,6 +12,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -29,6 +30,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.example.acer.taxiapp.MainActivity;
+import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
 import com.example.acer.taxiapp.TCPClient;
 import com.example.acer.taxiapp.Utils;
@@ -40,8 +42,9 @@ public class LoginFragment extends Fragment {
     private TextView noServicesTextView;
     private Button loginButton;
 
+    private Location location;
+
     private boolean isConfig = true;
-    private LoginCallbacks callbacks;
 
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
@@ -57,38 +60,6 @@ public class LoginFragment extends Fragment {
             errorTextView.setVisibility(View.INVISIBLE);
         }
     };
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        try {
-            callbacks = (LoginCallbacks) context;
-        } catch (ClassCastException e) {
-            e.printStackTrace();
-            Log.e("LOGIN_FRAGMENT", "Class Cast Exception");
-        }
-    }
-
-    // If the device has android version older than 6.0(Marshmallow),
-    // the method onAttach(context) doesn't get called.
-    // On devices with android version 6.0 or newer, both methods
-    // onAttach(Context) and onAttach(Activity) are called.
-    // This method performs the check so the provider doesn't get
-    // initialized twice.
-    @SuppressWarnings("deprecation")
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            Log.e("LOGIN_FRAGMENT", "On Attach(activity)");
-            try {
-                callbacks = (LoginCallbacks) activity;
-            } catch (ClassCastException e) {
-                e.printStackTrace();
-                Log.e("LOGIN_FRAGMENT", "Class Cast Exception");
-            }
-        }
-    }
 
     @Nullable
     @Override
@@ -111,7 +82,9 @@ public class LoginFragment extends Fragment {
                         Utils.hideKeyboard(view);
                         errorTextView.setText(getString(R.string.login_error));
                         errorTextView.setVisibility(View.INVISIBLE);
-                        callbacks.onSuccessfulLogin();
+//                        callbacks.onSuccessfulLogin();
+                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
+                        tcpClient.sendBytes(MessengerClient.getLoginMessage(location, getActivity()));
                     } else {
                         errorTextView.setVisibility(View.VISIBLE);
                     }
@@ -148,6 +121,11 @@ public class LoginFragment extends Fragment {
         super.onStop();
     }
 
+    public void initLocation(Location location) {
+        this.location = location;
+        setup();
+    }
+
     private void setup() {
         disableViews();
         SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
@@ -158,14 +136,12 @@ public class LoginFragment extends Fragment {
             return;
         }
         if(!Utils.isLocationEnabled(getActivity())) {
-//            promptLocationServices();
-            Log.e("LOGIN", 1+"");
             return;
         }
         if(!Utils.hasInternetConnection(getActivity())) {
-//            promptInternetConnection();
-            Log.e("LOGIN", 2+"");
-
+            return;
+        }
+        if(location == null) {
             return;
         }
         enableViews();
@@ -233,7 +209,4 @@ public class LoginFragment extends Fragment {
         noServicesTextView.setVisibility(View.VISIBLE);
     }
 
-    public interface LoginCallbacks {
-        void onSuccessfulLogin();
-    }
 }

@@ -50,12 +50,10 @@ public class GeneratedMessagesFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        Log.e("MSG_FRAGMENT", "On Attach(context)");
         try {
             provider = (MessageListProvider) context;
         } catch(ClassCastException e) {
             e.printStackTrace();
-            Log.e("MSG_FRAGMENT", "Class Cast Exception");
         }
     }
 
@@ -71,12 +69,10 @@ public class GeneratedMessagesFragment extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            Log.e("MSG_FRAGMENT", "On Attach(activity)");
             try {
                 provider = (MessageListProvider) activity;
             } catch (ClassCastException e) {
                 e.printStackTrace();
-                Log.e("MSG_FRAGMENT", "Class Cast Exception");
             }
         }
     }
@@ -159,6 +155,7 @@ public class GeneratedMessagesFragment extends Fragment {
     }
 
     private void showEnterMessageDialog() {
+        final byte destination = calculateDestination();
         LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
         final View dialogLayout = layoutInflater.inflate(R.layout.dialog_enter_generated_message, null);
         final AlertDialog dialog = new AlertDialog.Builder(getActivity())
@@ -181,11 +178,10 @@ public class GeneratedMessagesFragment extends Fragment {
                         EditText messageEditText = (EditText) dialogLayout.findViewById(R.id.edit_text_generated_message);
                         String text = messageEditText.getText().toString().trim();
                         if(text.equals("")) {
-                            messageEditText.setHint("Мора да внесете текст!");
+                            messageEditText.setHint(R.string.error_enter_text);
                             messageEditText.setHintTextColor(Color.RED);
                             return;
                         }
-                        byte destination = calculateDestination();
                         byte[] message = MessengerClient.getGeneratedMessage(destination, '7', text, getActivity());
 //                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
 //                        tcpClient.sendBytes(message);
@@ -198,6 +194,9 @@ public class GeneratedMessagesFragment extends Fragment {
                 });
             }
         });
+        TextView msgDestination = (TextView) dialogLayout.findViewById(R.id.text_view_message_destination);
+        msgDestination.setText(destination == '0' ? "До: Диспечер" : "До: Android");
+
         dialog.show();
     }
 

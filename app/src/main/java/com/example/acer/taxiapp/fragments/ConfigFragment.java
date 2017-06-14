@@ -38,11 +38,11 @@ public class ConfigFragment extends Fragment {
                 boolean shouldCommit = true;
                 String errorMessage = "";
                 if(driverNumberEditText.getText().toString().trim().length() != 4) {
-                    errorMessage += "Бројот на Rf картичката мора да е со должина 4.";
+                    errorMessage += getString(R.string.rf_card_error);
                     shouldCommit = false;
                 }
                 if(deviceNumberEditText.getText().toString().trim().length() != 5) {
-                    errorMessage += "Бројот на уредот мора да е со должина 5.";
+                    errorMessage += getString(R.string.device_id_error);
                     shouldCommit = false;
                 }
                 if(!shouldCommit) {
@@ -54,7 +54,7 @@ public class ConfigFragment extends Fragment {
                     editor.putString(MainActivity.RF_CARD_ID, driverNumberEditText.getText().toString().trim());
                     editor.putString(MainActivity.DEVICE_ID, deviceNumberEditText.getText().toString().trim());
                     editor.apply();
-                    errorTextView.setText("Успешна конфигурација!");
+                    errorTextView.setText(R.string.configuration_success);
                     errorTextView.setTextColor(Color.GREEN);
 
                     // Hide keyboard
@@ -71,7 +71,7 @@ public class ConfigFragment extends Fragment {
         super.onResume();
         SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         if(preferences.contains(MainActivity.RF_CARD_ID) && preferences.contains(MainActivity.DEVICE_ID)) {
-            errorTextView.setText("Уредот е веќе конфигуриран. Внесување нови вредности ќе ги препокрие старите.");
+            errorTextView.setText(R.string.override_prev_configuration);
             errorTextView.setTextColor(Color.YELLOW);
         }
     }
