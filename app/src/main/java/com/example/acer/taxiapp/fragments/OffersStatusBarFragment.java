@@ -138,6 +138,17 @@ public class OffersStatusBarFragment extends Fragment {
         timerTextView.setVisibility(View.INVISIBLE);
     }
 
+    public void cancelTimers() {
+        if(timerMoveToClient != null && timerMoveToClient.isRunning()) {
+            timerMoveToClient.cancel();
+        }
+        if(timerWaitingClient != null && timerWaitingClient.isRunning()) {
+            timerWaitingClient.cancel();
+        }
+        timerTextView.setText("");
+        timerTextView.setVisibility(View.INVISIBLE);
+    }
+
     private class CustomCountDownTimer extends CountDownTimer {
 
         private boolean isRunning;

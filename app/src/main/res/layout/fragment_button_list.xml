@@ -15,62 +15,57 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Send Login"
-            android:onClick="sendLoginMessage"/>
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="96dp"
-            android:text="Земав патник"
+            android:text="@string/client_taken"
             android:onClick="clientArrived"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Оставив патник"
+            android:text="@string/client_dropped_off"
             android:onClick="clientLeft"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Одјава"
+            android:text="@string/logout"
             android:onClick="sendLogoutMessage"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Пауза"
+            android:text="@string/pause"
             android:onClick="sendPauseStartMessage"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Крај на пауза"
+            android:text="@string/pause_end"
             android:onClick="sendPauseStopMessage"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Пораки"
+            android:text="@string/messages"
             android:onClick="showMessagesFragment"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Најави"
+            android:text="@string/offers"
             android:onClick="showOffersFragment"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Пријава за регион"
+            android:text="@string/register_for_region"
             android:onClick="registerForRegion"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Барање статус"
+            android:text="@string/request_status"
             android:onClick="requestStatus"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Инфо по региони"
+            android:text="@string/info_by_region"
             android:onClick="getInfoByRegion"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Генерирани пораки"
+            android:text="@string/generated_messages"
             android:onClick="showGeneratedMessagesFragment"/>
 
     </LinearLayout>

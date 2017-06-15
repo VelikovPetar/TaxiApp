@@ -134,7 +134,11 @@ public class MessagesFragment extends Fragment {
 
             String message = getItem(position);
             if(message != null) {
-                messageTextView.setText(String.format("%s...", message.substring(0, message.length() - 8).substring(0, 30)));
+                if(message.length() > 38) {
+                    messageTextView.setText(String.format("%s...", message.substring(0, message.length() - 8).substring(0, 30)));
+                } else {
+                    messageTextView.setText(String.format("%s", message.substring(0, message.length() - 8)));
+                }
                 timeTextView.setText(message.substring(message.length() - 8, message.length()));
             }
             return view;

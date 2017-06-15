@@ -779,12 +779,14 @@ public class MainActivity extends Activity implements LocationListener,
                 if(stateId != -1 && timeInState != 0) {
                     VehicleState state = VehicleState.getByValue(stateId);
                     if(state == VehicleState.ODI_KON_KLIENT || state == VehicleState.MOVE_TO_CLIENT_NEW_PHONE_CALL) {
-                        OffersStatusBarFragment offersStatusBarFragment = (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+                        OffersStatusBarFragment offersStatusBarFragment =
+                                (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
                         if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
                             offersStatusBarFragment.startCountdownMoveToClient(timeInState);
                         }
                     } else if(state == VehicleState.ZONA_NA_KLIENT || state == VehicleState.WAIT_CLIENT_NEW_PHONE_CALL) {
-                        OffersStatusBarFragment offersStatusBarFragment = (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+                        OffersStatusBarFragment offersStatusBarFragment =
+                                (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
                         if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
                             offersStatusBarFragment.startCountdownWaitingClient(timeInState);
                         }
@@ -864,6 +866,18 @@ public class MainActivity extends Activity implements LocationListener,
             // Enable the config button
             ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
             configButton.setEnabled(true);
+
+            // Clear messages, offers and timers
+            shortOffers.clear();
+            popupMessages.clear();
+            longOffer = null;
+            updateFragments(null);
+            OffersStatusBarFragment offersStatusBarFragment =
+                    (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+            if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+                offersStatusBarFragment.cancelTimers();
+                offersStatusBarFragment.setMessagesCount(popupMessages.size());
+            }
         }
     }
 }

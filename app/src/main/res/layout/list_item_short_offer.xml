@@ -22,7 +22,8 @@
         android:id="@+id/button_short_offer_confirm"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Потврди"
-        android:textColor="#00FF00"/>
+        android:text="@string/confirm"
+        android:textColor="#00FF00"
+        android:padding="8dp"/>
 
 </LinearLayout>

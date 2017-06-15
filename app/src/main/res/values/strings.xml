@@ -8,7 +8,7 @@
     <string name="login_error1">Внесовте погрешен код! Обидете се повторно!</string>
     <string name="login_error2">Мора да има интернет конекција и вклучени локациски сервиси за да се најавите!</string>
     <string name="gps_status">GPS</string>
-    <string name="config_confirm">Потврди</string>
+    <string name="confirm">Потврди</string>
     <string name="vehicle_status">Статус на возило:</string>
     <string name="no_offers">Нема најави!</string>
     <string name="no_messages">Нема пораки!</string>
@@ -43,4 +43,19 @@
     <string name="dest_dispatcher">До: Диспечер</string>
     <string name="dest_android">До: Android</string>
     <string name="message">Порака:</string>
+    <string name="client_taken">Земав патник</string>
+    <string name="client_dropped_off">Оставив патник</string>
+    <string name="logout">Одјава</string>
+    <string name="pause">Пауза</string>
+    <string name="pause_end">Крај на пауза</string>
+    <string name="messages">Пораки</string>
+    <string name="offers">Најави</string>
+    <string name="register_for_region">Пријава за регион</string>
+    <string name="request_status">Барање статус</string>
+    <string name="info_by_region">Инфо по региони</string>
+    <string name="generated_messages">Генерирани пораки</string>
+    <string name="setup">Подесување</string>
+    <string name="driver_number">Број на возач:</string>
+    <string name="device_id">Број на уред:</string>
+    <string name="display_on_map">Прикажи на мапа</string>
 </resources>

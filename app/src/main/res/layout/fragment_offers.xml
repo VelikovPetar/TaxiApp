@@ -35,7 +35,7 @@
             android:id="@+id/button_long_offer_confirm"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Прикажи на мапа"/>
+            android:text="@string/display_on_map"/>
     </LinearLayout>
 
 </LinearLayout>

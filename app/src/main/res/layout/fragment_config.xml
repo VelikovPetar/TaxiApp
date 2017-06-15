@@ -12,7 +12,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Подесување"
+            android:text="@string/setup"
             android:textSize="32sp"/>
         <LinearLayout
             android:layout_width="match_parent"
@@ -21,7 +21,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Број на возач:"
+                android:text="@string/driver_number"
                 android:textSize="20sp"
                 android:labelFor="@+id/edit_text_setup_driver_code"/>
             <EditText
@@ -39,7 +39,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Број на уред:"
+                android:text="@string/device_id"
                 android:textSize="20sp"
                 android:labelFor="@+id/edit_text_setup_device_code"/>
             <EditText
@@ -54,7 +54,7 @@
             android:id="@+id/button_confirm_config"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/config_confirm"/>
+            android:text="@string/confirm"/>
 
         <TextView
             android:id="@+id/text_view_error_config"
