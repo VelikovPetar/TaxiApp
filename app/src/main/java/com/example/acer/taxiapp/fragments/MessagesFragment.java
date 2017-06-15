@@ -68,22 +68,21 @@ public class MessagesFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.e("MSG_FRAGMENT", "On Create View");
         View view = inflater.inflate(R.layout.fragment_messages, container, false);
         messagesList = (ListView) view.findViewById(R.id.list_view_messages);
         messagesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setTitle("Целосна порака");
+                builder.setTitle(R.string.full_message);
                 String fullMessage = adapter.getItem(position);
                 if(fullMessage != null) {
                     fullMessage = fullMessage.substring(0, fullMessage.length() - 8);
                 } else {
-                    fullMessage = "Проблем при вчитувањето на пораката!";
+                    fullMessage = getString(R.string.error_reading_full_message);
                 }
                 builder.setMessage(fullMessage);
-                builder.setNegativeButton("Затвори", new DialogInterface.OnClickListener() {
+                builder.setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
@@ -135,7 +134,7 @@ public class MessagesFragment extends Fragment {
 
             String message = getItem(position);
             if(message != null) {
-                messageTextView.setText(message.substring(0, message.length() - 8).substring(0, 30) + "...");
+                messageTextView.setText(String.format("%s...", message.substring(0, message.length() - 8).substring(0, 30)));
                 timeTextView.setText(message.substring(message.length() - 8, message.length()));
             }
             return view;

@@ -24,7 +24,6 @@ import android.widget.TextView;
 import com.example.acer.taxiapp.MessageListProvider;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
-import com.example.acer.taxiapp.TCPClient;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -127,10 +126,9 @@ public class GeneratedMessagesFragment extends Fragment {
         final View dialogLayout = layoutInflater.inflate(R.layout.dialog_confirm_generated_message, null);
         final AlertDialog dialog = new AlertDialog.Builder(getActivity())
                 .setView(dialogLayout)
-                .setPositiveButton("Испрати", new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.send, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Log.e("DIALOGS", priority + "");
                         byte[] message = MessengerClient.getGeneratedMessage((byte)'0', Character.forDigit(priority + 1, 10), text, getActivity());
 //                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
 //                        tcpClient.sendBytes(message);
@@ -140,7 +138,7 @@ public class GeneratedMessagesFragment extends Fragment {
                         Log.e("DIALOGS", msg);
                     }
                 })
-                .setNegativeButton("Откажи", new DialogInterface.OnClickListener() {
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
@@ -148,9 +146,9 @@ public class GeneratedMessagesFragment extends Fragment {
                 })
                 .create();
         TextView msgDestination = (TextView) dialogLayout.findViewById(R.id.text_view_message_to);
-        msgDestination.setText("До: Диспечер");
+        msgDestination.setText(R.string.dest_dispatcher);
         TextView msgContent = (TextView) dialogLayout.findViewById(R.id.text_view_generated_message);
-        msgContent.setText("Порака: " + text);
+        msgContent.setText(String.format("%s%s", getString(R.string.message), text));
         dialog.show();
     }
 
@@ -160,8 +158,8 @@ public class GeneratedMessagesFragment extends Fragment {
         final View dialogLayout = layoutInflater.inflate(R.layout.dialog_enter_generated_message, null);
         final AlertDialog dialog = new AlertDialog.Builder(getActivity())
                 .setView(dialogLayout)
-                .setPositiveButton("Испрати", null)
-                .setNegativeButton("Откажи", new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.send, null)
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
@@ -195,7 +193,7 @@ public class GeneratedMessagesFragment extends Fragment {
             }
         });
         TextView msgDestination = (TextView) dialogLayout.findViewById(R.id.text_view_message_destination);
-        msgDestination.setText(destination == '0' ? "До: Диспечер" : "До: Android");
+        msgDestination.setText(destination == '0' ? getString(R.string.dest_dispatcher) : getString(R.string.dest_android));
 
         dialog.show();
     }
@@ -243,44 +241,33 @@ public class GeneratedMessagesFragment extends Fragment {
             switch (position) {
                 case 0:
                     categoryItems = getResources().getStringArray(R.array.pomosh_za_povik);
-                    messageItemsAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, categoryItems);
-                    messageItemsList.setAdapter(messageItemsAdapter);
                     break;
                 case 1:
                     categoryItems = getResources().getStringArray(R.array.servis);
-                    messageItemsAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, categoryItems);
-                    messageItemsList.setAdapter(messageItemsAdapter);
                     break;
                 case 2:
                     categoryItems = getResources().getStringArray(R.array.povik);
-                    messageItemsAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, categoryItems);
-                    messageItemsList.setAdapter(messageItemsAdapter);
                     break;
                 case 3:
                     categoryItems = getResources().getStringArray(R.array.sostojba);
-                    messageItemsAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, categoryItems);
-                    messageItemsList.setAdapter(messageItemsAdapter);
                     break;
                 case 4:
                     categoryItems = getResources().getStringArray(R.array.interventni);
-                    messageItemsAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, categoryItems);
-                    messageItemsList.setAdapter(messageItemsAdapter);
                     break;
                 case 5:
                     categoryItems = getResources().getStringArray(R.array.informativni);
-                    messageItemsAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, categoryItems);
-                    messageItemsList.setAdapter(messageItemsAdapter);
                     break;
                 case 6:
                     categoryItems = new String[0];
-                    messageItemsAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, categoryItems);
-                    messageItemsList.setAdapter(messageItemsAdapter);
                     showEnterMessageDialog();
                     break;
             }
+            messageItemsAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, categoryItems);
+            messageItemsList.setAdapter(messageItemsAdapter);
+
             if(lastCategorySelected != -1 && lastCategorySelected != position) {
                 int firstVisibleRow = messageCategoriesList.getFirstVisiblePosition();
-                int lastVisibleRow= messageCategoriesList.getLastVisiblePosition();
+                int lastVisibleRow = messageCategoriesList.getLastVisiblePosition();
 
                 if(lastCategorySelected >= firstVisibleRow && lastCategorySelected <= lastVisibleRow) {
                     int actualPosition = lastCategorySelected - firstVisibleRow;

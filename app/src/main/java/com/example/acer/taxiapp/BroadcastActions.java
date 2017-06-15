@@ -12,7 +12,7 @@ public class BroadcastActions {
     public static final String ACTION_CANCEL_SHORT_OFFER = "broadcastactions.cancelshortoffer";
     public static final String ACTION_LONG_OFFER = "broadcastactions.longoffer";
 
-    public static final String ACTION_VEHICLE_STATE_FOR_LOCATION_UPDATES = "broadcastactions.vehiclestateforlocationupdates";
+    public static final String ACTION_VEHICLE_STATE_FOR_TIMERS = "broadcastactions.vehiclestatefortimers";
 
     public static final String ACTION_DRIVER_LOGIN_STATUS = "broadcastactions.driverloginstatus";
 }

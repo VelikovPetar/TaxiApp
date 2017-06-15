@@ -27,8 +27,6 @@ import com.example.acer.taxiapp.LongOffer;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
 import com.example.acer.taxiapp.ShortOffer;
-import com.example.acer.taxiapp.TCPClient;
-import com.example.acer.taxiapp.Utils;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -105,7 +103,7 @@ public class OffersFragment extends Fragment {
         TextView offerSourceTextView = (TextView) longOfferLayout.findViewById(R.id.text_view_long_offer_source);
         TextView textMessageTextView = (TextView) longOfferLayout.findViewById(R.id.text_view_long_offer_text);
         Button confirmButton = (Button) longOfferLayout.findViewById(R.id.button_long_offer_confirm);
-        offerSourceTextView.setText(longOffer.getOfferSource() == '0' ? "Андроид:" : "Диспечер:");
+        offerSourceTextView.setText(longOffer.getOfferSource() == '0' ? getString(R.string.source_android) : getString(R.string.source_dispatcher));
         textMessageTextView.setText(longOffer.getTextMessage());
         final float latitude = longOffer.getLatitude();
         final float longitude = longOffer.getLongitude();
@@ -116,25 +114,15 @@ public class OffersFragment extends Fragment {
                 FragmentTransaction fTransaction = fManager.beginTransaction();
                 MapFragment mapFragment = (MapFragment) fManager.findFragmentByTag("TAG_MAP_FRAGMENT");
                 mapFragment.setCustomerLatLng(latitude, longitude);
-//                if(mapFragment.isAdded()) {
-//                    fTransaction.show(mapFragment);
-//                } else {
-//                    fTransaction.replace(R.id.fragment_content_container, mapFragment, "TAG_MAP_FRAGMENT");
-//                }
 
-                // Popni ja poslednata transakcija od stackot, bidejki pod nea se naogja mapata
-                // Nikogash nema da ima povekje od edna transakcija na stackot, a najdole sekad e mapata
-                fManager.popBackStack();
+                // Mapata e sekogash na dnoto na stackot
+                // TODO Najdi podobro reshenie!
+                while(fManager.getBackStackEntryCount() > 0)
+                    fManager.popBackStackImmediate();
                 fTransaction.commit();
             }
         });
         longOfferLayout.setVisibility(View.VISIBLE);
-        Log.e("LONG OFFER", "Display called");
-    }
-
-    public void hideLongOffer() {
-        longOffer = null;
-        longOfferLayout.setVisibility(View.GONE);
     }
 
     private class ShortOffersListAdapter extends ArrayAdapter<ShortOffer> {
@@ -164,7 +152,7 @@ public class OffersFragment extends Fragment {
             Button confirmButton = (Button) view.findViewById(R.id.button_short_offer_confirm);
             ShortOffer shortOffer = getItem(position);
             if(shortOffer != null) {
-                offerSourceTextView.setText(shortOffer.getOfferSource() == '0' ? "Андроид:" : "Диспечер:");
+                offerSourceTextView.setText(shortOffer.getOfferSource() == '0' ? getString(R.string.source_android) : getString(R.string.source_dispatcher));
                 textMessageTextView.setText(shortOffer.getTextMessage());
 
                 // If the offer is cancelled from the server, display it with different color and

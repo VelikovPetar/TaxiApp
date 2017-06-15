@@ -20,17 +20,27 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
+            android:text="Земав патник"
+            android:onClick="clientArrived"/>
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="96dp"
+            android:text="Оставив патник"
+            android:onClick="clientLeft"/>
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="96dp"
             android:text="Одјава"
             android:onClick="sendLogoutMessage"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Send Pause Start"
+            android:text="Пауза"
             android:onClick="sendPauseStartMessage"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="Send Pause Stop"
+            android:text="Крај на пауза"
             android:onClick="sendPauseStopMessage"/>
         <Button
             android:layout_width="match_parent"

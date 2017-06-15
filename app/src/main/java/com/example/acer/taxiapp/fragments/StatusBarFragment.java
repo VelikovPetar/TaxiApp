@@ -1,15 +1,9 @@
 package com.example.acer.taxiapp.fragments;
 
 import android.app.Fragment;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +11,6 @@ import android.widget.TextView;
 
 import com.example.acer.taxiapp.BroadcastActions;
 import com.example.acer.taxiapp.R;
-import com.example.acer.taxiapp.TCPClient;
 
 public class StatusBarFragment extends Fragment {
 
@@ -34,26 +27,16 @@ public class StatusBarFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_status_bar, container, false);
         driverStatus = (TextView) view.findViewById(R.id.text_view_driver_status);
-        driverStatus.setText("Unknown");
+        driverStatus.setText(R.string.no_info);
         vehicleStatus = (TextView) view.findViewById(R.id.text_view_vehicle_status);
-        vehicleStatus.setText("Unknown");
+        vehicleStatus.setText(R.string.no_info);
         locationStatus = (TextView) view.findViewById(R.id.text_view_location_status);
-        locationStatus.setText("NO INFO");
+        locationStatus.setText(R.string.no_info);
         connectionStatus = (TextView) view.findViewById(R.id.text_view_connection_status);
-        connectionStatus.setText("NO INFO");
+        connectionStatus.setText(R.string.no_info);
         serverStatus = (TextView) view.findViewById(R.id.text_view_server_status);
-        serverStatus.setText("NO INFO");
+        serverStatus.setText(R.string.no_info);
         return view;
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
     }
 
     public void update(String action, String value, int color) {

@@ -1,13 +1,10 @@
 package com.example.acer.taxiapp.fragments;
 
-import android.Manifest;
 import android.app.Fragment;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,8 +30,11 @@ public class MapFragment extends Fragment {
     private MapView mapView;
     private GoogleMap googleMap;
     private LatLng customerLatLng;
+    private Marker customerLocationMarker;
     private LatLng currentLatLng;
     private Marker currentLocationMarker;
+    private Location location;
+    private float bearing;
 
     // For tracking the route
     private ArrayList<LatLng> points;
@@ -61,30 +61,38 @@ public class MapFragment extends Fragment {
             public void onMapReady(GoogleMap _googleMap) {
                 googleMap = _googleMap;
 
-                if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-//                    googleMap.setMyLocationEnabled(true);
-//                    googleMap.addMarker(new MarkerOptions().position(new LatLng(42, 21)).title("Test Location"));
-//                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(new LatLng(42, 21)).zoom(12).build()));
-//                } else {
-//                    ActivityCompat.requestPermissions(getActivity(), new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, 1234);
-                }
-
                 // Display current position if it is already known
                 if (currentLatLng != null) {
-                    currentLocationMarker = googleMap.addMarker(new MarkerOptions().position(currentLatLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(currentLatLng).zoom(14).build()));
+                    currentLocationMarker = googleMap.addMarker(new MarkerOptions()
+                            .position(currentLatLng)
+                            .flat(true)
+                            .rotation(bearing)
+                            .anchor(0.5f, 0.5f)
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow32)));
+                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
+                            .target(currentLatLng)
+                            .zoom(16)
+                            .build()));
                 }
 
                 // Display position of the customer if there is one waiting for the driver
                 if(customerLatLng != null) {
-                    googleMap.addMarker(new MarkerOptions().position(customerLatLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)));
-                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(customerLatLng).zoom(14).build()));
+                    customerLocationMarker = googleMap.addMarker(new MarkerOptions()
+                            .position(customerLatLng)
+                            .flat(true)
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
+                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
+                            .target(customerLatLng)
+                            .zoom(16)
+                            .build()));
                     // Redraw the polyline if there was a polyline already
                     if(points.size() > 0) {
                         if (line != null) {
                             line.remove();
                         }
-                        PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE);
+                        PolylineOptions options = new PolylineOptions()
+                                .width(5)
+                                .color(Color.BLUE);
                         points.add(currentLatLng);
                         for (LatLng latLng : points) {
                             options.add(latLng);
@@ -102,22 +110,24 @@ public class MapFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        Log.e("LIFECYCLE", "On destroy view");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.e("C", "On destroy");
     }
 
-    public void initLocation(float lat, float lng) {
-        currentLatLng = new LatLng(lat, lng);
+    public void initLocation(Location location) {
+        this.location = location;
+        currentLatLng = new LatLng(this.location.getLatitude(), this.location.getLongitude());
     }
 
-    public void updateLocation(float lat, float lng) {
-//        googleMap.clear();
-        currentLatLng = new LatLng(lat, lng);
+    public void updateLocation(Location location) {
+        if(this.location != null) {
+            bearing = this.location.bearingTo(location);
+        }
+        this.location = location;
+        currentLatLng = new LatLng(this.location.getLatitude(), this.location.getLongitude());
         if(currentLocationMarker != null) {
             currentLocationMarker.remove();
         }
@@ -127,27 +137,52 @@ public class MapFragment extends Fragment {
             if (line != null) {
                 line.remove();
             }
-            PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE);
+            PolylineOptions options = new PolylineOptions()
+                    .width(5)
+                    .color(Color.BLUE);
             points.add(currentLatLng);
             for (LatLng latLng : points) {
                 options.add(latLng);
             }
-            // Edge case where the location is updaafter the fragmted ent is drawn,
-            // But before the map is loaded
+            // Edge case where the location is updated after the fragment is drawn,
+            // but before the map is loaded
             if(googleMap != null) {
                 line = googleMap.addPolyline(options);
             }
         }
 
-        // Edge case where the location is updaafter the fragmted ent is drawn,
+        // Edge case where the location is updated after the fragment is drawn,
         // But before the map is loaded
         if(googleMap != null) {
-            currentLocationMarker = googleMap.addMarker(new MarkerOptions().position(currentLatLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(currentLatLng).zoom(14).build()));
+            currentLocationMarker = googleMap.addMarker(new MarkerOptions()
+                    .position(currentLatLng)
+                    .flat(true)
+                    .rotation(bearing)
+                    .anchor(0.5f, 0.5f)
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow32)));
+            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
+                    .target(currentLatLng)
+                    .zoom(16)
+                    .build()));
         }
     }
 
     public void setCustomerLatLng(float lat, float lng) {
         customerLatLng = new LatLng(lat, lng);
+    }
+
+    public void clear() {
+        if(isResumed()) {
+            if (customerLocationMarker != null) {
+                customerLocationMarker.remove();
+            }
+            if (line != null) {
+                line.remove();
+            }
+        }
+        customerLocationMarker = null;
+        customerLatLng = null;
+        line = null;
+        points.clear();
     }
 }

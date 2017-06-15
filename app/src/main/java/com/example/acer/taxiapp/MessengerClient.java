@@ -3,11 +3,9 @@ package com.example.acer.taxiapp;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.location.LocationManager;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.TimeZone;
 
 public class MessengerClient {
 
@@ -21,7 +19,6 @@ public class MessengerClient {
         message[0] = message[1] = (byte) 'A';
 
         // Broj na ured
-        // TODO Da se prochita ID=na uredot samo ednashka i da se chuva vo memorija
         SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         String deviceID = preferences.getString(MainActivity.DEVICE_ID, null);
         byte[] bytes;
@@ -42,12 +39,12 @@ public class MessengerClient {
 
         // Podatoci
         // Stari podatoci
-        int i = 1;
+        float i = 1;
         int bits = Float.floatToIntBits(i);
-        message[9] = (byte) (i);
-        message[10] = (byte) (i >> 8);
-        message[11] = (byte) (i >> 16);
-        message[12] = (byte) (i >> 24);
+        message[9] = (byte) (bits);
+        message[10] = (byte) (bits >> 8);
+        message[11] = (byte) (bits >> 16);
+        message[12] = (byte) (bits >> 24);
 
         Calendar cal = Calendar.getInstance();
         cal.setTime(new Date(location.getTime()));
@@ -171,6 +168,7 @@ public class MessengerClient {
         return message;
     }
 
+    // Not used
     public static byte[] getCommonMessage(Location location, Context context, VehicleState state) {
         byte[] message = getBaseCommonMessage(location, context);
         switch(state) {
@@ -185,14 +183,27 @@ public class MessengerClient {
             case ZAFATEN:
                 turnOffPauseBit(message);
                 turnOffTaximeterBit(message);
-            // TODO Other states
             default:
                 turnOffPauseBit(message);
                 turnOnTaximeterBit(message);
                 break;
         }
-        byte[] res = addChkSum(message);
-        return res;
+        return addChkSum(message);
+    }
+
+    public static byte[] getCommonMessage(Location location, Context context, boolean pause, boolean taximeter) {
+        byte[] message = getBaseCommonMessage(location, context);
+        if(pause) {
+            turnOnPauseBit(message);
+        } else {
+            turnOffPauseBit(message);
+        }
+        if(taximeter) {
+            turnOffTaximeterBit(message);
+        } else {
+            turnOnTaximeterBit(message);
+        }
+        return addChkSum(message);
     }
 
     public static byte[] getLoginMessage(Location location, Context context) {
@@ -213,11 +224,9 @@ public class MessengerClient {
         message[69] = bytes[2];
         message[70] = bytes[3];
 
-        byte[] res = addChkSum(message);
-        return res;
+        return addChkSum(message);
     }
 
-    // TODO CHECK?!
     public static byte[] getLogoutMessage(Location location, Context context) {
         byte[] message = getBaseCommonMessage(location, context);
         turnOnPauseBit(message);
@@ -236,28 +245,23 @@ public class MessengerClient {
         message[69] = bytes[2];
         message[70] = bytes[3];
 
-        byte[] res = addChkSum(message);
-        return res;
+        return addChkSum(message);
     }
 
-    // TODO FIX?!
     public static byte[] getPauseStartMessage(Location location, Context context) {
         byte[] message = getBaseCommonMessage(location, context);
         turnOnPauseBit(message);
         turnOnTaximeterBit(message);
 
-        byte[] res = addChkSum(message);
-        return res;
+        return addChkSum(message);
     }
 
-    // TODO FIX?!
     public static byte[] getPauseStopMessage(Location location, Context context) {
         byte[] message = getBaseCommonMessage(location, context);
         turnOffPauseBit(message);
         turnOnTaximeterBit(message);
 
-        byte[] res = addChkSum(message);
-        return res;
+        return addChkSum(message);
     }
 
     public static byte[] getShortOfferConfirmMessage(long idPhoneCall, int minutes, Context context) {
@@ -295,8 +299,7 @@ public class MessengerClient {
         message[13] = (byte) (minutes);
         message[14] = (byte) (minutes >> 8);
 
-        byte[] res = addChkSum(message);
-        return res;
+        return addChkSum(message);
     }
 
     public static byte[] getRequestStatusMessage(String text, Context context) {
@@ -336,13 +339,11 @@ public class MessengerClient {
             if(i - 12 < text.length()) {
                 message[i] = (byte) text.charAt(i - 12);
             } else {
-                // TODO Check the padding character
                 message[i] = (byte) ' ';
             }
         }
 
-        byte[] res = addChkSum(message);
-        return res;
+        return addChkSum(message);
     }
 
     public static byte[] getRegisterForRegionMessage(int region, Context context) {
@@ -379,12 +380,10 @@ public class MessengerClient {
 
         // Tekst za baranje
         for(int i = 12; i < 42; ++i) {
-            // TODO Check the padding character
             message[i] = (byte) ' ';
         }
 
-        byte[] res = addChkSum(message);
-        return res;
+        return addChkSum(message);
     }
 
     public static byte[] getInfoByRegionMessage(Context context) {
@@ -424,8 +423,7 @@ public class MessengerClient {
             message[i] = (byte) ' ';
         }
 
-        byte[] res = addChkSum(message);
-        return res;
+        return addChkSum(message);
     }
 
     public static byte[] getGeneratedMessage(byte destination, char priority, String text, Context context) {
@@ -476,24 +474,20 @@ public class MessengerClient {
             message[13 + i] = (byte) text.charAt(i);
         }
 
-        byte[] res = addChkSum(message);
-        return res;
+        return addChkSum(message);
     }
 
     private static byte[] addChkSum(byte[] message) {
         byte[] retVal = new byte[message.length + 2];
 //        byte[] retVal = new byte[message.length + 7];
 
-        for (int i = 0; i < message.length; ++i)
-        {
+        for(int i = 0; i < message.length; ++i) {
             retVal[i] = message[i];
         }
 
         byte tmpByte = (byte)0;
 
-
-        for (byte item : message)
-        {
+        for(byte item : message) {
             tmpByte = (byte)(tmpByte ^ item);
         }
 
@@ -507,7 +501,6 @@ public class MessengerClient {
 //        {
 //            retVal[retVal.length - i] = (byte)'z';
 //        }
-
         return retVal;
     }
 
@@ -526,42 +519,6 @@ public class MessengerClient {
         byte res = 0;
         res |= 1 << 7; // FIKSNO
         res |= 1 << 6; // FIKSNO
-        return res;
-    }
-
-    private static byte setBinaryData1ForLoginMessage() {
-        byte res = 0;
-        res |= 1 << 7; // FIKSNO
-        res |= 1 << 6; // FIKSNO
-        res |= 1; // FIKSNO
-        return res;
-    }
-
-    private static byte setBinaryData2ForLoginMessage() {
-        byte res = 0;
-        res |= 1 << 7; // FIKSNO
-        res |= 1 << 6; // FIKSNO
-
-        res |= 1 << 1;
-        return res;
-    }
-
-    private static byte setBinaryData1ForLogoutMessage() {
-        byte res = 0;
-        res |= 1 << 7; // FIKSNO
-        res |= 1 << 6; // FIKSNO
-        res |= 1; // FIKSNO
-        // Za odlogiranje
-        res |= 1 << 5;
-        return res;
-    }
-
-    private static byte setBinaryData2ForLogoutMessage() {
-        byte res = 0;
-        res |= 1 << 7; // FIKSNO
-        res |= 1 << 6; // FIKSNO
-        // Za iskluchen taksimetar
-        res |= 1 << 1;
         return res;
     }
 

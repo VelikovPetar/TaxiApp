@@ -1,30 +1,19 @@
 package com.example.acer.taxiapp.fragments;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.net.ConnectivityManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -82,7 +71,6 @@ public class LoginFragment extends Fragment {
                         Utils.hideKeyboard(view);
                         errorTextView.setText(getString(R.string.login_error1));
                         errorTextView.setVisibility(View.INVISIBLE);
-//                        callbacks.onSuccessfulLogin();
                         TCPClient tcpClient = TCPClient.getInstance(getActivity());
                         tcpClient.sendBytes(MessengerClient.getLoginMessage(location, getActivity()));
                     } else {
@@ -131,7 +119,7 @@ public class LoginFragment extends Fragment {
         disableViews();
         SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         if(!preferences.contains(MainActivity.RF_CARD_ID) || !preferences.contains(MainActivity.DEVICE_ID)) {
-            errorTextView.setText("Уредот не е конфигуриран! Направете конфигурација пред да се логирате!");
+            errorTextView.setText(R.string.error_no_config_found);
             errorTextView.setVisibility(View.VISIBLE);
             isConfig = false;
             return;
@@ -148,55 +136,55 @@ public class LoginFragment extends Fragment {
         enableViews();
     }
 
-    private void promptLocationServices() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("Location Services");
-        builder.setMessage("Turn on location services to enable login.");
-        builder.setPositiveButton("Turn on", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                startActivity(intent);
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        builder.create().show();
-    }
+//    private void promptLocationServices() {
+//        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+//        builder.setTitle("Location Services");
+//        builder.setMessage("Turn on location services to enable login.");
+//        builder.setPositiveButton("Turn on", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+//                startActivity(intent);
+//            }
+//        });
+//        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                dialog.cancel();
+//            }
+//        });
+//        builder.create().show();
+//    }
 
-    private void promptInternetConnection() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("Internet Connection");
-        builder.setMessage("Turn on internet connection to enable login.");
-        builder.setPositiveButton("WiFi", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
-                startActivity(intent);
-            }
-        });
-        builder.setNeutralButton("Mobile Data", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent();
-                intent.setComponent(new ComponentName(
-                            "com.android.settings",
-                            "com.android.settings.Settings$DataUsageSummaryActivity"));
-                startActivity(intent);
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        builder.create().show();
-    }
+//    private void promptInternetConnection() {
+//        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+//        builder.setTitle("Internet Connection");
+//        builder.setMessage("Turn on internet connection to enable login.");
+//        builder.setPositiveButton("WiFi", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
+//                startActivity(intent);
+//            }
+//        });
+//        builder.setNeutralButton("Mobile Data", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                Intent intent = new Intent();
+//                intent.setComponent(new ComponentName(
+//                            "com.android.settings",
+//                            "com.android.settings.Settings$DataUsageSummaryActivity"));
+//                startActivity(intent);
+//            }
+//        });
+//        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                dialog.cancel();
+//            }
+//        });
+//        builder.create().show();
+//    }
 
     private void enableViews() {
         loginEditText.setEnabled(true);

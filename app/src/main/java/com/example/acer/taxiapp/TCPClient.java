@@ -7,11 +7,9 @@ import android.util.Log;
 
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
 
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
@@ -76,8 +74,6 @@ public class TCPClient implements Runnable {
 
     // Manually close the connection
     public void close() {
-
-        if(debug)Log.e(DEBUG_TAG, "In close");
 
         if(isWaitingData) {
             isWaitingData = false;
@@ -203,7 +199,7 @@ public class TCPClient implements Runnable {
             // Connecting to server
             serverAvailable = false;
             broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.CONNECTING);
-            Log.e("SERVERATT", ""+serverReconnectAttempts);
+            Log.e(DEBUG_TAG, ""+serverReconnectAttempts);
             if(serverReconnectAttempts == 3) {
                 // If there were 3 failed reconnects, wait 1 minute before trying again
                 serverReconnectAttempts = 0;
@@ -305,6 +301,7 @@ public class TCPClient implements Runnable {
                 e.printStackTrace();
                 // Notify user that there is probably server-side problem
                 if(debug) Log.e(DEBUG_TAG, "SocketException");
+                serverReconnectAttempts++;
             } catch (IOException e) {
                 e.printStackTrace();
                 // Identify the problem
@@ -315,7 +312,7 @@ public class TCPClient implements Runnable {
                 }
                 if(Utils.hasInternetConnection(context)) {
                     // TODO Notify of probable server error
-                    Log.e("SERVERATT", "HERE");
+                    Log.e(DEBUG_TAG, "HERE");
                     serverReconnectAttempts ++;
                 } else {
                     // TODO Notify that connection was lost on the local device

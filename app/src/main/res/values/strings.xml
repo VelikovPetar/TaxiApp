@@ -10,6 +10,7 @@
     <string name="gps_status">GPS</string>
     <string name="config_confirm">Потврди</string>
     <string name="vehicle_status">Статус на возило:</string>
+    <string name="no_offers">Нема најави!</string>
     <string name="no_messages">Нема пораки!</string>
     <string name="send">Испрати</string>
     <string name="cancel">Откажи</string>
@@ -25,4 +26,21 @@
     <string name="error_enter_text">Мора да внесете текст!</string>
     <string name="error_enter_region">Мора да внесете регион!</string>
     <string name="error_enter_minutes">Мора да внесете минути!</string>
+    <string name="active_long_offer">Активна долга најава!</string>
+    <string name="number_of_offers">Број на најави: %d</string>
+    <string name="number_of_messages">Број на пораки: %d</string>
+    <string name="timer_zero">00:00</string>
+    <string name="move_to_client">Кон клиент:</string>
+    <string name="waiting">Чекање:</string>
+    <string name="location_permissions_needed">PLEASE GIVE PERMISSION TO USE FINE LOCATION</string>
+    <string name="no_info">No info</string>
+    <string name="error_no_config_found">Уредот не е конфигуриран! Направете конфигурација пред да се логирате!</string>
+    <string name="error_reading_full_message">Проблем при вчитувањето на пораката!</string>
+    <string name="full_message">Целосна порака</string>
+    <string name="close">Затвори</string>
+    <string name="source_android">Андроид:</string>
+    <string name="source_dispatcher">Диспечер:</string>
+    <string name="dest_dispatcher">До: Диспечер</string>
+    <string name="dest_android">До: Android</string>
+    <string name="message">Порака:</string>
 </resources>

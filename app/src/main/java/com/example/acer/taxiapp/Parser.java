@@ -27,6 +27,7 @@ public class Parser {
 
     // Name for broadcasts concerning global vehicle state updates
     public static final String VEHICLE_STATE = "vehicle_state";
+    public static final String TIME_IN_STATE = "time_in_state";
 
     // Names for broadcasts concerning status bar updates
     public static final String VALUE = "status_bar_update_value";
@@ -80,11 +81,11 @@ public class Parser {
 
                 // Get the type of the command
                 String command;
-                if(message.length >= 9) {
-                    command = (char) message[7] + "" + (char) message[8];
-                } else {
+                if (message.length < 9) {
                     Log.e(DEBUG_TAG, "Full message not received");
                     command = "";
+                } else {
+                    command = (char) message[7] + "" + (char) message[8];
                 }
                 switch(command) {
                     case "34":
@@ -124,13 +125,12 @@ public class Parser {
         lengthOfMessage += (message[10] - '0') * 10;
         lengthOfMessage += (message[11] - '0');
 
-        // TODO Check message validity
         // message[12] =!?
 
         // AAxxxxxyyccc(12) +
         // Validnost(1) + length(text) + source(1) // lengthOfMessage +
         // checksum(2) + zzzzz(5)
-        if(message.length != HEADER_LENGTH + 3 + lengthOfMessage + CHECKSUM_LENGTH + PADDING_LENGTH) {
+        if(message.length < HEADER_LENGTH + 3 + lengthOfMessage + CHECKSUM_LENGTH + PADDING_LENGTH) {
             Log.e(DEBUG_TAG, "Full message not received");
             return;
         }
@@ -143,7 +143,7 @@ public class Parser {
             String driverName = bytesToString(driverNameBytes);
             broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue(driverName, Color.GREEN));
             broadcastLoginAction(true);
-        // Check if it is confirmation of successful logout - SPECIAL CASE TODO Mozhebi poinaku kje se spravuvame
+        // Check if it is confirmation of successful logout - SPECIAL CASE
         } else if(message[13] == '0' && message[14] == '0' && message[15] == '0') {
             broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue("Нема најавен возач", Color.YELLOW));
             broadcastLoginAction(false);
@@ -206,17 +206,18 @@ public class Parser {
             newState += (char) message[i];
         }
 
-        // SEGA ZA SEGA NE GI KORISTIME OVIE
-        // Vreme vo sostojba?
-        // message[startPos + stateLength] ?!
-        // message[startPos + stateLength + 1] ?!
+        // Vreme vo sostojba
+        byte[] tmp = new byte[4];
+        tmp[0] = message[startPos + stateLength];
+        tmp[1] = message[startPos + stateLength + 1];
+        int timeInState = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getInt();
 
-        // Prodolzhuvanje na vreme?
+        // Prodolzhuvanje na vreme
         // message[startPos + stateLength + 2] ?!
 
-        // Sostojba?
-        // message[startPos + stateLength + 3] ?!
-        broadcastVehicleStateUpdate((int) message[startPos + stateLength + 3]);
+        // Sostojba
+        // For status updates that activate countdown timers
+        broadcastVehicleStateUpdate((int) message[startPos + stateLength + 3], timeInState);
 
         // Show status on the Status bar
         broadcastStatusUpdate(BroadcastActions.ACTION_VEHICLE_STATE_STATUS, new StatusBarFragment.VehicleStatusValue(newState.replace("State", ""), Color.CYAN));
@@ -232,15 +233,15 @@ public class Parser {
             Log.e(DEBUG_TAG, "Full message not received");
             return;
         }
-//        byte[] tmp = new byte[idPhoneCallLength];
-//        for(int i = 0; i < idPhoneCallLength; ++i) {
-//            tmp[idPhoneCallLength - i - 1] = message[HEADER_LENGTH + i];
-//        }
-//        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
-        byte[] tmp = Arrays.copyOfRange(message, HEADER_LENGTH, HEADER_LENGTH + idPhoneCallLength);
 
-        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getInt();
+        byte[] tmp = new byte[8];
+        tmp[0] = message[HEADER_LENGTH];
+        tmp[1] = message[HEADER_LENGTH + 1];
+        tmp[2] = message[HEADER_LENGTH + 2];
+        tmp[3] = message[HEADER_LENGTH + 3];
+        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getLong();
         Log.e(DEBUG_TAG, "ID phonecall = " + idPhoneCall);
+
         byte offerSource = message[HEADER_LENGTH + idPhoneCallLength];
         tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength + offerSourceLength, HEADER_LENGTH + idPhoneCallLength + offerSourceLength + textMessageLength);
         String textMessage = bytesToString(tmp).trim();
@@ -254,13 +255,13 @@ public class Parser {
             Log.e(DEBUG_TAG, "Full message not received");
             return;
         }
-//        byte[] tmp = new byte[idPhoneCallLength];
-//        for(int i = 0; i < idPhoneCallLength; ++i) {
-//            tmp[idPhoneCallLength - i - 1] = message[HEADER_LENGTH + i];
-//        }
-//        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
-        byte[] tmp = Arrays.copyOfRange(message, HEADER_LENGTH, HEADER_LENGTH + idPhoneCallLength);
-        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getInt(); // Int because 4 bytes
+
+        byte[] tmp = new byte[8];
+        tmp[0] = message[HEADER_LENGTH];
+        tmp[1] = message[HEADER_LENGTH + 1];
+        tmp[2] = message[HEADER_LENGTH + 2];
+        tmp[3] = message[HEADER_LENGTH + 3];
+        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getLong();
 
         tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength, HEADER_LENGTH + idPhoneCallLength + textMessageLength);
         String textMessage = bytesToString(tmp).trim();
@@ -283,14 +284,13 @@ public class Parser {
             Log.e(DEBUG_TAG, "Full message not received");
             return;
         }
-        // ID Phone Call
-//        byte[] tmp = new byte[idPhoneCallLength];
-//        for(int i = 0; i < idPhoneCallLength; ++i) {
-//            tmp[idPhoneCallLength - i - 1] = message[HEADER_LENGTH + i];
-//        }
-//        long idPhoneCall = ByteBuffer.wrap(tmp).getLong();
-        byte[] tmp = Arrays.copyOfRange(message, HEADER_LENGTH, HEADER_LENGTH + idPhoneCallLength);
-        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getInt();
+
+        byte[] tmp = new byte[8];
+        tmp[0] = message[HEADER_LENGTH];
+        tmp[1] = message[HEADER_LENGTH + 1];
+        tmp[2] = message[HEADER_LENGTH + 2];
+        tmp[3] = message[HEADER_LENGTH + 3];
+        long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getLong();
 
         // Latitude degrees
         tmp = new byte[4];
@@ -394,10 +394,11 @@ public class Parser {
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
-    private void broadcastVehicleStateUpdate(int state) {
+    private void broadcastVehicleStateUpdate(int state, int timeInState) {
         Intent intent = new Intent();
-        intent.setAction(BroadcastActions.ACTION_VEHICLE_STATE_FOR_LOCATION_UPDATES);
+        intent.setAction(BroadcastActions.ACTION_VEHICLE_STATE_FOR_TIMERS);
         intent.putExtra(VEHICLE_STATE, state);
+        intent.putExtra(TIME_IN_STATE, timeInState);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 }

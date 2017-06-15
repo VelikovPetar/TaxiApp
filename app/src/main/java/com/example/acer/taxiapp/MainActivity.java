@@ -60,10 +60,6 @@ public class MainActivity extends Activity implements LocationListener,
     public static final String RF_CARD_ID = "rf_card";
     public static final String DEVICE_ID = "device_id";
 
-    // Debug
-    private String DEBUG_TAG = "LONG OFFER";
-    private boolean debug = true;
-
     // Location manager
     private LocationManager locationManager;
     // Last known location
@@ -76,9 +72,6 @@ public class MainActivity extends Activity implements LocationListener,
 
     // Thread for automatically sending periodical location updates
     private LocationUpdater locationUpdater;
-    // State of the vehicle
-    private VehicleState state = VehicleState.SLOBODEN;
-
 
     // Communicating with the TcpClientService
     private TCPClientService tcpClientService;
@@ -138,12 +131,6 @@ public class MainActivity extends Activity implements LocationListener,
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
         }
 
-        // Check for location permissions
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-//                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
-//        }
-
         // Initialize the Location manager
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -166,7 +153,6 @@ public class MainActivity extends Activity implements LocationListener,
         FragmentManager fManager = getFragmentManager();
         boolean isPopped = fManager.popBackStackImmediate("frag_conf", FragmentManager.POP_BACK_STACK_INCLUSIVE);
         if (!isPopped) {
-            Log.e("POPPING", "Not in stack");
             LoginFragment loginFragment = (LoginFragment) fManager.findFragmentByTag("TAG_LOGIN_FRAGMENT");
             if (loginFragment == null || !loginFragment.isVisible()) {
                 FragmentTransaction fTransaction = fManager.beginTransaction();
@@ -174,8 +160,6 @@ public class MainActivity extends Activity implements LocationListener,
                 fTransaction.addToBackStack(null);
                 fTransaction.commit();
             }
-        } else {
-            Log.e("POPPING", "IN stack");
         }
     }
 
@@ -197,6 +181,7 @@ public class MainActivity extends Activity implements LocationListener,
         if (lastLocation != null) {
             byte[] message = MessengerClient.getPauseStartMessage(lastLocation, this);
             tcpClientService.sendBytes(message);
+            locationUpdater.setBits(true, false);
         }
     }
 
@@ -204,6 +189,7 @@ public class MainActivity extends Activity implements LocationListener,
         if (lastLocation != null) {
             byte[] message = MessengerClient.getPauseStopMessage(lastLocation, this);
             tcpClientService.sendBytes(message);
+            locationUpdater.setBits(false, false);
         }
     }
 
@@ -235,8 +221,7 @@ public class MainActivity extends Activity implements LocationListener,
                             return;
                         }
                         byte[] message = MessengerClient.getRequestStatusMessage(text, MainActivity.this);
-//                TCPClient tcpClient = TCPClient.getInstance(MainActivity.this);
-//                tcpClient.sendBytes(message);
+//                tcpClientService.sendBytes(message);
                         String msg = "";
                         for(byte b : message)
                             msg += (char) b;
@@ -251,8 +236,7 @@ public class MainActivity extends Activity implements LocationListener,
 
     public void getInfoByRegion(View view) {
         byte[] message = MessengerClient.getInfoByRegionMessage(this);
-        TCPClient tcpClient = TCPClient.getInstance(this);
-        tcpClient.sendBytes(message);
+        tcpClientService.sendBytes(message);
         String msg = "";
         for(byte b : message)
             msg += (char) b;
@@ -288,8 +272,7 @@ public class MainActivity extends Activity implements LocationListener,
                         }
                         int region = Integer.parseInt(regionText.trim());
                         byte[] message = MessengerClient.getRegisterForRegionMessage(region, MainActivity.this);
-//                        TCPClient tcpClient = TCPClient.getInstance(MainActivity.this);
-//                        tcpClient.sendBytes(message);
+//                        tcpClientService.sendBytes(message);
                         String msg = "";
                         for(byte b : message)
                             msg += (char) b;
@@ -307,30 +290,85 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
     public void showMessagesFragment(View view) {
+        if(popupMessages.size() == 0) {
+            Toast.makeText(this, getString(R.string.no_messages), Toast.LENGTH_SHORT).show();
+            return;
+        }
         FragmentManager fManager = getFragmentManager();
-        FragmentTransaction fTransaction = fManager.beginTransaction();
-        MessagesFragment messagesFragment = new MessagesFragment();
-        fTransaction.replace(R.id.fragment_content_container, messagesFragment, "TAG_POPUP_MESSAGES_FRAGMENT");
-        fTransaction.addToBackStack(null);
-        fTransaction.commit();
+        MessagesFragment messagesFragment = (MessagesFragment) fManager.findFragmentByTag("TAG_POPUP_MESSAGES_FRAGMENT");
+        if(messagesFragment != null && messagesFragment.isVisible())
+            return;
+        boolean popped = fManager.popBackStackImmediate("messages_frag", 0);
+        if(!popped) {
+            FragmentTransaction fTransaction = fManager.beginTransaction();
+            fTransaction.replace(R.id.fragment_content_container, new MessagesFragment(), "TAG_POPUP_MESSAGES_FRAGMENT");
+            fTransaction.addToBackStack("messages_frag");
+            fTransaction.commit();
+        }
     }
 
     public void showOffersFragment(View view) {
+        if(shortOffers.size() == 0 && longOffer == null) {
+            Toast.makeText(this, getString(R.string.no_offers), Toast.LENGTH_SHORT).show();
+            return;
+        }
         FragmentManager fManager = getFragmentManager();
-        FragmentTransaction fTransaction = fManager.beginTransaction();
-        OffersFragment messagesFragment = new OffersFragment();
-        fTransaction.replace(R.id.fragment_content_container, messagesFragment, "TAG_OFFERS_FRAGMENT");
-        fTransaction.addToBackStack(null);
-        fTransaction.commit();
+        OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
+        if(offersFragment != null && offersFragment.isVisible())
+            return;
+        boolean popped = fManager.popBackStackImmediate("offers_frag", 0);
+        if(!popped) {
+            FragmentTransaction fTransaction = fManager.beginTransaction();
+            fTransaction.replace(R.id.fragment_content_container, new OffersFragment(), "TAG_OFFERS_FRAGMENT");
+            fTransaction.addToBackStack("offers_frag");
+            fTransaction.commit();
+        }
     }
 
     public void showGeneratedMessagesFragment(View view) {
         FragmentManager fManager = getFragmentManager();
-        FragmentTransaction fTransaction = fManager.beginTransaction();
-        GeneratedMessagesFragment generatedMessagesFragment = new GeneratedMessagesFragment();
-        fTransaction.replace(R.id.fragment_content_container, generatedMessagesFragment, "TAG_GENERATED_MESSAGES_FRAGMENT");
-        fTransaction.addToBackStack(null);
-        fTransaction.commit();
+        GeneratedMessagesFragment generatedMessagesFragment =
+                (GeneratedMessagesFragment) fManager.findFragmentByTag("TAG_GENERATED_MESSAGES_FRAGMENT");
+        if(generatedMessagesFragment != null && generatedMessagesFragment.isVisible())
+            return;
+        boolean popped = fManager.popBackStackImmediate("generated_messages_frag", 0);
+        if(!popped) {
+            FragmentTransaction fTransaction = fManager.beginTransaction();
+            fTransaction.replace(R.id.fragment_content_container, new GeneratedMessagesFragment(), "TAG_GENERATED_MESSAGES_FRAGMENT");
+            fTransaction.addToBackStack("generated_messages_frag");
+            fTransaction.commit();
+        }
+    }
+
+    public void clientArrived(View view) {
+        OffersStatusBarFragment offersStatusBarFragment =
+                (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+        offersStatusBarFragment.clientArrived();
+        locationUpdater.setBits(false, true);
+        tcpClientService.sendBytes(MessengerClient.getCommonMessage(lastLocation, this, false, true));
+        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentByTag("TAG_MAP_FRAGMENT");
+        if(mapFragment != null) {
+            mapFragment.clear();
+        }
+    }
+
+    public void clientLeft(View view) {
+        onLongOfferFinished();
+        locationUpdater.setBits(false, false);
+        tcpClientService.sendBytes(MessengerClient.getCommonMessage(lastLocation, this, false, false));
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Register receiver for status bar updates
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BroadcastActions.ACTION_DRIVER_STATUS);
+        intentFilter.addAction(BroadcastActions.ACTION_VEHICLE_STATE_STATUS);
+        intentFilter.addAction(BroadcastActions.ACTION_LOCATION_STATUS);
+        intentFilter.addAction(BroadcastActions.ACTION_CONNECTION_STATUS);
+        intentFilter.addAction(BroadcastActions.ACTION_SERVER_STATUS);
+        LocalBroadcastManager.getInstance(this).registerReceiver(statusBarUpdatesReceiver, intentFilter);
     }
 
     @Override
@@ -338,36 +376,28 @@ public class MainActivity extends Activity implements LocationListener,
         super.onResume();
         // TODO Konsultiraj se shto da pravi aplikacijata ako e vo pozadina!
 
-        // register receiver for driver login status
-        IntentFilter intentFilter4 = new IntentFilter();
-        intentFilter4.addAction(BroadcastActions.ACTION_DRIVER_LOGIN_STATUS);
-        LocalBroadcastManager.getInstance(this).registerReceiver(loginStatusReceiver, intentFilter4);
-        // Register receiver for status bar updates
-        IntentFilter intentFilter3 = new IntentFilter();
-        intentFilter3.addAction(BroadcastActions.ACTION_DRIVER_STATUS);
-        intentFilter3.addAction(BroadcastActions.ACTION_VEHICLE_STATE_STATUS);
-        intentFilter3.addAction(BroadcastActions.ACTION_LOCATION_STATUS);
-        intentFilter3.addAction(BroadcastActions.ACTION_CONNECTION_STATUS);
-        intentFilter3.addAction(BroadcastActions.ACTION_SERVER_STATUS);
-        LocalBroadcastManager.getInstance(this).registerReceiver(statusBarUpdatesReceiver, intentFilter3);
+        // Register receiver for driver login status
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BroadcastActions.ACTION_DRIVER_LOGIN_STATUS);
+        LocalBroadcastManager.getInstance(this).registerReceiver(loginStatusReceiver, intentFilter);
 
         // Register receiver for popup messages
-        IntentFilter intentFilter = new IntentFilter();
+        intentFilter = new IntentFilter();
         intentFilter.addAction(BroadcastActions.ACTION_POPUP_MESSAGE);
         LocalBroadcastManager.getInstance(this).registerReceiver(popupMessageReceiver, intentFilter);
 
         // Register receiver for short offers
         offersReceiver = new OffersReceiver(handler);
-        IntentFilter intentFilter1 = new IntentFilter();
-        intentFilter1.addAction(BroadcastActions.ACTION_SHORT_OFFER);
-        intentFilter1.addAction(BroadcastActions.ACTION_CANCEL_SHORT_OFFER);
-        intentFilter1.addAction(BroadcastActions.ACTION_LONG_OFFER);
-        LocalBroadcastManager.getInstance(this).registerReceiver(offersReceiver, intentFilter1);
+        intentFilter = new IntentFilter();
+        intentFilter.addAction(BroadcastActions.ACTION_SHORT_OFFER);
+        intentFilter.addAction(BroadcastActions.ACTION_CANCEL_SHORT_OFFER);
+        intentFilter.addAction(BroadcastActions.ACTION_LONG_OFFER);
+        LocalBroadcastManager.getInstance(this).registerReceiver(offersReceiver, intentFilter);
 
         // Register receiver for vehicle state updates
-        IntentFilter intentFilter2 = new IntentFilter();
-        intentFilter2.addAction(BroadcastActions.ACTION_VEHICLE_STATE_FOR_LOCATION_UPDATES);
-        LocalBroadcastManager.getInstance(this).registerReceiver(vehicleStateReceiver, intentFilter2);
+        intentFilter = new IntentFilter();
+        intentFilter.addAction(BroadcastActions.ACTION_VEHICLE_STATE_FOR_TIMERS);
+        LocalBroadcastManager.getInstance(this).registerReceiver(vehicleStateReceiver, intentFilter);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -416,10 +446,13 @@ public class MainActivity extends Activity implements LocationListener,
 
         // Unregister vehicle state receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(vehicleStateReceiver);
+    }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
         // Unregister status bar updates receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(statusBarUpdatesReceiver);
-
     }
 
     @Override
@@ -446,7 +479,7 @@ public class MainActivity extends Activity implements LocationListener,
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 1234 && grantResults.length > 0) {
             if (grantResults[0] != PackageManager.PERMISSION_GRANTED && grantResults[1] != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "PLEASE GIVE PERMISSION TO USE FINE LOCATION", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.location_permissions_needed, Toast.LENGTH_SHORT).show();
             } else {
                 updateStatusBarLocation();
             }
@@ -457,19 +490,17 @@ public class MainActivity extends Activity implements LocationListener,
     @Override
     public void onLocationChanged(Location location) {
         // Initialize the location for the login message
-//        if(!hasInitialLocation) {
-            LoginFragment loginFragment = (LoginFragment) getFragmentManager().findFragmentByTag("TAG_LOGIN_FRAGMENT");
-            if(loginFragment != null && loginFragment.isVisible()) {
-                loginFragment.initLocation(location);
-                hasInitialLocation = true;
-            }
-//        }
+        LoginFragment loginFragment = (LoginFragment) getFragmentManager().findFragmentByTag("TAG_LOGIN_FRAGMENT");
+        if(loginFragment != null && loginFragment.isVisible()) {
+            loginFragment.initLocation(location);
+            hasInitialLocation = true;
+        }
+
         this.lastLocation = location;
-        // TODO Replace with boolean isMapVisible
         FragmentManager fManager = getFragmentManager();
         MapFragment mapFragment = (MapFragment) fManager.findFragmentByTag("TAG_MAP_FRAGMENT");
         if (mapFragment != null && mapFragment.isVisible()) {
-            mapFragment.updateLocation((float) lastLocation.getLatitude(), (float) lastLocation.getLongitude());
+            mapFragment.updateLocation(lastLocation);
         }
     }
 
@@ -742,11 +773,22 @@ public class MainActivity extends Activity implements LocationListener,
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if(action.equals(BroadcastActions.ACTION_VEHICLE_STATE_FOR_LOCATION_UPDATES)) {
+            if(action.equals(BroadcastActions.ACTION_VEHICLE_STATE_FOR_TIMERS)) {
                 int stateId = intent.getIntExtra(Parser.VEHICLE_STATE, -1);
-                if(stateId != -1) {
+                int timeInState = intent.getIntExtra(Parser.TIME_IN_STATE, 0);
+                if(stateId != -1 && timeInState != 0) {
                     VehicleState state = VehicleState.getByValue(stateId);
-                    locationUpdater.setState(state);
+                    if(state == VehicleState.ODI_KON_KLIENT || state == VehicleState.MOVE_TO_CLIENT_NEW_PHONE_CALL) {
+                        OffersStatusBarFragment offersStatusBarFragment = (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+                        if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+                            offersStatusBarFragment.startCountdownMoveToClient(timeInState);
+                        }
+                    } else if(state == VehicleState.ZONA_NA_KLIENT || state == VehicleState.WAIT_CLIENT_NEW_PHONE_CALL) {
+                        OffersStatusBarFragment offersStatusBarFragment = (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+                        if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+                            offersStatusBarFragment.startCountdownWaitingClient(timeInState);
+                        }
+                    }
                 }
             }
         }
@@ -789,7 +831,7 @@ public class MainActivity extends Activity implements LocationListener,
             FragmentManager fManager = getFragmentManager();
             FragmentTransaction fTransaction = fManager.beginTransaction();
             MapFragment mapFragment = new MapFragment();
-            mapFragment.initLocation((float) lastLocation.getLatitude(), (float) lastLocation.getLongitude());
+            mapFragment.initLocation(lastLocation);
             fTransaction.replace(R.id.fragment_content_container, mapFragment, "TAG_MAP_FRAGMENT");
             fTransaction.commit();
 
@@ -821,7 +863,7 @@ public class MainActivity extends Activity implements LocationListener,
 
             // Enable the config button
             ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
-            configButton.setEnabled(false);
+            configButton.setEnabled(true);
         }
     }
 }
