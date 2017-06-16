@@ -24,6 +24,7 @@ import android.widget.TextView;
 import com.example.acer.taxiapp.MessageListProvider;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
+import com.example.acer.taxiapp.TCPClient;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -181,8 +182,8 @@ public class GeneratedMessagesFragment extends Fragment {
                             return;
                         }
                         byte[] message = MessengerClient.getGeneratedMessage(destination, '7', text, getActivity());
-//                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
-//                        tcpClient.sendBytes(message);
+                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
+                        tcpClient.sendBytes(message);
                         String msg = "";
                         for(byte b : message)
                             msg += (char) b;

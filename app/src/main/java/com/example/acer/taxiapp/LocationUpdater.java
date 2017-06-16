@@ -59,9 +59,6 @@ public class LocationUpdater {
         return isRunning;
     }
 
-    public void execute(Location location) {
-
-    }
 
     public void setLastLocation(Location location) {
         synchronized (locationLock) {

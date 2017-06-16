@@ -163,13 +163,6 @@ public class MainActivity extends Activity implements LocationListener,
         }
     }
 
-    public void sendLoginMessage(View view) {
-        if (lastLocation != null) {
-            byte[] message = MessengerClient.getLoginMessage(lastLocation, this);
-            tcpClientService.sendBytes(message);
-        }
-    }
-
     public void sendLogoutMessage(View view) {
         if (lastLocation != null) {
             byte[] message = MessengerClient.getLogoutMessage(lastLocation, this);
@@ -221,11 +214,13 @@ public class MainActivity extends Activity implements LocationListener,
                             return;
                         }
                         byte[] message = MessengerClient.getRequestStatusMessage(text, MainActivity.this);
-//                tcpClientService.sendBytes(message);
+                        tcpClientService.sendBytes(message);
+
                         String msg = "";
                         for(byte b : message)
                             msg += (char) b;
                         Log.e("DIALOGS", msg);
+
                         dialog.dismiss();
                     }
                 });
@@ -272,7 +267,8 @@ public class MainActivity extends Activity implements LocationListener,
                         }
                         int region = Integer.parseInt(regionText.trim());
                         byte[] message = MessengerClient.getRegisterForRegionMessage(region, MainActivity.this);
-//                        tcpClientService.sendBytes(message);
+                        tcpClientService.sendBytes(message);
+
                         String msg = "";
                         for(byte b : message)
                             msg += (char) b;
@@ -281,6 +277,7 @@ public class MainActivity extends Activity implements LocationListener,
                         tmp[1] = message[11];
                         long l = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getInt();
                         Log.e("DIALOGS", msg + " " + l);
+
                         dialog.dismiss();
                     }
                 });
@@ -459,8 +456,7 @@ public class MainActivity extends Activity implements LocationListener,
     protected void onDestroy() {
         super.onDestroy();
         if (isLoggedIn) {
-            TCPClient client = TCPClient.getInstance(this);
-            client.sendBytes(MessengerClient.getLogoutMessage(lastLocation, this));
+            tcpClientService.sendBytes(MessengerClient.getLogoutMessage(lastLocation, this));
             isLoggedIn = false;
         }
         unbindService(serviceConnection);
@@ -648,8 +644,6 @@ public class MainActivity extends Activity implements LocationListener,
             }
         }
     };
-
-
 
     // List that keeps current short offers
     private ArrayList<ShortOffer> shortOffers = new ArrayList<>();

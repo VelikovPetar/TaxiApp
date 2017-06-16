@@ -21,12 +21,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.example.acer.taxiapp.LongOffer;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
 import com.example.acer.taxiapp.ShortOffer;
+import com.example.acer.taxiapp.TCPClient;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -149,8 +151,9 @@ public class OffersFragment extends Fragment {
             }
             TextView offerSourceTextView = (TextView) view.findViewById(R.id.text_view_list_item_short_offer_source);
             TextView textMessageTextView = (TextView) view.findViewById(R.id.text_view_list_item_short_offer_text);
-            Button confirmButton = (Button) view.findViewById(R.id.button_short_offer_confirm);
-            ShortOffer shortOffer = getItem(position);
+            final Button confirmButton = (Button) view.findViewById(R.id.button_short_offer_confirm);
+            Log.e("DIALOGS", "This called");
+            final ShortOffer shortOffer = getItem(position);
             if(shortOffer != null) {
                 offerSourceTextView.setText(shortOffer.getOfferSource() == '0' ? getString(R.string.source_android) : getString(R.string.source_dispatcher));
                 textMessageTextView.setText(shortOffer.getTextMessage());
@@ -164,18 +167,22 @@ public class OffersFragment extends Fragment {
                     view.setBackgroundColor(Color.TRANSPARENT);
                     confirmButton.setEnabled(true);
                 }
-                final long idPhoneCall = shortOffer.getIdPhoneCall();
+                if(shortOffer.isAccepted()) {
+                    confirmButton.setEnabled(false);
+                }
                 confirmButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        promptMinutesDialog(idPhoneCall);
+                        promptMinutesDialog(shortOffer, confirmButton);
+//                        promptMinutesDialogRadio(shortOffer, confirmButton);
                     }
                 });
+
             }
             return view;
         }
 
-        private void promptMinutesDialog(final long idPhoneCall) {
+        private void promptMinutesDialog(final ShortOffer shortOffer, final Button button) {
             LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
             final View dialogLayout = layoutInflater.inflate(R.layout.dialog_enter_minutes, null);
             final AlertDialog dialog = new AlertDialog.Builder(getActivity())
@@ -203,14 +210,20 @@ public class OffersFragment extends Fragment {
                                 return;
                             }
                             int minutes = Integer.parseInt(minutesText.trim());
-                            byte[] message = MessengerClient.getShortOfferConfirmMessage(idPhoneCall, minutes, context);
-//                            TCPClient tcpClient = TCPClient.getInstance(context);
-//                            tcpClient.sendBytes(message);
+                            byte[] message = MessengerClient.getShortOfferConfirmMessage(shortOffer.getIdPhoneCall(), minutes, context);
+                            TCPClient tcpClient = TCPClient.getInstance(getActivity());
+                            tcpClient.sendBytes(message);
+
+
                             String msg = "";
                             for(byte b : message)
                                 msg += (char) b;
                             long l = ByteBuffer.wrap(Arrays.copyOfRange(message, 9, 13)).order(ByteOrder.LITTLE_ENDIAN).getInt();
+
+
                             Log.e("DIALOGS", msg + " " + l);
+                            button.setEnabled(false);
+                            shortOffer.accept();
                             dialog.dismiss();
                         }
                     });
@@ -218,6 +231,58 @@ public class OffersFragment extends Fragment {
             });
             dialog.show();
         }
+    }
+
+    private void promptMinutesDialogRadio(final ShortOffer shortOffer, final Button button) {
+        LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+        final View dialogLayout = layoutInflater.inflate(R.layout.dialog_enter_minutes_radio, null);
+        final AlertDialog dialog = new AlertDialog.Builder(getActivity())
+                .setView(dialogLayout)
+                .setPositiveButton(R.string.send, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        RadioGroup radioGroup = (RadioGroup) dialogLayout.findViewById(R.id.radio_group_minutes);
+                        int checkedId = radioGroup.getCheckedRadioButtonId();
+                        int minutes = 2;
+                        switch (checkedId) {
+                            case R.id.radio_button_minutes_2:
+                                minutes = 2;
+                                break;
+                            case R.id.radio_button_minutes_4:
+                                minutes = 4;
+                                break;
+                            case R.id.radio_button_minutes_6:
+                                minutes = 6;
+                                break;
+                            case R.id.radio_button_minutes_8:
+                                minutes = 8;
+                                break;
+                            case R.id.radio_button_minutes_10:
+                                minutes = 10;
+                                break;
+                        }
+                        byte[] message = MessengerClient.getShortOfferConfirmMessage(shortOffer.getIdPhoneCall(), minutes, getActivity());
+                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
+                        tcpClient.sendBytes(message);
+
+
+                        String msg = "";
+                        for(byte b : message)
+                            msg += (char) b;
+                        long l = ByteBuffer.wrap(Arrays.copyOfRange(message, 9, 13)).order(ByteOrder.LITTLE_ENDIAN).getInt();
+                        Log.e("DIALOGS", msg + " " + l);
+                        shortOffer.accept();
+                        button.setEnabled(false);
+                    }
+                })
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .create();
+        dialog.show();
     }
 
     public interface ShortOffersListProvider {
