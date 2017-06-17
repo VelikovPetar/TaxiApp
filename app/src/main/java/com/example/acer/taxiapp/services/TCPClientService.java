@@ -23,8 +23,8 @@ public class TCPClientService extends Service {
         return binder;
     }
 
-    public void sendBytes(byte[] message) {
-        tcpClient.sendBytes(message);
+    public boolean sendBytes(byte[] message) {
+        return tcpClient.sendBytes(message);
     }
 
     @Override

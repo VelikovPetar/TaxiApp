@@ -7,36 +7,24 @@
         android:layout_height="wrap_content">
 
         <Button
+            android:id="@+id/button_menu_login_logout"
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="@string/login_button_text"
-            android:onClick="showLoginFragment"
+            android:text="@string/login"
+            android:onClick="onLoginButtonClick"
             />
         <Button
+            android:id="@+id/button_menu_client_status"
             android:layout_width="match_parent"
             android:layout_height="96dp"
             android:text="@string/client_taken"
-            android:onClick="clientArrived"/>
+            android:onClick="onClientButtonClick"/>
         <Button
-            android:layout_width="match_parent"
-            android:layout_height="96dp"
-            android:text="@string/client_dropped_off"
-            android:onClick="clientLeft"/>
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="96dp"
-            android:text="@string/logout"
-            android:onClick="sendLogoutMessage"/>
-        <Button
+            android:id="@+id/button_menu_pause_status"
             android:layout_width="match_parent"
             android:layout_height="96dp"
             android:text="@string/pause"
-            android:onClick="sendPauseStartMessage"/>
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="96dp"
-            android:text="@string/pause_end"
-            android:onClick="sendPauseStopMessage"/>
+            android:onClick="onPauseButtonClick"/>
         <Button
             android:layout_width="match_parent"
             android:layout_height="96dp"

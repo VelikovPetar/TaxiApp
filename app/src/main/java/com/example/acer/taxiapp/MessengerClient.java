@@ -206,19 +206,12 @@ public class MessengerClient {
         return addChkSum(message);
     }
 
-    public static byte[] getLoginMessage(Location location, Context context) {
+    public static byte[] getLoginMessage(Location location, String driverId, Context context) {
         byte[] message = getBaseCommonMessage(location, context);
         turnOffPauseBit(message);
         turnOnTaximeterBit(message);
 
-        SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
-        String driverID = preferences.getString(MainActivity.RF_CARD_ID, null);
-        byte[] bytes;
-        if(driverID != null) {
-            bytes = driverID.getBytes();
-        } else {
-            bytes = new byte[4];
-        }
+        byte[] bytes = driverId.getBytes();
         message[67] = bytes[0];
         message[68] = bytes[1];
         message[69] = bytes[2];
@@ -227,19 +220,12 @@ public class MessengerClient {
         return addChkSum(message);
     }
 
-    public static byte[] getLogoutMessage(Location location, Context context) {
+    public static byte[] getLogoutMessage(Location location, String driverId, Context context) {
         byte[] message = getBaseCommonMessage(location, context);
         turnOnPauseBit(message);
         turnOnTaximeterBit(message);
 
-        SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
-        String driverID = preferences.getString(MainActivity.RF_CARD_ID, null);
-        byte[] bytes;
-        if(driverID != null) {
-            bytes = driverID.getBytes();
-        } else {
-            bytes = new byte[4];
-        }
+        byte[] bytes = driverId.getBytes();
         message[67] = bytes[0];
         message[68] = bytes[1];
         message[69] = bytes[2];
@@ -328,7 +314,7 @@ public class MessengerClient {
         message[8] = '3';
 
         // Kod na baranje
-        message[9] = '1';
+        message[9] = (byte) 1;
 
         // Vrednost
         message[10] = 0;
@@ -372,7 +358,7 @@ public class MessengerClient {
         message[8] = '3';
 
         // Kod na baranje
-        message[9] = '2';
+        message[9] = (byte) 2;
 
         // Vrednost
         message[10] = (byte) (region);
@@ -412,7 +398,7 @@ public class MessengerClient {
         message[8] = '3';
 
         // Kod na baranje
-        message[9] = '4';
+        message[9] = (byte) 4;
 
         // Vrednost
         message[10] = 0;

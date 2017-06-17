@@ -19,6 +19,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.acer.taxiapp.MessageListProvider;
+import com.example.acer.taxiapp.PopupMessage;
 import com.example.acer.taxiapp.R;
 
 import java.util.List;
@@ -26,7 +27,7 @@ import java.util.List;
 public class MessagesFragment extends Fragment {
 
     private ListView messagesList;
-    private List<String> messages;
+    private List<PopupMessage> messages;
     private MessageListAdapter adapter;
 
     // Reference to MainActivity for getting the list of messages
@@ -74,11 +75,16 @@ public class MessagesFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setTitle(R.string.full_message);
-                String fullMessage = adapter.getItem(position);
-                if(fullMessage != null) {
-                    fullMessage = fullMessage.substring(0, fullMessage.length() - 8);
+                // TODO Vo header izvor
+                PopupMessage popupMessage = adapter.getItem(position);
+                String fullMessage;
+                if(popupMessage != null) {
+                    byte source = popupMessage.getMessageSource();
+                    builder.setTitle(String.format("%s(%s)", getString(R.string.full_message), source == '0' ? getString(R.string.dispatcher) :
+                            (source == '3' ? getString(R.string.android) : getString(R.string.system))));
+                    fullMessage = popupMessage.getTextMessage();
                 } else {
+                    builder.setTitle(R.string.full_message);
                     fullMessage = getString(R.string.error_reading_full_message);
                 }
                 builder.setMessage(fullMessage);
@@ -107,12 +113,12 @@ public class MessagesFragment extends Fragment {
         adapter.notifyDataSetChanged();
     }
 
-    private class MessageListAdapter extends ArrayAdapter<String> {
+    private class MessageListAdapter extends ArrayAdapter<PopupMessage> {
 
         private Context context;
-        private List<String> messages;
+        private List<PopupMessage> messages;
 
-        MessageListAdapter(@NonNull Context context, @NonNull List<String> objects) {
+        MessageListAdapter(@NonNull Context context, @NonNull List<PopupMessage> objects) {
             super(context, 0, objects);
             this.context = context;
             messages = objects;
@@ -129,17 +135,21 @@ public class MessagesFragment extends Fragment {
             if(view == null) {
                 view = LayoutInflater.from(context).inflate(R.layout.list_item_message, parent, false);
             }
+            TextView sourceTextView = (TextView) view.findViewById(R.id.text_view_list_item_message_source);
             TextView messageTextView = (TextView) view.findViewById(R.id.text_view_list_item_message_text);
             TextView timeTextView = (TextView) view.findViewById(R.id.text_view_list_item_message_time);
 
-            String message = getItem(position);
-            if(message != null) {
-                if(message.length() > 38) {
-                    messageTextView.setText(String.format("%s...", message.substring(0, message.length() - 8).substring(0, 30)));
+            PopupMessage popupMessage = getItem(position);
+            if(popupMessage != null) {
+                byte source = popupMessage.getMessageSource();
+                sourceTextView.setText(source == '0' ? R.string.dispatcher : (source == '3' ? R.string.android : R.string.system));
+                String textMessage = popupMessage.getTextMessage();
+                if(textMessage.length() > 30) {
+                    messageTextView.setText(String.format("%s...", textMessage.substring(0, 30)));
                 } else {
-                    messageTextView.setText(String.format("%s", message.substring(0, message.length() - 8)));
+                    messageTextView.setText(textMessage);
                 }
-                timeTextView.setText(message.substring(message.length() - 8, message.length()));
+                timeTextView.setText(popupMessage.getTimestamp());
             }
             return view;
         }

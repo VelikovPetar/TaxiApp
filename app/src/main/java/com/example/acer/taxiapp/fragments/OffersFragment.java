@@ -105,7 +105,7 @@ public class OffersFragment extends Fragment {
         TextView offerSourceTextView = (TextView) longOfferLayout.findViewById(R.id.text_view_long_offer_source);
         TextView textMessageTextView = (TextView) longOfferLayout.findViewById(R.id.text_view_long_offer_text);
         Button confirmButton = (Button) longOfferLayout.findViewById(R.id.button_long_offer_confirm);
-        offerSourceTextView.setText(longOffer.getOfferSource() == '0' ? getString(R.string.source_android) : getString(R.string.source_dispatcher));
+        offerSourceTextView.setText(longOffer.getOfferSource() == '0' ? getString(R.string.android) : getString(R.string.dispatcher));
         textMessageTextView.setText(longOffer.getTextMessage());
         final float latitude = longOffer.getLatitude();
         final float longitude = longOffer.getLongitude();
@@ -155,7 +155,7 @@ public class OffersFragment extends Fragment {
             Log.e("DIALOGS", "This called");
             final ShortOffer shortOffer = getItem(position);
             if(shortOffer != null) {
-                offerSourceTextView.setText(shortOffer.getOfferSource() == '0' ? getString(R.string.source_android) : getString(R.string.source_dispatcher));
+                offerSourceTextView.setText(shortOffer.getOfferSource() == '0' ? getString(R.string.android) : getString(R.string.dispatcher));
                 textMessageTextView.setText(shortOffer.getTextMessage());
 
                 // If the offer is cancelled from the server, display it with different color and

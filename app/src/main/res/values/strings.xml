@@ -4,7 +4,7 @@
     <string name="server_status">Сервер:</string>
     <string name="connection_status">Конекција:</string>
     <string name="logged_driver">Најавен возач:</string>
-    <string name="login_button_text">Најава</string>
+    <string name="login">Најава</string>
     <string name="login_error1">Внесовте погрешен код! Обидете се повторно!</string>
     <string name="login_error2">Мора да има интернет конекција и вклучени локациски сервиси за да се најавите!</string>
     <string name="gps_status">GPS</string>
@@ -38,8 +38,9 @@
     <string name="error_reading_full_message">Проблем при вчитувањето на пораката!</string>
     <string name="full_message">Целосна порака</string>
     <string name="close">Затвори</string>
-    <string name="source_android">Андроид:</string>
-    <string name="source_dispatcher">Диспечер:</string>
+    <string name="android">Андроид</string>
+    <string name="system">Систем</string>
+    <string name="dispatcher">Диспечер</string>
     <string name="dest_dispatcher">До: Диспечер</string>
     <string name="dest_android">До: Android</string>
     <string name="message">Порака:</string>
@@ -58,4 +59,9 @@
     <string name="driver_number">Број на возач:</string>
     <string name="device_id">Број на уред:</string>
     <string name="display_on_map">Прикажи на мапа</string>
+    <string name="confirmation_code">Код за потврда:</string>
+    <string name="confirm_logout">Дали сакате да се одјавите?</string>
+    <string name="yes">Да</string>
+    <string name="no">Не</string>
+    <string name="must_be_logged_in">Мора да сте најавени за оваа акција!</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.example.acer.taxiapp.fragments;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -8,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -19,6 +21,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.example.acer.taxiapp.MainActivity;
+import com.example.acer.taxiapp.MessageListProvider;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
 import com.example.acer.taxiapp.TCPClient;
@@ -34,6 +37,43 @@ public class LoginFragment extends Fragment {
     private Location location;
 
     private boolean isConfig = true;
+
+    // Reference to MainActivity for providing the driver ID
+    private DriverIdProvider provider;
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        Log.e("MSG_FRAGMENT", "On Attach(context)");
+        try {
+            provider = (DriverIdProvider) context;
+        } catch(ClassCastException e) {
+            e.printStackTrace();
+            Log.e("MSG_FRAGMENT", "Class Cast Exception");
+        }
+    }
+
+
+    // If the device has android version older than 6.0(Marshmallow),
+    // the method onAttach(context) doesn't get called.
+    // On devices with android version 6.0 or newer, both methods
+    // onAttach(Context) and onAttach(Activity) are called.
+    // This method performs the check so the provider doesn't get
+    // initialized twice.
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            Log.e("MSG_FRAGMENT", "On Attach(activity)");
+            try {
+                provider = (DriverIdProvider) activity;
+            } catch (ClassCastException e) {
+                e.printStackTrace();
+                Log.e("MSG_FRAGMENT", "Class Cast Exception");
+            }
+        }
+    }
 
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
@@ -64,17 +104,18 @@ public class LoginFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if(isConfig) {
-                    SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
-                    String driverID = preferences.getString(MainActivity.RF_CARD_ID, null);
-                    if(driverID != null && driverID.equals(loginEditText.getText().toString().trim())) {
+                    String driverId = loginEditText.getText().toString();
+                    if(driverId.trim().length() != 4) {
+                        errorTextView.setText(R.string.login_error1);
+                        errorTextView.setVisibility(View.VISIBLE);
+                    } else {
+                        provider.onDriverIdProvided(driverId);
+                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
+                        tcpClient.sendBytes(MessengerClient.getLoginMessage(location, driverId, getActivity()));
                         View view = getActivity().getCurrentFocus();
                         Utils.hideKeyboard(view);
                         errorTextView.setText(getString(R.string.login_error1));
                         errorTextView.setVisibility(View.INVISIBLE);
-                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
-                        tcpClient.sendBytes(MessengerClient.getLoginMessage(location, getActivity()));
-                    } else {
-                        errorTextView.setVisibility(View.VISIBLE);
                     }
                 }
             }
@@ -91,6 +132,7 @@ public class LoginFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        Log.e("LYFECYCLE", "On resume");
         setup();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -117,22 +159,27 @@ public class LoginFragment extends Fragment {
 
     private void setup() {
         disableViews();
+        noServicesTextView.setVisibility(View.INVISIBLE);
         SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
-        if(!preferences.contains(MainActivity.RF_CARD_ID) || !preferences.contains(MainActivity.DEVICE_ID)) {
+        if(!preferences.contains(MainActivity.DEVICE_ID)) {
             errorTextView.setText(R.string.error_no_config_found);
             errorTextView.setVisibility(View.VISIBLE);
             isConfig = false;
             return;
         }
+        isConfig = true;
         if(!Utils.isLocationEnabled(getActivity())) {
+            noServicesTextView.setVisibility(View.VISIBLE);
             return;
         }
         if(!Utils.hasInternetConnection(getActivity())) {
+            noServicesTextView.setVisibility(View.VISIBLE);
             return;
         }
         if(location == null) {
             return;
         }
+        noServicesTextView.setVisibility(View.INVISIBLE);
         enableViews();
     }
 
@@ -198,4 +245,7 @@ public class LoginFragment extends Fragment {
         noServicesTextView.setVisibility(View.VISIBLE);
     }
 
+    public interface DriverIdProvider {
+        void onDriverIdProvided(String driverId);
+    }
 }

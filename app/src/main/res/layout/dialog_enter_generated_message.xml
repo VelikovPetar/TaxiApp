@@ -10,6 +10,7 @@
         android:text="@string/enter_text"
         android:padding="8dp"/>
 
+    <!--TODO Opcija A/D ako e porakata e vo 3 minuti-->
     <TextView
         android:id="@+id/text_view_message_destination"
         android:layout_width="match_parent"

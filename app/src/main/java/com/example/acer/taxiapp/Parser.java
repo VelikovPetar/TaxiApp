@@ -33,18 +33,18 @@ public class Parser {
     public static final String VALUE = "status_bar_update_value";
     public static final String COLOR = "status_bar_update_color";
 
-    // Names for extras for offers broadcasts
+    // Names for extras for offers/messages broadcasts
     public static final String ID_PHONE_CALL = "id_phone_call_extra";
     public static final String LATITUDE = "latitude_extra";
     public static final String LONGITUDE = "longitude_extra";
-    public static final String OFFER_SOURCE = "offer_source_extra";
+    public static final String SOURCE = "offer_source_extra";
     public static final String TEXT_MESSAGE = "text_message_extra";
+    public static final String TIMESTAMP = "timestamp_extra";
 
     // Name for driver login status broadcasts
     public static final String LOGIN_STATUS = "login_status";
 
     private Context context;
-    private String deviceId;
 
     // Constants
     private static final int HEADER_LENGTH = 9;
@@ -53,8 +53,7 @@ public class Parser {
 
     public Parser(Context context) {
         this.context = context;
-        SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
-        deviceId = preferences.getString(MainActivity.DEVICE_ID, null);
+
     }
 
     public void parse(byte[] message) {
@@ -170,23 +169,8 @@ public class Parser {
             String timeStamp = String.format(Locale.getDefault(), "%02d:%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND));
             // Check for the message source
             byte source = message[12 + lengthOfMessage - 1];
-            switch(source) {
-                case '4': // System
-                    Log.e(DEBUG_TAG, "System message");
-                    popupMessageText = "Систем: " + popupMessageText + timeStamp;
-                    broadcastMessage(BroadcastActions.ACTION_POPUP_MESSAGE, popupMessageText);
-                    break;
-                case '0': // Dispatcher
-                    Log.e(DEBUG_TAG, "Dispatcher message.");
-                    popupMessageText = "Диспечер: " + popupMessageText + timeStamp;
-                    broadcastMessage(BroadcastActions.ACTION_POPUP_MESSAGE, popupMessageText);
-                    break;
-                case '3': // Android
-                    Log.e(DEBUG_TAG, "Android message");
-                    popupMessageText = "Android: " + popupMessageText + timeStamp;
-                    broadcastMessage(BroadcastActions.ACTION_POPUP_MESSAGE, popupMessageText);
-                    break;
-            }
+            // Broadcast message
+            broadcastMessage(BroadcastActions.ACTION_POPUP_MESSAGE, source, popupMessageText, timeStamp);
         }
     }
 
@@ -349,6 +333,10 @@ public class Parser {
             return false;
         }
         byte[] deviceIdBytes = Arrays.copyOfRange(message, 2, 7);
+        SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+        String deviceId = preferences.getString(MainActivity.DEVICE_ID, null);
+        if(deviceId == null)
+            return false;
         return deviceId.equals(bytesToString(deviceIdBytes));
     }
 
@@ -367,10 +355,12 @@ public class Parser {
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
-    private void broadcastMessage(String action, String message) {
+    private void broadcastMessage(String action, byte messageSource, String textMessage, String timestamp) {
         Intent intent = new Intent();
         intent.setAction(action);
-        intent.putExtra(MESSAGE, message);
+        intent.putExtra(SOURCE, messageSource);
+        intent.putExtra(MESSAGE, textMessage);
+        intent.putExtra(TIMESTAMP, timestamp);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
@@ -378,7 +368,7 @@ public class Parser {
         Intent intent = new Intent();
         intent.setAction(action);
         intent.putExtra(ID_PHONE_CALL, idPhoneCall);
-        intent.putExtra(OFFER_SOURCE, offerSource);
+        intent.putExtra(SOURCE, offerSource);
         intent.putExtra(TEXT_MESSAGE, textMessage);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
@@ -389,7 +379,7 @@ public class Parser {
         intent.putExtra(ID_PHONE_CALL, idPhoneCall);
         intent.putExtra(LATITUDE, latitude);
         intent.putExtra(LONGITUDE, longitude);
-        intent.putExtra(OFFER_SOURCE, offerSource);
+        intent.putExtra(SOURCE, offerSource);
         intent.putExtra(TEXT_MESSAGE, textMessage);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }

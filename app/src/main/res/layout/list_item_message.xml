@@ -5,10 +5,17 @@
     android:layout_height="match_parent">
 
     <TextView
+        android:id="@+id/text_view_list_item_message_source"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textSize="25sp"
+        android:padding="8dp"/>
+    <TextView
         android:id="@+id/text_view_list_item_message_text"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="3"
+        android:layout_weight="4"
         android:textSize="25sp"
         android:maxLines="1"
         android:padding="8dp"/>

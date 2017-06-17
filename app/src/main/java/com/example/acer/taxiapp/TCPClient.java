@@ -121,15 +121,15 @@ public class TCPClient implements Runnable {
         return serverAvailable;
     }
 
-    public void sendBytes(byte[] message) {
+    public boolean sendBytes(byte[] message) {
         synchronized (this) {
             try {
                 if(!Utils.hasInternetConnection(context)) {
                     Log.e("MSG", "No connection");
-                    return;
+                    return false;
                 }
                 if(message == null) {
-                    return;
+                    return false;
                 }
                 if(writer != null) {
                     writer.write(message);
@@ -144,6 +144,7 @@ public class TCPClient implements Runnable {
                 e.printStackTrace();
             }
         }
+        return true;
     }
 
     private void broadcastStatusUpdate(String action, StatusBarFragment.StatusUpdate statusUpdate) {
@@ -273,7 +274,7 @@ public class TCPClient implements Runnable {
 //                        message += (char) b;
 //                    }
 
-                    byte[] buffer = new byte[512];
+                    byte[] buffer = new byte[1024];
                     int readBytes = reader.read(buffer);
                     ArrayList<Byte> bytes = new ArrayList<>();
                     for(int i = 0; i < readBytes; ++i) {

@@ -21,14 +21,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/driver_number"
+                android:text="@string/confirmation_code"
                 android:textSize="20sp"
-                android:labelFor="@+id/edit_text_setup_driver_code"/>
+                android:labelFor="@+id/edit_text_setup_confirmation_code"/>
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/edit_text_setup_driver_code"
-                android:inputType="number"
+                android:id="@+id/edit_text_setup_confirmation_code"
+                android:inputType="textPassword"
                 android:textAlignment="center"/>
         </LinearLayout>
 
