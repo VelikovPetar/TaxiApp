@@ -23,6 +23,7 @@ import android.widget.TextView;
 
 import com.example.acer.taxiapp.MessageListProvider;
 import com.example.acer.taxiapp.MessengerClient;
+import com.example.acer.taxiapp.PopupMessage;
 import com.example.acer.taxiapp.R;
 import com.example.acer.taxiapp.TCPClient;
 
@@ -200,11 +201,11 @@ public class GeneratedMessagesFragment extends Fragment {
     }
 
     private byte calculateDestination() {
-        List<String> messages = provider.getMessages();
+        List<PopupMessage> messages = provider.getMessages();
         if(messages.size() < 1)
             return '0';
-        String lastMessage = messages.get(0);
-        String lastMessageTime = lastMessage.substring(lastMessage.length() - 8, lastMessage.length());
+        PopupMessage lastMessage = messages.get(0);
+        String lastMessageTime = lastMessage.getTimestamp();
         Date date = new Date();
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
@@ -212,7 +213,7 @@ public class GeneratedMessagesFragment extends Fragment {
         int differenceInSeconds = differenceInSeconds(lastMessageTime, currentTime);
         if(differenceInSeconds > 3 * 60)
             return '0';
-        if(lastMessage.startsWith("Android"))
+        if(lastMessage.getMessageSource() == '3')
             return '3';
         return '0';
     }

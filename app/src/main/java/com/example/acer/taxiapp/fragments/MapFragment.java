@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.acer.taxiapp.R;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -18,6 +19,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -61,6 +63,16 @@ public class MapFragment extends Fragment {
             public void onMapReady(GoogleMap _googleMap) {
                 googleMap = _googleMap;
 
+                // Zoom the camera such that both current and customer location are visible
+                if(currentLatLng != null && customerLatLng != null) {
+                    LatLngBounds bounds = new LatLngBounds.Builder()
+                            .include(currentLatLng)
+                            .include(customerLatLng)
+                            .build();
+                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 25);
+                    googleMap.animateCamera(cameraUpdate);
+                }
+
                 // Display current position if it is already known
                 if (currentLatLng != null) {
                     currentLocationMarker = googleMap.addMarker(new MarkerOptions()
@@ -69,10 +81,13 @@ public class MapFragment extends Fragment {
                             .rotation(bearing)
                             .anchor(0.5f, 0.5f)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow32)));
-                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
-                            .target(currentLatLng)
-                            .zoom(16)
-                            .build()));
+                    if(customerLatLng == null) {
+                        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(
+                                new CameraPosition.Builder()
+                                        .target(currentLatLng)
+                                        .zoom(16)
+                                        .build()));
+                    }
                 }
 
                 // Display position of the customer if there is one waiting for the driver
@@ -81,10 +96,6 @@ public class MapFragment extends Fragment {
                             .position(customerLatLng)
                             .flat(true)
                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
-                    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
-                            .target(customerLatLng)
-                            .zoom(16)
-                            .build()));
                     // Redraw the polyline if there was a polyline already
                     if(points.size() > 0) {
                         if (line != null) {
@@ -100,7 +111,6 @@ public class MapFragment extends Fragment {
                         line = googleMap.addPolyline(options);
                     }
                 }
-
 
             }
         });
@@ -160,10 +170,6 @@ public class MapFragment extends Fragment {
                     .rotation(bearing)
                     .anchor(0.5f, 0.5f)
                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow32)));
-            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
-                    .target(currentLatLng)
-                    .zoom(16)
-                    .build()));
         }
     }
 

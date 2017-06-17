@@ -1,5 +1,6 @@
 package com.example.acer.taxiapp;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -31,4 +32,5 @@ public class Utils {
             imm.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         }
     }
+
 }

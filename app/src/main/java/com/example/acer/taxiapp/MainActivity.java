@@ -110,23 +110,23 @@ public class MainActivity extends Activity implements LocationListener,
             FragmentTransaction fTransaction = fManager.beginTransaction();
             fTransaction.add(R.id.fragment_offers_container, new OffersStatusBarFragment(), "TAG_OFFERS_STATUS_BAR_FRAGMENT");
             fTransaction.add(R.id.fragment_buttons_container, new ButtonListFragment(), "TAG_BUTTONS_LIST_FRAGMENT");
-            fTransaction.add(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
             fTransaction.add(R.id.fragment_status_bar_container, new StatusBarFragment(), "TAG_STATUS_BAR_FRAGMENT");
+            fTransaction.add(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
             fTransaction.commit();
         }
 
-        // TODO Naming
         ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
         configButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ConfigFragment configFragment = (ConfigFragment) fManager.findFragmentByTag("TAG_CONFIG_FRAGMENT");
-                if (configFragment == null || !configFragment.isVisible()) {
-                    FragmentTransaction fTransaction = fManager.beginTransaction();
-                    fTransaction.replace(R.id.fragment_content_container, new ConfigFragment(), "TAG_CONFIG_FRAGMENT");
-                    fTransaction.addToBackStack("frag_conf");
-                    fTransaction.commit();
+                if(configFragment != null && configFragment.isVisible()) {
+                    return;
                 }
+                FragmentTransaction fTransaction = fManager.beginTransaction();
+                fTransaction.replace(R.id.fragment_content_container, new ConfigFragment(), "TAG_CONFIG_FRAGMENT");
+                fTransaction.addToBackStack("frag_conf");
+                fTransaction.commit();
             }
         });
 
@@ -245,6 +245,10 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
     public void requestStatus(View view) {
+        if(!isLoggedIn) {
+            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
+            return;
+        }
         LayoutInflater layoutInflater = LayoutInflater.from(this);
         final View dialogLayout = layoutInflater.inflate(R.layout.dialog_status_request, null);
         final AlertDialog dialog = new AlertDialog.Builder(this)
@@ -288,6 +292,10 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
     public void getInfoByRegion(View view) {
+        if(!isLoggedIn) {
+            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
+            return;
+        }
         byte[] message = MessengerClient.getInfoByRegionMessage(this);
         tcpClientService.sendBytes(message);
         String msg = "";
@@ -297,6 +305,10 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
     public void registerForRegion(View view) {
+        if(!isLoggedIn) {
+            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
+            return;
+        }
         LayoutInflater layoutInflater = LayoutInflater.from(this);
         final View dialogLayout = layoutInflater.inflate(R.layout.dialog_register_for_region, null);
         final AlertDialog dialog = new AlertDialog.Builder(this)
@@ -345,8 +357,12 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
     public void showMessagesFragment(View view) {
+        if(!isLoggedIn) {
+            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
+            return;
+        }
         if(popupMessages.size() == 0) {
-            Toast.makeText(this, getString(R.string.no_messages), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.no_messages), Toast.LENGTH_LONG).show();
             return;
         }
         FragmentManager fManager = getFragmentManager();
@@ -363,8 +379,12 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
     public void showOffersFragment(View view) {
+        if(!isLoggedIn) {
+            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
+            return;
+        }
         if(shortOffers.size() == 0 && longOffer == null) {
-            Toast.makeText(this, getString(R.string.no_offers), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.no_offers), Toast.LENGTH_LONG).show();
             return;
         }
         FragmentManager fManager = getFragmentManager();
@@ -381,6 +401,10 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
     public void showGeneratedMessagesFragment(View view) {
+        if(!isLoggedIn) {
+            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
+            return;
+        }
         FragmentManager fManager = getFragmentManager();
         GeneratedMessagesFragment generatedMessagesFragment =
                 (GeneratedMessagesFragment) fManager.findFragmentByTag("TAG_GENERATED_MESSAGES_FRAGMENT");
@@ -411,7 +435,6 @@ public class MainActivity extends Activity implements LocationListener,
     @Override
     protected void onResume() {
         super.onResume();
-        // TODO Konsultiraj se shto da pravi aplikacijata ako e vo pozadina!
 
         // Register receiver for driver login status
         IntentFilter intentFilter = new IntentFilter();
@@ -707,7 +730,6 @@ public class MainActivity extends Activity implements LocationListener,
         return longOffer;
     }
 
-    // TODO Koga treba da se povika?
     @Override
     public void onLongOfferFinished() {
         longOffer = null;
@@ -892,7 +914,10 @@ public class MainActivity extends Activity implements LocationListener,
         if(isLoggedIn) {
             isLoggedIn = false;
             FragmentManager fManager = getFragmentManager();
-            fManager.popBackStackImmediate();
+            // Remove all fragments from the background, if the logout was called
+            // when a fragment other than the map was visible(fragment above the map)
+            while(fManager.getBackStackEntryCount() > 0)
+                fManager.popBackStackImmediate();
             FragmentTransaction fTransaction = fManager.beginTransaction();
             LoginFragment loginFragment = new LoginFragment();
             loginFragment.initLocation(lastLocation);
