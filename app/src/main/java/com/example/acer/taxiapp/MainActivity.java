@@ -29,6 +29,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -103,6 +104,7 @@ public class MainActivity extends Activity implements LocationListener,
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Initialize fragments
         final FragmentManager fManager = getFragmentManager();
@@ -473,12 +475,6 @@ public class MainActivity extends Activity implements LocationListener,
                     hasInitialLocation = true;
                 }
             }
-            // Start the thread that sends periodical location updates
-            if (isLoggedIn && !locationUpdater.isRunning()) {
-                locationUpdater.setLastLocation(lastLocation);
-                locationUpdater.start();
-            }
-
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
         }
@@ -489,10 +485,6 @@ public class MainActivity extends Activity implements LocationListener,
     protected void onPause() {
         super.onPause();
 
-        // Stop the thread sending periodical location updates
-        if (isLoggedIn && locationUpdater.isRunning()) {
-            locationUpdater.stop();
-        }
         locationManager.removeUpdates(this);
 
         // Unregister login status receiver
@@ -518,6 +510,7 @@ public class MainActivity extends Activity implements LocationListener,
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        locationUpdater.stop();
         if (isLoggedIn) {
             tcpClientService.sendBytes(MessengerClient.getLogoutMessage(lastLocation, driverID, this));
             isLoggedIn = false;

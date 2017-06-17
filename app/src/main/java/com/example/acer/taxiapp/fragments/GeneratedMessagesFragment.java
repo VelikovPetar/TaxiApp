@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -19,6 +20,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.example.acer.taxiapp.MessageListProvider;
@@ -155,7 +157,8 @@ public class GeneratedMessagesFragment extends Fragment {
     }
 
     private void showEnterMessageDialog() {
-        final byte destination = calculateDestination();
+        final boolean shouldChooseDestination = shouldChooseDestination();
+        Log.e("DIALOGS", "" + shouldChooseDestination);
         LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
         final View dialogLayout = layoutInflater.inflate(R.layout.dialog_enter_generated_message, null);
         final AlertDialog dialog = new AlertDialog.Builder(getActivity())
@@ -171,6 +174,28 @@ public class GeneratedMessagesFragment extends Fragment {
         dialog.setOnShowListener(new DialogInterface.OnShowListener() {
             @Override
             public void onShow(DialogInterface _dialog) {
+                final TextView msgDestination = (TextView) dialogLayout.findViewById(R.id.text_view_message_destination);
+                RadioGroup destinationRadioGroup = (RadioGroup) dialogLayout.findViewById(R.id.radio_group_choose_destination);
+                destinationRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(RadioGroup group, @IdRes int checkedId) {
+                        switch (checkedId) {
+                            case R.id.radio_button_destination_android:
+                                msgDestination.setText(R.string.dest_android);
+                                break;
+                            case R.id.radio_button_destination_dispatcher:
+                                msgDestination.setText(R.string.dest_dispatcher);
+                                break;
+                        }
+                    }
+                });
+                if(shouldChooseDestination) {
+                    msgDestination.setText(R.string.dest_android);
+                    destinationRadioGroup.setVisibility(View.VISIBLE);
+                } else {
+                    msgDestination.setText(R.string.dest_dispatcher);
+                    destinationRadioGroup.setVisibility(View.GONE);
+                }
                 Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 positiveButton.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -181,6 +206,19 @@ public class GeneratedMessagesFragment extends Fragment {
                             messageEditText.setHint(R.string.error_enter_text);
                             messageEditText.setHintTextColor(Color.RED);
                             return;
+                        }
+                        byte destination = '0';
+                        RadioGroup destinationRadioGroup = (RadioGroup) dialogLayout.findViewById(R.id.radio_group_choose_destination);
+                        if(shouldChooseDestination) {
+                            int choice = destinationRadioGroup.getCheckedRadioButtonId();
+                            switch (choice) {
+                                case R.id.radio_button_destination_android:
+                                    destination = '3';
+                                    break;
+                                case R.id.radio_button_destination_dispatcher:
+                                    destination = '0';
+                                    break;
+                            }
                         }
                         byte[] message = MessengerClient.getGeneratedMessage(destination, '7', text, getActivity());
                         TCPClient tcpClient = TCPClient.getInstance(getActivity());
@@ -194,16 +232,13 @@ public class GeneratedMessagesFragment extends Fragment {
                 });
             }
         });
-        TextView msgDestination = (TextView) dialogLayout.findViewById(R.id.text_view_message_destination);
-        msgDestination.setText(destination == '0' ? getString(R.string.dest_dispatcher) : getString(R.string.dest_android));
-
         dialog.show();
     }
 
-    private byte calculateDestination() {
+    private boolean shouldChooseDestination() {
         List<PopupMessage> messages = provider.getMessages();
         if(messages.size() < 1)
-            return '0';
+            return false;
         PopupMessage lastMessage = messages.get(0);
         String lastMessageTime = lastMessage.getTimestamp();
         Date date = new Date();
@@ -211,11 +246,13 @@ public class GeneratedMessagesFragment extends Fragment {
         cal.setTime(date);
         String currentTime = String.format(Locale.getDefault(), "%02d:%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND));
         int differenceInSeconds = differenceInSeconds(lastMessageTime, currentTime);
+        Log.e("DIALOGS", lastMessageTime);
+        Log.e("DIALOGS", currentTime);
         if(differenceInSeconds > 3 * 60)
-            return '0';
+            return false;
         if(lastMessage.getMessageSource() == '3')
-            return '3';
-        return '0';
+            return true;
+        return false;
     }
 
     private int differenceInSeconds(String time1, String time2) {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
     <TextView
@@ -10,7 +10,25 @@
         android:text="@string/enter_text"
         android:padding="8dp"/>
 
-    <!--TODO Opcija A/D ako e porakata e vo 3 minuti-->
+    <RadioGroup
+        android:id="@+id/radio_group_choose_destination"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:checkedButton="@+id/radio_button_destination_android">
+        <RadioButton
+            android:id="@+id/radio_button_destination_android"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/android"/>
+        <RadioButton
+            android:id="@+id/radio_button_destination_dispatcher"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/dispatcher"/>
+    </RadioGroup>
     <TextView
         android:id="@+id/text_view_message_destination"
         android:layout_width="match_parent"
