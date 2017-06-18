@@ -114,12 +114,12 @@ public class MessengerClient {
         message[41] = (byte) (bits >> 16);
         message[42] = (byte) (bits >> 24);
 
-        // Visina TODO
+        // Visina
         int altitude = (int) location.getAltitude();
         message[43] = (byte) (altitude);
         message[44] = (byte) (altitude >> 8);
 
-        // Bearing TODO
+        // Bearing
         float bearing = location.getBearing();
         bits = Float.floatToIntBits(bearing);
         message[45] = (byte) (bits);

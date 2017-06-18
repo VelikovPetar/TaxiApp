@@ -39,7 +39,8 @@
                android:scaleType="centerInside"
                android:maxWidth="25dp"
                android:maxHeight="25dp"
-               android:layout_weight="1"/>
+               android:layout_weight="1"
+               android:contentDescription="@string/configuration" />
        </TableRow>
 
    </TableLayout>
