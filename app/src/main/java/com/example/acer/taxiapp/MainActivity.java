@@ -25,7 +25,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
@@ -46,8 +45,6 @@ import com.example.acer.taxiapp.fragments.OffersStatusBarFragment;
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
 import com.example.acer.taxiapp.services.TCPClientService;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -116,6 +113,17 @@ public class MainActivity extends Activity implements LocationListener,
             fTransaction.add(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
             fTransaction.commit();
         }
+        // Special case: On some android devices, when pressing the power button(off then on),
+        // the activity changes orientation effectively destroying itself(with that it send message for logging out).
+        // When the activity is recreated, it restores the state of the other fragments, but it remains in not logged state
+        // So when that happens, we need to clear the fragments from the stack before the activity was destroyed, and add the Login fragment
+        if(savedInstanceState != null && !isLoggedIn) {
+            while(fManager.getBackStackEntryCount() > 0)
+                fManager.popBackStackImmediate();
+            FragmentTransaction fTransaction = fManager.beginTransaction();
+            fTransaction.replace(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
+            fTransaction.commit();
+        }
 
         ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
         configButton.setOnClickListener(new View.OnClickListener() {
@@ -159,59 +167,80 @@ public class MainActivity extends Activity implements LocationListener,
                 LoginFragment loginFragment = (LoginFragment) fManager.findFragmentByTag("TAG_LOGIN_FRAGMENT");
                 if (loginFragment == null || !loginFragment.isVisible()) {
                     FragmentTransaction fTransaction = fManager.beginTransaction();
-                    fTransaction.replace(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
+                    LoginFragment newLoginFragment = new LoginFragment();
+                    if(lastLocation != null)
+                        newLoginFragment.initLocation(lastLocation);
+                    fTransaction.replace(R.id.fragment_content_container, newLoginFragment, "TAG_LOGIN_FRAGMENT");
                     fTransaction.addToBackStack(null);
                     fTransaction.commit();
                 }
             }
         } else {
-            if (lastLocation != null) {
-                AlertDialog dialog = new AlertDialog.Builder(this)
-                        .setTitle(R.string.logout)
-                        .setMessage(R.string.confirm_logout)
-                        .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                if (lastLocation != null) {
-                                    byte[] message = MessengerClient.getLogoutMessage(lastLocation, driverID, MainActivity.this);
-                                    tcpClientService.sendBytes(message);
+            AlertDialog dialog = new AlertDialog.Builder(this)
+                    .setTitle(R.string.logout)
+                    .setMessage(R.string.confirm_logout)
+                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (lastLocation != null) {
+                                byte[] message = MessengerClient.getLogoutMessage(lastLocation, driverID, MainActivity.this);
+                                if (!tcpClientService.sendBytes(message)) {
+                                    Toast.makeText(MainActivity.this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
                                 }
                             }
-                        })
-                        .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.cancel();
-                            }
-                        })
-                        .create();
-                dialog.show();
-            }
+                        }
+                    })
+                    .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    })
+                    .create();
+            dialog.show();
         }
+
     }
 
-    public void onPauseButtonClick(View view) {
+    public void onMapButtonClick(View v) {
         if(!isLoggedIn) {
             Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
             return;
         }
-        if (lastLocation != null) {
-            if(!isPaused) {
-                byte[] message = MessengerClient.getPauseStartMessage(lastLocation, this);
-                if(tcpClientService.sendBytes(message)) {
-                    locationUpdater.setBits(true, false);
-                    isPaused = true;
-                    Button pauseButton = (Button) findViewById(R.id.button_menu_pause_status);
-                    pauseButton.setText(R.string.pause_end);
-                }
+        // If the driver is logged in, the map is always the bottom fragment
+        FragmentManager fManager = getFragmentManager();
+        while(fManager.getBackStackEntryCount() > 0)
+            fManager.popBackStackImmediate();
+    }
+
+    public void onPauseButtonClick(View view) {
+        if (!isLoggedIn) {
+            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (!isPaused) {
+            // Send message for starting pause
+            byte[] message = MessengerClient.getPauseStartMessage(lastLocation, this);
+            if (tcpClientService.sendBytes(message)) {
+                locationUpdater.setBits(true, false);
+                isPaused = true;
+                // Change button
+                Button pauseButton = (Button) findViewById(R.id.button_menu_pause_status);
+                pauseButton.setText(R.string.pause_end);
             } else {
-                byte[] message = MessengerClient.getPauseStopMessage(lastLocation, this);
-                if(tcpClientService.sendBytes(message)) {
-                    locationUpdater.setBits(false, false);
-                    isPaused = false;
-                    Button pauseButton = (Button) findViewById(R.id.button_menu_pause_status);
-                    pauseButton.setText(R.string.pause);
-                }
+                Toast.makeText(this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
+            }
+        } else {
+            // Send message for ending pause
+            byte[] message = MessengerClient.getPauseStopMessage(lastLocation, this);
+            if (tcpClientService.sendBytes(message)) {
+                locationUpdater.setBits(false, false);
+                isPaused = false;
+                // Change button
+                Button pauseButton = (Button) findViewById(R.id.button_menu_pause_status);
+                pauseButton.setText(R.string.pause);
+            } else {
+                Toast.makeText(this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -222,26 +251,27 @@ public class MainActivity extends Activity implements LocationListener,
             return;
         }
         if(!isWithClient) {
-            OffersStatusBarFragment offersStatusBarFragment =
-                    (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-            offersStatusBarFragment.clientArrived();
+            // Send message that the client was picked up
             if(tcpClientService.sendBytes(MessengerClient.getCommonMessage(lastLocation, this, false, true))) {
                 locationUpdater.setBits(false, true);
-                MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentByTag("TAG_MAP_FRAGMENT");
-                if (mapFragment != null) {
-                    mapFragment.clear();
-                }
                 onLongOfferFinished();
                 isWithClient = true;
+                // Change button
                 Button clientStatusButton = (Button) findViewById(R.id.button_menu_client_status);
                 clientStatusButton.setText(R.string.client_dropped_off);
+            } else {
+                Toast.makeText(this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
             }
         } else {
+            // Send message that client was dropped
             if(tcpClientService.sendBytes(MessengerClient.getCommonMessage(lastLocation, this, false, false))) {
                 locationUpdater.setBits(false, false);
                 isWithClient = false;
+                // Change button
                 Button clientStatusButton = (Button) findViewById(R.id.button_menu_client_status);
                 clientStatusButton.setText(R.string.client_taken);
+            } else {
+                Toast.makeText(this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -278,13 +308,9 @@ public class MainActivity extends Activity implements LocationListener,
                             return;
                         }
                         byte[] message = MessengerClient.getRequestStatusMessage(text, MainActivity.this);
-                        tcpClientService.sendBytes(message);
-
-                        String msg = "";
-                        for(byte b : message)
-                            msg += (char) b;
-                        Log.e("DIALOGS", msg);
-
+                        if(!tcpClientService.sendBytes(message)) {
+                            Toast.makeText(MainActivity.this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
+                        }
                         dialog.dismiss();
                     }
                 });
@@ -299,11 +325,10 @@ public class MainActivity extends Activity implements LocationListener,
             return;
         }
         byte[] message = MessengerClient.getInfoByRegionMessage(this);
-        tcpClientService.sendBytes(message);
-        String msg = "";
-        for(byte b : message)
-            msg += (char) b;
-        Log.e("DIALOGS", msg);
+        if(!tcpClientService.sendBytes(message)) {
+            Toast.makeText(MainActivity.this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
+        }
+
     }
 
     public void registerForRegion(View view) {
@@ -339,17 +364,9 @@ public class MainActivity extends Activity implements LocationListener,
                         }
                         int region = Integer.parseInt(regionText.trim());
                         byte[] message = MessengerClient.getRegisterForRegionMessage(region, MainActivity.this);
-                        tcpClientService.sendBytes(message);
-
-                        String msg = "";
-                        for(byte b : message)
-                            msg += (char) b;
-                        byte[] tmp = new byte[4];
-                        tmp[0] = message[10];
-                        tmp[1] = message[11];
-                        long l = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getInt();
-                        Log.e("DIALOGS", msg + " " + l);
-
+                        if(!tcpClientService.sendBytes(message)) {
+                            Toast.makeText(MainActivity.this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
+                        }
                         dialog.dismiss();
                     }
                 });
@@ -361,10 +378,6 @@ public class MainActivity extends Activity implements LocationListener,
     public void showMessagesFragment(View view) {
         if(!isLoggedIn) {
             Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
-            return;
-        }
-        if(popupMessages.size() == 0) {
-            Toast.makeText(this, getString(R.string.no_messages), Toast.LENGTH_LONG).show();
             return;
         }
         FragmentManager fManager = getFragmentManager();
@@ -383,10 +396,6 @@ public class MainActivity extends Activity implements LocationListener,
     public void showOffersFragment(View view) {
         if(!isLoggedIn) {
             Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
-            return;
-        }
-        if(shortOffers.size() == 0 && longOffer == null) {
-            Toast.makeText(this, getString(R.string.no_offers), Toast.LENGTH_LONG).show();
             return;
         }
         FragmentManager fManager = getFragmentManager();
@@ -437,7 +446,6 @@ public class MainActivity extends Activity implements LocationListener,
     @Override
     protected void onResume() {
         super.onResume();
-
         // Register receiver for driver login status
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BroadcastActions.ACTION_DRIVER_LOGIN_STATUS);
@@ -476,7 +484,8 @@ public class MainActivity extends Activity implements LocationListener,
                 }
             }
         } else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
         }
 
     }
@@ -484,18 +493,13 @@ public class MainActivity extends Activity implements LocationListener,
     @Override
     protected void onPause() {
         super.onPause();
-
         locationManager.removeUpdates(this);
-
         // Unregister login status receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(loginStatusReceiver);
-
         // Unregister popup message receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(popupMessageReceiver);
-
         // Unregister short offers receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(offersReceiver);
-
         // Unregister vehicle state receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(vehicleStateReceiver);
     }
@@ -523,8 +527,23 @@ public class MainActivity extends Activity implements LocationListener,
         if (getFragmentManager().getBackStackEntryCount() > 0) {
             getFragmentManager().popBackStack();
         } else {
-            super.onBackPressed();
-            // TODO Prompt exit
+            final AlertDialog dialog = new AlertDialog.Builder(this)
+                    .setTitle(R.string.exit)
+                    .setMessage(R.string.confirm_exit)
+                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            MainActivity.super.onBackPressed();
+                        }
+                    })
+                    .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    })
+                    .create();
+            dialog.show();
         }
     }
 
@@ -543,14 +562,13 @@ public class MainActivity extends Activity implements LocationListener,
     @Override
     public void onLocationChanged(Location location) {
         // Initialize the location for the login message
-        LoginFragment loginFragment = (LoginFragment) getFragmentManager().findFragmentByTag("TAG_LOGIN_FRAGMENT");
+        FragmentManager fManager = getFragmentManager();
+        LoginFragment loginFragment = (LoginFragment) fManager.findFragmentByTag("TAG_LOGIN_FRAGMENT");
         if(loginFragment != null && loginFragment.isVisible()) {
             loginFragment.initLocation(location);
             hasInitialLocation = true;
         }
-        Toast.makeText(this, "Update", Toast.LENGTH_SHORT).show();
         this.lastLocation = location;
-        FragmentManager fManager = getFragmentManager();
         MapFragment mapFragment = (MapFragment) fManager.findFragmentByTag("TAG_MAP_FRAGMENT");
         if (mapFragment != null && mapFragment.isVisible()) {
             mapFragment.updateLocation(lastLocation);
@@ -675,6 +693,11 @@ public class MainActivity extends Activity implements LocationListener,
         return popupMessages.getElements();
     }
 
+    @Override
+    public void notifyChange() {
+        updateMessagesFragments();
+    }
+
     // Broadcast receiver for incoming popup messages
     private BroadcastReceiver popupMessageReceiver = new BroadcastReceiver() {
         @Override
@@ -686,23 +709,26 @@ public class MainActivity extends Activity implements LocationListener,
                 String message = intent.getStringExtra(Parser.MESSAGE);
                 String timestamp = intent.getStringExtra(Parser.TIMESTAMP);
                 popupMessages.insert(new PopupMessage(source, message, timestamp));
-
-                // If the message fragment is visible, update the list view displaying the messages
-                FragmentManager fManager = getFragmentManager();
-                MessagesFragment messagesFragment = (MessagesFragment) fManager.findFragmentByTag("TAG_POPUP_MESSAGES_FRAGMENT");
-                if(messagesFragment != null && messagesFragment.isVisible()) {
-                    messagesFragment.notifyDataSetChanged();
-                }
-
-                // Update the offers status bar
-                OffersStatusBarFragment offersStatusBarFragment =
-                        (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-                if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
-                    offersStatusBarFragment.setMessagesCount(popupMessages.size());
-                }
+                updateMessagesFragments();
             }
         }
     };
+
+    private void updateMessagesFragments() {
+        // If the message fragment is visible, update the list view displaying the messages
+        FragmentManager fManager = getFragmentManager();
+        MessagesFragment messagesFragment = (MessagesFragment) fManager.findFragmentByTag("TAG_POPUP_MESSAGES_FRAGMENT");
+        if(messagesFragment != null && messagesFragment.isVisible()) {
+            messagesFragment.notifyDataSetChanged();
+        }
+
+        // Update the offers status bar
+        OffersStatusBarFragment offersStatusBarFragment =
+                (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+        if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+            offersStatusBarFragment.setMessagesCount(popupMessages.size());
+        }
+    }
 
     // List that keeps current short offers
     private ArrayList<ShortOffer> shortOffers = new ArrayList<>();
@@ -726,10 +752,20 @@ public class MainActivity extends Activity implements LocationListener,
     @Override
     public void onLongOfferFinished() {
         longOffer = null;
-        updateFragments(null);
+        updateOfferFragments(null);
+
+        // Cancel the timers and remove the long offer
+        OffersStatusBarFragment offersStatusBarFragment =
+                (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+        offersStatusBarFragment.cancelTimers();
+        // Remove the client marker
+        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentByTag("TAG_MAP_FRAGMENT");
+        if (mapFragment != null) {
+            mapFragment.clear();
+        }
     }
 
-    private void updateFragments(LongOffer longOffer) {
+    private void updateOfferFragments(LongOffer longOffer) {
         FragmentManager fManager = getFragmentManager();
         // If the offers fragment is visible, update the list view displaying the short offers
         OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
@@ -737,6 +773,8 @@ public class MainActivity extends Activity implements LocationListener,
             offersFragment.notifyDataSetChanged();
             if(longOffer != null) {
                 offersFragment.displayLongOffer(longOffer);
+            } else {
+                offersFragment.hideLongOffer();
             }
         }
         // Update the offers status bar
@@ -763,57 +801,69 @@ public class MainActivity extends Activity implements LocationListener,
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if(action.equals(BroadcastActions.ACTION_SHORT_OFFER)) {
-                // If there is an active long offer, ignore incoming short offers
-                if(longOffer != null)
-                    return;
-                long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);
-                byte offerSource = intent.getByteExtra(Parser.SOURCE, (byte) -1);
-                String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
-                final ShortOffer shortOffer = new ShortOffer(idPhoneCall, offerSource, textMessage);
-                shortOffers.add(0, shortOffer);
-                receiverHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(!shortOffer.isCanceled()) {
-                            shortOffers.remove(shortOffer);
-                            updateFragments(null);
+            switch (action) {
+                case BroadcastActions.ACTION_SHORT_OFFER: {
+                    // If there is an active long offer, ignore incoming short offers
+                    if (longOffer != null)
+                        return;
+                    long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);
+                    byte offerSource = intent.getByteExtra(Parser.SOURCE, (byte) -1);
+                    String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
+                    final ShortOffer shortOffer = new ShortOffer(idPhoneCall, offerSource, textMessage);
+                    shortOffers.add(0, shortOffer);
+                    receiverHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (!shortOffer.isCanceled()) {
+                                shortOffers.remove(shortOffer);
+                                updateOfferFragments(null);
+                            }
+                        }
+                    }, 45000);
+                    updateOfferFragments(null);
+                    break;
+                }
+                case BroadcastActions.ACTION_CANCEL_SHORT_OFFER: {
+                    // If there is an active long offer, ignore incoming cancels of short offers
+                    if (longOffer != null)
+                        return;
+                    long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);
+                    String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
+                    for (final ShortOffer so : shortOffers) {
+                        if (so.getIdPhoneCall() == idPhoneCall && !so.isCanceled()) {
+                            so.cancel(textMessage);
+                            receiverHandler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    shortOffers.remove(so);
+                                    updateOfferFragments(null);
+                                }
+                            }, 10000);
+                            updateOfferFragments(null);
                         }
                     }
-                }, 45000);
-                updateFragments(null);
-            } else if(action.equals(BroadcastActions.ACTION_CANCEL_SHORT_OFFER)) {
-                // If there is an active long offer, ignore incoming cancels of short offers
-                if(longOffer != null)
-                    return;
-                long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);
-                String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
-                for(final ShortOffer so : shortOffers) {
-                    if(so.getIdPhoneCall() == idPhoneCall) {
-                        so.cancel(textMessage);
-                        receiverHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                shortOffers.remove(so);
-                                updateFragments(null);
-                            }
-                        }, 10000);
-                        updateFragments(null);
-                    }
+                    break;
                 }
-            } else if(action.equals(BroadcastActions.ACTION_LONG_OFFER)) {
-                long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);
-                float latitude = intent.getFloatExtra(Parser.LATITUDE, -1);
-                float longitude = intent.getFloatExtra(Parser.LONGITUDE, -1);
-                byte offerSource = intent.getByteExtra(Parser.SOURCE, (byte) -1);
-                String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
-                longOffer = new LongOffer(idPhoneCall, latitude, longitude, offerSource, textMessage);
-
-                // Remove all short offers and callbacks scheduled on the handler
-                receiverHandler.removeCallbacksAndMessages(null);
-                shortOffers.clear();
-                // Display the long offer
-                updateFragments(longOffer);
+                case BroadcastActions.ACTION_LONG_OFFER: {
+                    long idPhoneCall = intent.getLongExtra(Parser.ID_PHONE_CALL, -1);
+                    float latitude = intent.getFloatExtra(Parser.LATITUDE, -1);
+                    float longitude = intent.getFloatExtra(Parser.LONGITUDE, -1);
+                    byte offerSource = intent.getByteExtra(Parser.SOURCE, (byte) -1);
+                    String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
+                    // Accept the long offer if there was already a short offer with the same id
+                    for (ShortOffer so : shortOffers) {
+                        if (so.getIdPhoneCall() == idPhoneCall && !so.isCanceled()) {
+                            longOffer = new LongOffer(idPhoneCall, latitude, longitude, offerSource, textMessage);
+                            // Remove all short offers and callbacks scheduled on the handler
+                            receiverHandler.removeCallbacksAndMessages(null);
+                            shortOffers.clear();
+                            // Display the long offer
+                            updateOfferFragments(longOffer);
+                            break;
+                        }
+                    }
+                    break;
+                }
             }
         }
     }
@@ -856,7 +906,9 @@ public class MainActivity extends Activity implements LocationListener,
             String value = intent.getStringExtra(TCPClient.VALUE);
             int color = intent.getIntExtra(TCPClient.COLOR, Color.GRAY);
             StatusBarFragment statusBarFragment = (StatusBarFragment) getFragmentManager().findFragmentByTag("TAG_STATUS_BAR_FRAGMENT");
-            statusBarFragment.update(action, value, color);
+            if(statusBarFragment != null) {
+                statusBarFragment.update(action, value, color);
+            }
         }
     };
 
@@ -867,7 +919,6 @@ public class MainActivity extends Activity implements LocationListener,
             String action = intent.getAction();
             if(action.equals(BroadcastActions.ACTION_DRIVER_LOGIN_STATUS)) {
                 boolean login = intent.getBooleanExtra(Parser.LOGIN_STATUS, false);
-                Log.e("LOGGING", "Loged " + login);
                 if(login) {
                     onSuccessfulLogin();
                 } else {
@@ -899,6 +950,12 @@ public class MainActivity extends Activity implements LocationListener,
             // Change the text on the login menu button
             Button loginButton = (Button) findViewById(R.id.button_menu_login_logout);
             loginButton.setText(R.string.logout);
+
+            OffersStatusBarFragment offersStatusBarFragment =
+                    (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+            if(offersStatusBarFragment != null) {
+                offersStatusBarFragment.setLoggedIn(true);
+            }
         }
     }
 
@@ -928,12 +985,13 @@ public class MainActivity extends Activity implements LocationListener,
             shortOffers.clear();
             popupMessages.clear();
             longOffer = null;
-            updateFragments(null);
+            updateOfferFragments(null);
             OffersStatusBarFragment offersStatusBarFragment =
                     (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
             if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
                 offersStatusBarFragment.cancelTimers();
                 offersStatusBarFragment.setMessagesCount(popupMessages.size());
+                offersStatusBarFragment.setLoggedIn(false);
             }
 
             // Change the text on the login menu button

@@ -28,6 +28,8 @@ public class OffersStatusBarFragment extends Fragment {
     private int offersCount;
     private int messagesCount;
 
+    private boolean isLoggedIn = false;
+
 
     @Nullable
     @Override
@@ -39,8 +41,8 @@ public class OffersStatusBarFragment extends Fragment {
         offersInfoTextView.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                if(offersCount == 0) {
-                    Toast.makeText(getActivity(), getString(R.string.no_offers), Toast.LENGTH_SHORT).show();
+                if(!isLoggedIn) {
+                    Toast.makeText(getActivity(), R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
                     return;
                 }
                 FragmentManager fManager = getFragmentManager();
@@ -64,8 +66,8 @@ public class OffersStatusBarFragment extends Fragment {
         messagesInfoTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(messagesCount == 0) {
-                    Toast.makeText(getActivity(), getString(R.string.no_messages), Toast.LENGTH_SHORT).show();
+                if(!isLoggedIn) {
+                    Toast.makeText(getActivity(), R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
                     return;
                 }
                 FragmentManager fManager = getFragmentManager();
@@ -130,14 +132,6 @@ public class OffersStatusBarFragment extends Fragment {
         timerWaitingClient.start();
     }
 
-    public void clientArrived() {
-        if(timerWaitingClient != null && timerWaitingClient.isRunning()) {
-            timerWaitingClient.cancel();
-        }
-        timerTextView.setText("");
-        timerTextView.setVisibility(View.INVISIBLE);
-    }
-
     public void cancelTimers() {
         if(timerMoveToClient != null && timerMoveToClient.isRunning()) {
             timerMoveToClient.cancel();
@@ -147,6 +141,11 @@ public class OffersStatusBarFragment extends Fragment {
         }
         timerTextView.setText("");
         timerTextView.setVisibility(View.INVISIBLE);
+    }
+
+
+    public void setLoggedIn(boolean isLoggedIn) {
+        this.isLoggedIn = isLoggedIn;
     }
 
     private class CustomCountDownTimer extends CountDownTimer {

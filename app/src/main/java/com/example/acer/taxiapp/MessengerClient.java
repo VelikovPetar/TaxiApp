@@ -48,8 +48,8 @@ public class MessengerClient {
 
         Calendar cal = Calendar.getInstance();
         cal.setTime(new Date(location.getTime()));
-//        cal.setTimeZone(TimeZone.getTimeZone("UTC"));
-        // UTC den
+
+        // UTC date
         message[13] = (byte) cal.get(Calendar.DAY_OF_MONTH);
         message[14] = (byte) (cal.get(Calendar.MONTH) + 1);
         message[15] = (byte) (cal.get(Calendar.YEAR) - 2000);
@@ -523,5 +523,4 @@ public class MessengerClient {
     private static void turnOffTaximeterBit(byte[] message) {
         message[BINARY_DATA_2] &= ~(1 << 1);
     }
-
 }

@@ -1,9 +1,5 @@
 package com.example.acer.taxiapp;
 
-/**
- * Created by Acer on 17.6.2017.
- */
-
 public class PopupMessage {
 
     private byte messageSource;

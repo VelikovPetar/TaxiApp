@@ -6,6 +6,15 @@
     android:paddingLeft="8dp"
     android:paddingRight="8dp">
 
+    <TextView
+        android:id="@+id/text_view_no_offers"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/no_offers"
+        android:textSize="25sp"
+        android:padding="8dp"
+        android:gravity="center"/>
+
     <ListView
         android:id="@+id/list_view_short_offers"
         android:layout_width="match_parent"

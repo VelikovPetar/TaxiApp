@@ -1,9 +1,5 @@
 package com.example.acer.taxiapp;
 
-/**
- * Created by Acer on 05.6.2017.
- */
-
 public enum VehicleState {
     NEDEFINIRANO(1),
     SLOBODEN(2),

@@ -70,7 +70,7 @@ public class MapFragment extends Fragment {
                             .include(customerLatLng)
                             .build();
                     CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, 25);
-                    googleMap.animateCamera(cameraUpdate);
+                    googleMap.moveCamera(cameraUpdate);
                 }
 
                 // Display current position if it is already known
@@ -82,7 +82,7 @@ public class MapFragment extends Fragment {
                             .anchor(0.5f, 0.5f)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow32)));
                     if(customerLatLng == null) {
-                        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(
+                        googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                                 new CameraPosition.Builder()
                                         .target(currentLatLng)
                                         .zoom(16)
@@ -95,7 +95,7 @@ public class MapFragment extends Fragment {
                     customerLocationMarker = googleMap.addMarker(new MarkerOptions()
                             .position(customerLatLng)
                             .flat(true)
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
                     // Redraw the polyline if there was a polyline already
                     if(points.size() > 0) {
                         if (line != null) {

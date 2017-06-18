@@ -3,7 +3,6 @@ package com.example.acer.taxiapp;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
 
@@ -16,10 +15,6 @@ import java.util.ArrayList;
 
 
 public class TCPClient implements Runnable {
-
-    // Debug
-    private String DEBUG_TAG = "TCP";
-    private boolean debug = true;
 
     // Name for broadcasts concerning status bar updates
     public static final String VALUE = "status_bar_update_value";
@@ -40,7 +35,6 @@ public class TCPClient implements Runnable {
 
     // Attempts to reconnect to server
     private int serverReconnectAttempts = 0;
-    private volatile boolean serverAvailable = false;
 
     // Reader and writer from the socket
 //    private InputStream reader;
@@ -79,8 +73,6 @@ public class TCPClient implements Runnable {
             isWaitingData = false;
             shouldAutomaticallyReconnect = false;
 
-            if(debug)Log.e(DEBUG_TAG, "Falsed booleans");
-
             if(socket != null) {
                 try {
                     socket.close();
@@ -88,8 +80,6 @@ public class TCPClient implements Runnable {
                     e.printStackTrace();
                 }
             }
-
-            if(debug)Log.e(DEBUG_TAG, "Closed socket");
 
             if(reader != null) {
                 try {
@@ -107,25 +97,16 @@ public class TCPClient implements Runnable {
                 }
             }
 
-            if(debug)Log.e(DEBUG_TAG, "Closed streams");
-
             reader = null;
             writer = null;
             socket = null;
-
-            if(debug)Log.e(DEBUG_TAG, "Nulled everything");
         }
-    }
-
-    public boolean isServerAvailable() {
-        return serverAvailable;
     }
 
     public boolean sendBytes(byte[] message) {
         synchronized (this) {
             try {
                 if(!Utils.hasInternetConnection(context)) {
-                    Log.e("MSG", "No connection");
                     return false;
                 }
                 if(message == null) {
@@ -135,11 +116,6 @@ public class TCPClient implements Runnable {
                     writer.write(message);
                     writer.flush();
                 }
-                String msg = "";
-                for(byte b : message) {
-                    msg += (int)b + "";
-                }
-                Log.e("MSG", msg);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -157,15 +133,8 @@ public class TCPClient implements Runnable {
 
     @Override
     public void run() {
-
         shouldAutomaticallyReconnect = true;
-
-        if(debug)Log.e(DEBUG_TAG, "sar = " + shouldAutomaticallyReconnect);
-
         while(shouldAutomaticallyReconnect) {
-
-            if(debug)Log.e(DEBUG_TAG, "Client started");
-
             // Wait for internet connection
             int attempts = 0;
             while(!Utils.hasInternetConnection(context)) {
@@ -195,12 +164,9 @@ public class TCPClient implements Runnable {
             // Notify user that internet connection WAS established
             isWaitingData = true;
             broadcastStatusUpdate(BroadcastActions.ACTION_CONNECTION_STATUS, StatusBarFragment.ConnectionStatusValues.CONNECTED);
-            if(debug)Log.e(DEBUG_TAG, "Has connection");
 
             // Connecting to server
-            serverAvailable = false;
             broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.CONNECTING);
-            Log.e(DEBUG_TAG, ""+serverReconnectAttempts);
             if(serverReconnectAttempts == 3) {
                 // If there were 3 failed reconnects, wait 1 minute before trying again
                 serverReconnectAttempts = 0;
@@ -211,7 +177,6 @@ public class TCPClient implements Runnable {
                     e.printStackTrace();
                 }
             } else if(serverReconnectAttempts > 0 && serverReconnectAttempts < 3){
-                serverAvailable = false;
                 // Try to connect to server after waiting 3 seconds
                 try {
                     Thread.sleep(3000);
@@ -233,47 +198,20 @@ public class TCPClient implements Runnable {
                 socket = new Socket(SERVER_IP, SERVER_PORT);
                 socket.setSoTimeout(TIMEOUT);
 
-                // If the socket is opened display that the server is OK
+                // If the socket is opened, display that the server is OK
                 serverReconnectAttempts = 0;
-                serverAvailable = true;
                 broadcastStatusUpdate(BroadcastActions.ACTION_SERVER_STATUS, StatusBarFragment.ServerStatusValues.CONNECTED);
-
-                if(debug)Log.e(DEBUG_TAG, "Socket established");
 
                 // Open reader
                 reader = socket.getInputStream();
-
                 // Open writer
                 writer = new DataOutputStream(socket.getOutputStream());
-
-                if(debug)Log.e(DEBUG_TAG, "Acquired I/O streams");
 
                 // Create parser
                 Parser parser = new Parser(context);
 
                 // Waiting for incoming data
                 while(isWaitingData) {
-
-                    if(debug)Log.e(DEBUG_TAG, "Is waiting data...");
-
-                    String message = "";
-//                    byte[] buffer = new byte[256];
-//                    byte[] receivedMessage = new byte[0];
-//                    int count = 0;
-//                    while((count = socket.getInputStream().read(buffer, 0, buffer.length)) > 0) {
-//                        byte[] tmp = new byte[receivedMessage.length + count];
-//                        for(int i = 0; i < receivedMessage.length; ++i) {
-//                            tmp[i] = receivedMessage[i];
-//                        }
-//                        for(int i = 0; i < count; ++i) {
-//                            tmp[receivedMessage.length + i] = buffer[i];
-//                        }
-//                        receivedMessage = tmp;
-//                    }
-//                    for(byte b : receivedMessage) {
-//                        message += (char) b;
-//                    }
-
                     byte[] buffer = new byte[1024];
                     int readBytes = reader.read(buffer);
                     ArrayList<Byte> bytes = new ArrayList<>();
@@ -284,24 +222,17 @@ public class TCPClient implements Runnable {
                                 if(bytes.size() > 0) {
                                     parser.parse(listToArray(bytes));
                                     bytes = new ArrayList<>();
-
-                                    Log.e(DEBUG_TAG, message);
-                                    message = "";
                                 }
                             }
                         }
                         bytes.add(buffer[i]);
-                        message += (char) buffer[i];
                     }
                     // Parse the received message
                     parser.parse(listToArray(bytes));
-                    if(debug)Log.e(DEBUG_TAG, "RECEIVED: " + message);
-
                 }
             } catch (SocketTimeoutException e) {
                 e.printStackTrace();
                 // Notify user that there is probably server-side problem
-                if(debug) Log.e(DEBUG_TAG, "SocketException");
                 serverReconnectAttempts++;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -312,14 +243,10 @@ public class TCPClient implements Runnable {
                     e1.printStackTrace();
                 }
                 if(Utils.hasInternetConnection(context)) {
-                    // TODO Notify of probable server error
-                    Log.e(DEBUG_TAG, "HERE");
+                    // If the device has internet connection,
+                    // there is a probable problem with the server
                     serverReconnectAttempts ++;
-                } else {
-                    // TODO Notify that connection was lost on the local device
                 }
-                if(debug) Log.e(DEBUG_TAG, "IOException");
-                if(debug) Log.e(DEBUG_TAG, e.getLocalizedMessage());
             } finally {
                 if(socket != null) {
                     try {

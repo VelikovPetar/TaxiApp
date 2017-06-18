@@ -12,16 +12,15 @@ import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.acer.taxiapp.MainActivity;
-import com.example.acer.taxiapp.MessageListProvider;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
 import com.example.acer.taxiapp.TCPClient;
@@ -44,12 +43,10 @@ public class LoginFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        Log.e("MSG_FRAGMENT", "On Attach(context)");
         try {
             provider = (DriverIdProvider) context;
         } catch(ClassCastException e) {
             e.printStackTrace();
-            Log.e("MSG_FRAGMENT", "Class Cast Exception");
         }
     }
 
@@ -65,12 +62,10 @@ public class LoginFragment extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            Log.e("MSG_FRAGMENT", "On Attach(activity)");
             try {
                 provider = (DriverIdProvider) activity;
             } catch (ClassCastException e) {
                 e.printStackTrace();
-                Log.e("MSG_FRAGMENT", "Class Cast Exception");
             }
         }
     }
@@ -78,7 +73,6 @@ public class LoginFragment extends Fragment {
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.e("LOGIN", "RECEVED");
             if(Utils.hasInternetConnection(getActivity()) &&
                     Utils.isLocationEnabled(getActivity()) &&
                     location != null) {
@@ -111,10 +105,11 @@ public class LoginFragment extends Fragment {
                     } else {
                         provider.onDriverIdProvided(driverId);
                         TCPClient tcpClient = TCPClient.getInstance(getActivity());
-                        tcpClient.sendBytes(MessengerClient.getLoginMessage(location, driverId, getActivity()));
+                        if(!tcpClient.sendBytes(MessengerClient.getLoginMessage(location, driverId, getActivity()))) {
+                            Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();
+                        }
                         View view = getActivity().getCurrentFocus();
                         Utils.hideKeyboard(view);
-                        errorTextView.setText(getString(R.string.login_error1));
                         errorTextView.setVisibility(View.INVISIBLE);
                     }
                 }
@@ -132,7 +127,6 @@ public class LoginFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        Log.e("LYFECYCLE", "On resume");
         setup();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);

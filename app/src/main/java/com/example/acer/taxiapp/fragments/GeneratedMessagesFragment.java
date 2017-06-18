@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +21,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.acer.taxiapp.MessageListProvider;
 import com.example.acer.taxiapp.MessengerClient;
@@ -134,12 +134,10 @@ public class GeneratedMessagesFragment extends Fragment {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         byte[] message = MessengerClient.getGeneratedMessage((byte)'0', Character.forDigit(priority + 1, 10), text, getActivity());
-//                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
-//                        tcpClient.sendBytes(message);
-                        String msg = "";
-                        for(byte b : message)
-                            msg += (char) b;
-                        Log.e("DIALOGS", msg);
+                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
+                        if(!tcpClient.sendBytes(message)) {
+                            Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();
+                        }
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -158,7 +156,6 @@ public class GeneratedMessagesFragment extends Fragment {
 
     private void showEnterMessageDialog() {
         final boolean shouldChooseDestination = shouldChooseDestination();
-        Log.e("DIALOGS", "" + shouldChooseDestination);
         LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
         final View dialogLayout = layoutInflater.inflate(R.layout.dialog_enter_generated_message, null);
         final AlertDialog dialog = new AlertDialog.Builder(getActivity())
@@ -222,12 +219,9 @@ public class GeneratedMessagesFragment extends Fragment {
                         }
                         byte[] message = MessengerClient.getGeneratedMessage(destination, '7', text, getActivity());
                         TCPClient tcpClient = TCPClient.getInstance(getActivity());
-                        tcpClient.sendBytes(message);
-                        String msg = "";
-                        for(byte b : message)
-                            msg += (char) b;
-                        Log.e("DIALOGS", msg);
-                        dialog.dismiss();
+                        if(!tcpClient.sendBytes(message)) {
+                            Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
             }
@@ -246,8 +240,6 @@ public class GeneratedMessagesFragment extends Fragment {
         cal.setTime(date);
         String currentTime = String.format(Locale.getDefault(), "%02d:%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND));
         int differenceInSeconds = differenceInSeconds(lastMessageTime, currentTime);
-        Log.e("DIALOGS", lastMessageTime);
-        Log.e("DIALOGS", currentTime);
         if(differenceInSeconds > 3 * 60)
             return false;
         if(lastMessage.getMessageSource() == '3')
@@ -267,7 +259,6 @@ public class GeneratedMessagesFragment extends Fragment {
         if(inSeconds2 < inSeconds1) {
             inSeconds2 += 86400;
         }
-        Log.e("DIALOGS", (inSeconds2-inSeconds1) +"");
         return inSeconds2 - inSeconds1;
     }
 
@@ -322,5 +313,4 @@ public class GeneratedMessagesFragment extends Fragment {
             return lastCategorySelected;
         }
     }
-
 }

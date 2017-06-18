@@ -50,10 +50,6 @@
 
         </service>
 
-        <service android:name=".services.TCPClientIntentService">
-
-        </service>
-
     </application>
 
 </manifest>

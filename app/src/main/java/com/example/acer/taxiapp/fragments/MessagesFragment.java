@@ -9,12 +9,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -26,6 +26,7 @@ import java.util.List;
 
 public class MessagesFragment extends Fragment {
 
+    private TextView noMessagesTextView;
     private ListView messagesList;
     private List<PopupMessage> messages;
     private MessageListAdapter adapter;
@@ -36,12 +37,10 @@ public class MessagesFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        Log.e("MSG_FRAGMENT", "On Attach(context)");
         try {
             provider = (MessageListProvider) context;
         } catch(ClassCastException e) {
             e.printStackTrace();
-            Log.e("MSG_FRAGMENT", "Class Cast Exception");
         }
     }
 
@@ -57,12 +56,10 @@ public class MessagesFragment extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            Log.e("MSG_FRAGMENT", "On Attach(activity)");
             try {
                 provider = (MessageListProvider) activity;
             } catch (ClassCastException e) {
                 e.printStackTrace();
-                Log.e("MSG_FRAGMENT", "Class Cast Exception");
             }
         }
     }
@@ -70,12 +67,12 @@ public class MessagesFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_messages, container, false);
+        noMessagesTextView = (TextView) view.findViewById(R.id.text_view_no_messages);
         messagesList = (ListView) view.findViewById(R.id.list_view_messages);
         messagesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                // TODO Vo header izvor
                 PopupMessage popupMessage = adapter.getItem(position);
                 String fullMessage;
                 if(popupMessage != null) {
@@ -109,10 +106,24 @@ public class MessagesFragment extends Fragment {
         messagesList.setAdapter(adapter);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        toggleNoMessagesTextView();
+    }
+
     public void notifyDataSetChanged() {
+        toggleNoMessagesTextView();
         adapter.notifyDataSetChanged();
     }
 
+    private void toggleNoMessagesTextView() {
+        if(messages.size() == 0) {
+            noMessagesTextView.setVisibility(View.VISIBLE);
+        } else {
+            noMessagesTextView.setVisibility(View.GONE);
+        }
+    }
     private class MessageListAdapter extends ArrayAdapter<PopupMessage> {
 
         private Context context;
@@ -131,21 +142,30 @@ public class MessagesFragment extends Fragment {
 
         @NonNull
         @Override
-        public View getView(int position, @Nullable View view, @NonNull ViewGroup parent) {
+        public View getView(final int position, @Nullable View view, @NonNull ViewGroup parent) {
             if(view == null) {
                 view = LayoutInflater.from(context).inflate(R.layout.list_item_message, parent, false);
             }
             TextView sourceTextView = (TextView) view.findViewById(R.id.text_view_list_item_message_source);
             TextView messageTextView = (TextView) view.findViewById(R.id.text_view_list_item_message_text);
             TextView timeTextView = (TextView) view.findViewById(R.id.text_view_list_item_message_time);
+            Button deleteButton = (Button) view.findViewById(R.id.button_list_item_message_delete);
+            deleteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    messages.remove(position);
+                    adapter.notifyDataSetChanged();
+                    provider.notifyChange();
+                }
+            });
 
             PopupMessage popupMessage = getItem(position);
             if(popupMessage != null) {
                 byte source = popupMessage.getMessageSource();
                 sourceTextView.setText(source == '0' ? R.string.dispatcher : (source == '3' ? R.string.android : R.string.system));
                 String textMessage = popupMessage.getTextMessage();
-                if(textMessage.length() > 30) {
-                    messageTextView.setText(String.format("%s...", textMessage.substring(0, 30)));
+                if(textMessage.length() > 12) {
+                    messageTextView.setText(String.format("%s...", textMessage.substring(0, 12)));
                 } else {
                     messageTextView.setText(textMessage);
                 }
@@ -154,5 +174,4 @@ public class MessagesFragment extends Fragment {
             return view;
         }
     }
-
 }

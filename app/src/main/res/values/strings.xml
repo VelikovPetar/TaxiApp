@@ -64,4 +64,12 @@
     <string name="yes">Да</string>
     <string name="no">Не</string>
     <string name="must_be_logged_in">Мора да сте најавени за оваа акција!</string>
+    <string name="delete">Избриши</string>
+    <string name="error_sending_message">Проблем при праќањето на пораката. Обидете се повторно.</string>
+    <string name="exit">Излез</string>
+    <string name="confirm_exit">Дали сакате да излезете од апликацијата?</string>
+    <string name="map">Мапа</string>
+    <string name="no_logged_driver">Нема најавен возач</string>
+    <string name="dont_play_with_the_card">(Ne igraj so kartickata !)</string>
+    <string name="state">State</string>
 </resources>

@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
@@ -12,7 +11,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.acer.taxiapp.LongOffer;
 import com.example.acer.taxiapp.MessengerClient;
@@ -30,13 +29,11 @@ import com.example.acer.taxiapp.R;
 import com.example.acer.taxiapp.ShortOffer;
 import com.example.acer.taxiapp.TCPClient;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.List;
 
 public class OffersFragment extends Fragment {
 
+    private TextView noOffersTextView;
     private ListView shortOffersList;
     private List<ShortOffer> shortOffers;
     private ShortOffersListAdapter adapter;
@@ -78,6 +75,7 @@ public class OffersFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_offers, container, false);
+        noOffersTextView = (TextView) view.findViewById(R.id.text_view_no_offers);
         shortOffersList = (ListView) view.findViewById(R.id.list_view_short_offers);
         longOfferLayout = (LinearLayout) view.findViewById(R.id.linear_layout_long_offer);
         return view;
@@ -94,6 +92,12 @@ public class OffersFragment extends Fragment {
         if(longOffer != null) {
             displayLongOffer(longOffer);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        toggleNoOffersTextView();
     }
 
     public void notifyDataSetChanged() {
@@ -113,18 +117,30 @@ public class OffersFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 FragmentManager fManager = getFragmentManager();
-                FragmentTransaction fTransaction = fManager.beginTransaction();
                 MapFragment mapFragment = (MapFragment) fManager.findFragmentByTag("TAG_MAP_FRAGMENT");
                 mapFragment.setCustomerLatLng(latitude, longitude);
 
-                // Mapata e sekogash na dnoto na stackot
-                // TODO Najdi podobro reshenie!
+                // The map is always at the bottom
                 while(fManager.getBackStackEntryCount() > 0)
                     fManager.popBackStackImmediate();
-                fTransaction.commit();
             }
         });
         longOfferLayout.setVisibility(View.VISIBLE);
+        toggleNoOffersTextView();
+    }
+
+    public void hideLongOffer() {
+        longOffer = null;
+        longOfferLayout.setVisibility(View.GONE);
+        toggleNoOffersTextView();
+    }
+
+    private void toggleNoOffersTextView() {
+        if(shortOffers.size() == 0 && longOffer == null) {
+            noOffersTextView.setVisibility(View.VISIBLE);
+        } else {
+            noOffersTextView.setVisibility(View.GONE);
+        }
     }
 
     private class ShortOffersListAdapter extends ArrayAdapter<ShortOffer> {
@@ -152,7 +168,6 @@ public class OffersFragment extends Fragment {
             TextView offerSourceTextView = (TextView) view.findViewById(R.id.text_view_list_item_short_offer_source);
             TextView textMessageTextView = (TextView) view.findViewById(R.id.text_view_list_item_short_offer_text);
             final Button confirmButton = (Button) view.findViewById(R.id.button_short_offer_confirm);
-            Log.e("DIALOGS", "This called");
             final ShortOffer shortOffer = getItem(position);
             if(shortOffer != null) {
                 offerSourceTextView.setText(shortOffer.getOfferSource() == '0' ? getString(R.string.android) : getString(R.string.dispatcher));
@@ -212,16 +227,10 @@ public class OffersFragment extends Fragment {
                             int minutes = Integer.parseInt(minutesText.trim());
                             byte[] message = MessengerClient.getShortOfferConfirmMessage(shortOffer.getIdPhoneCall(), minutes, context);
                             TCPClient tcpClient = TCPClient.getInstance(getActivity());
-                            tcpClient.sendBytes(message);
-
-
-                            String msg = "";
-                            for(byte b : message)
-                                msg += (char) b;
-                            long l = ByteBuffer.wrap(Arrays.copyOfRange(message, 9, 13)).order(ByteOrder.LITTLE_ENDIAN).getInt();
-
-
-                            Log.e("DIALOGS", msg + " " + l);
+                            if(!tcpClient.sendBytes(message)) {
+                                Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();
+                                return;
+                            }
                             button.setEnabled(false);
                             shortOffer.accept();
                             dialog.dismiss();
@@ -263,14 +272,10 @@ public class OffersFragment extends Fragment {
                         }
                         byte[] message = MessengerClient.getShortOfferConfirmMessage(shortOffer.getIdPhoneCall(), minutes, getActivity());
                         TCPClient tcpClient = TCPClient.getInstance(getActivity());
-                        tcpClient.sendBytes(message);
-
-
-                        String msg = "";
-                        for(byte b : message)
-                            msg += (char) b;
-                        long l = ByteBuffer.wrap(Arrays.copyOfRange(message, 9, 13)).order(ByteOrder.LITTLE_ENDIAN).getInt();
-                        Log.e("DIALOGS", msg + " " + l);
+                        if(!tcpClient.sendBytes(message)) {
+                            Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();
+                            return;
+                        }
                         shortOffer.accept();
                         button.setEnabled(false);
                     }

@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
 
@@ -57,61 +56,43 @@ public class Parser {
     }
 
     public void parse(byte[] message) {
-//        for(byte b : message) {
-//            Log.e(DEBUG_TAG, b + "\t" + (char)b);
-//        }
         // Check if it is OK message or heartbeat message
-        if(message.length <= 2) {
-            // OK <- successful connection
-            // or
-            // Z <- heartbeat
-        } else {
+        if (message.length > 2) {
             // Check if it is Confirmation message(BB) or incoming message(AA)
             if(message[0] == 'A' && message[1] == 'A') {
-                Log.e(DEBUG_TAG, bytesToString(message) + " : Received from server.");
-
                 // Process it
-
                 // Check if the message is for this device
                 if(!confirmVehicleId(message)) {
-                    Log.e(DEBUG_TAG, "Wrong DeviceId!");
                     return;
                 }
 
                 // Get the type of the command
                 String command;
                 if (message.length < 9) {
-                    Log.e(DEBUG_TAG, "Full message not received");
                     command = "";
                 } else {
                     command = (char) message[7] + "" + (char) message[8];
                 }
                 switch(command) {
                     case "34":
-                        Log.e(DEBUG_TAG, "Kratka najava.");
                         parseShortOffer(message);
                         break;
                     case "35":
-                        Log.e(DEBUG_TAG, "Brishenje na kratka najava.");
                         parseCancelShortOffer(message);
                         break;
                     case "36":
-                        Log.e(DEBUG_TAG, "Dolga najava.");
                         parseLongOffer(message);
                         break;
                     case "40":
-                        Log.e(DEBUG_TAG, "Status update message.");
                         parseStatusUpdateMessage(message);
                         break;
                     case "45":
-                        Log.e(DEBUG_TAG, "Popup message.");
                         parsePopupMessage(message);
                         break;
                 }
 
             } else if(message[0] == 'B' && message[1] == 'B') {
                 // Confirmation of received message
-                Log.e(DEBUG_TAG, bytesToString(message) + " : Confirmation-Server received the message.");
             }
         }
     }
@@ -130,7 +111,6 @@ public class Parser {
         // Validnost(1) + length(text) + source(1) // lengthOfMessage +
         // checksum(2) + zzzzz(5)
         if(message.length < HEADER_LENGTH + 3 + lengthOfMessage + CHECKSUM_LENGTH + PADDING_LENGTH) {
-            Log.e(DEBUG_TAG, "Full message not received");
             return;
         }
 
@@ -144,7 +124,7 @@ public class Parser {
             broadcastLoginAction(true);
         // Check if it is confirmation of successful logout - SPECIAL CASE
         } else if(message[13] == '0' && message[14] == '0' && message[15] == '0') {
-            broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue("Нема најавен возач", Color.YELLOW));
+            broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue(context.getString(R.string.no_logged_driver), Color.YELLOW));
             broadcastLoginAction(false);
         } else {
             // Regular popup message
@@ -153,16 +133,15 @@ public class Parser {
 
             // Special case
             // If the message contains "(Ne igraj so kartickata !)", that means that the driver is already
-            // logged in. If the driver was remained logged in the previous usage of the application,
+            // logged in. If the driver has remained logged in the previous usage of the application,
             // display his name in the status bar
-            Log.e(DEBUG_TAG, popupMessageText);
-            if(popupMessageText.contains("(Ne igraj so kartickata !)")) {
+            if(popupMessageText.contains(context.getString(R.string.dont_play_with_the_card))) {
                 broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS,
-                        new StatusBarFragment.DriverStatusValue(popupMessageText.replace("(Ne igraj so kartickata !)", "").trim(), Color.GREEN));
+                        new StatusBarFragment.DriverStatusValue(popupMessageText.replace(context.getString(R.string.dont_play_with_the_card), "").trim(), Color.GREEN));
                 broadcastLoginAction(true);
             }
 
-            // Append time to the message text
+            // Calculate the time
             Date date = new Date();
             Calendar cal = Calendar.getInstance();
             cal.setTime(date);
@@ -180,7 +159,6 @@ public class Parser {
         // AAxxxxxyy(9)
         int startPos = 9;
         if(message.length < HEADER_LENGTH + stateLength + 2 + 1 + 1 + CHECKSUM_LENGTH + PADDING_LENGTH) {
-            Log.e(DEBUG_TAG, "Full message not received");
             return;
         }
         String newState = "";
@@ -204,9 +182,7 @@ public class Parser {
         broadcastVehicleStateUpdate((int) message[startPos + stateLength + 3], timeInState);
 
         // Show status on the Status bar
-        broadcastStatusUpdate(BroadcastActions.ACTION_VEHICLE_STATE_STATUS, new StatusBarFragment.VehicleStatusValue(newState.replace("State", ""), Color.CYAN));
-
-        Log.e(DEBUG_TAG, "STATE = " + newState);
+        broadcastStatusUpdate(BroadcastActions.ACTION_VEHICLE_STATE_STATUS, new StatusBarFragment.VehicleStatusValue(newState.replace(context.getString(R.string.state), ""), Color.CYAN));
     }
 
     private void parseShortOffer(byte[] message) {
@@ -214,7 +190,6 @@ public class Parser {
         final int offerSourceLength = 1;
         final int textMessageLength = 60;
         if(message.length < HEADER_LENGTH + idPhoneCallLength + offerSourceLength + textMessageLength + CHECKSUM_LENGTH + PADDING_LENGTH) {
-            Log.e(DEBUG_TAG, "Full message not received");
             return;
         }
 
@@ -224,7 +199,6 @@ public class Parser {
         tmp[2] = message[HEADER_LENGTH + 2];
         tmp[3] = message[HEADER_LENGTH + 3];
         long idPhoneCall = ByteBuffer.wrap(tmp).order(ByteOrder.LITTLE_ENDIAN).getLong();
-        Log.e(DEBUG_TAG, "ID phonecall = " + idPhoneCall);
 
         byte offerSource = message[HEADER_LENGTH + idPhoneCallLength];
         tmp = Arrays.copyOfRange(message, HEADER_LENGTH + idPhoneCallLength + offerSourceLength, HEADER_LENGTH + idPhoneCallLength + offerSourceLength + textMessageLength);
@@ -236,7 +210,6 @@ public class Parser {
         final int idPhoneCallLength = 4;
         final int textMessageLength = 60;
         if(message.length < HEADER_LENGTH + idPhoneCallLength + textMessageLength + CHECKSUM_LENGTH + PADDING_LENGTH) {
-            Log.e(DEBUG_TAG, "Full message not received");
             return;
         }
 
@@ -265,7 +238,6 @@ public class Parser {
         if(message.length < HEADER_LENGTH + idPhoneCallLength + latDegreesLength + latMinutesLength +
                 lonDegreesLength + lonMinutesLength + validityLength + offerSourceLength +
                 textMessageLength + CHECKSUM_LENGTH + PADDING_LENGTH) {
-            Log.e(DEBUG_TAG, "Full message not received");
             return;
         }
 
@@ -314,8 +286,6 @@ public class Parser {
 
         float latitude = (float) latDegrees + latMinutes / 60;
         float longitude = (float) lonDegrees + lonMinutes / 60;
-        Log.e(DEBUG_TAG, latMinutes+"");
-        Log.e(DEBUG_TAG, latMinutes+"");
         broadcastLongOffer(idPhoneCall, latitude, longitude, offerSource, textMessage);
     }
 
@@ -329,7 +299,6 @@ public class Parser {
 
     private boolean confirmVehicleId(byte[] message) {
         if(message.length < 7) {
-            Log.e(DEBUG_TAG, "Full message not received");
             return false;
         }
         byte[] deviceIdBytes = Arrays.copyOfRange(message, 2, 7);
@@ -373,7 +342,7 @@ public class Parser {
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
-    public void broadcastLongOffer(long idPhoneCall, float latitude, float longitude, byte offerSource, String textMessage) {
+    private void broadcastLongOffer(long idPhoneCall, float latitude, float longitude, byte offerSource, String textMessage) {
         Intent intent = new Intent();
         intent.setAction(BroadcastActions.ACTION_LONG_OFFER);
         intent.putExtra(ID_PHONE_CALL, idPhoneCall);
