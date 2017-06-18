@@ -25,7 +25,7 @@ public class ConfigFragment extends Fragment {
     private Button confirmButton;
     private TextView errorTextView;
 
-    private static final String CONFIGURATION_CODE = "config123";
+    private static final String CONFIGURATION_CODE = "12345";
 
     @Nullable
     @Override
@@ -35,7 +35,7 @@ public class ConfigFragment extends Fragment {
         confirmationCodeEditText.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if(confirmationCodeEditText.getText().toString().equals(CONFIGURATION_CODE)) {
+                if (confirmationCodeEditText.getText().toString().equals(CONFIGURATION_CODE)) {
                     deviceNumberEditText.setEnabled(true);
                 } else {
                     deviceNumberEditText.setEnabled(false);
@@ -50,28 +50,15 @@ public class ConfigFragment extends Fragment {
         confirmButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                boolean shouldCommit = true;
-                String errorMessage = "";
-                // TODO mozda ne treba ovaa validacija
-                if(deviceNumberEditText.getText().toString().trim().length() != 5) {
-                    errorMessage += getString(R.string.device_id_error);
-                    shouldCommit = false;
-                }
-                if(!shouldCommit) {
-                    errorTextView.setText(errorMessage);
-                    errorTextView.setTextColor(Color.RED);
-                } else {
-                    SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
-                    SharedPreferences.Editor editor = preferences.edit();
-                    editor.putString(MainActivity.DEVICE_ID, deviceNumberEditText.getText().toString().trim());
-                    editor.apply();
-                    errorTextView.setText(R.string.configuration_success);
-                    errorTextView.setTextColor(Color.GREEN);
-
-                    // Hide keyboard
-                    View view = getActivity().getCurrentFocus();
-                    Utils.hideKeyboard(view);
-                }
+                SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putString(MainActivity.DEVICE_ID, deviceNumberEditText.getText().toString().trim());
+                editor.apply();
+                errorTextView.setText(R.string.configuration_success);
+                errorTextView.setTextColor(Color.GREEN);
+                // Hide keyboard
+                View view = getActivity().getCurrentFocus();
+                Utils.hideKeyboard(view);
             }
         });
         return view;
@@ -81,7 +68,7 @@ public class ConfigFragment extends Fragment {
     public void onResume() {
         super.onResume();
         SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
-        if(preferences.contains(MainActivity.DEVICE_ID)) {
+        if (preferences.contains(MainActivity.DEVICE_ID)) {
             errorTextView.setText(R.string.override_prev_configuration);
             errorTextView.setTextColor(Color.YELLOW);
         }

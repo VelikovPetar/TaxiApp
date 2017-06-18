@@ -21,6 +21,7 @@ public class MessengerClient {
         // Broj na ured
         SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         String deviceID = preferences.getString(MainActivity.DEVICE_ID, null);
+        deviceID = padLeft(deviceID, 5, '0');
         byte[] bytes;
         if(deviceID != null) {
             bytes = deviceID.getBytes();
@@ -211,11 +212,18 @@ public class MessengerClient {
         turnOffPauseBit(message);
         turnOnTaximeterBit(message);
 
+        driverId = padLeft(driverId, 10, '0');
         byte[] bytes = driverId.getBytes();
-        message[67] = bytes[0];
-        message[68] = bytes[1];
-        message[69] = bytes[2];
-        message[70] = bytes[3];
+        message[61] = bytes[0];
+        message[62] = bytes[1];
+        message[63] = bytes[2];
+        message[64] = bytes[3];
+        message[65] = bytes[4];
+        message[66] = bytes[5];
+        message[67] = bytes[6];
+        message[68] = bytes[7];
+        message[69] = bytes[8];
+        message[70] = bytes[9];
 
         return addChkSum(message);
     }
@@ -225,11 +233,18 @@ public class MessengerClient {
         turnOnPauseBit(message);
         turnOnTaximeterBit(message);
 
+        driverId = padLeft(driverId, 10, '0');
         byte[] bytes = driverId.getBytes();
-        message[67] = bytes[0];
-        message[68] = bytes[1];
-        message[69] = bytes[2];
-        message[70] = bytes[3];
+        message[61] = bytes[0];
+        message[62] = bytes[1];
+        message[63] = bytes[2];
+        message[64] = bytes[3];
+        message[65] = bytes[4];
+        message[66] = bytes[5];
+        message[67] = bytes[6];
+        message[68] = bytes[7];
+        message[69] = bytes[8];
+        message[70] = bytes[9];
 
         return addChkSum(message);
     }
@@ -522,5 +537,17 @@ public class MessengerClient {
 
     private static void turnOffTaximeterBit(byte[] message) {
         message[BINARY_DATA_2] &= ~(1 << 1);
+    }
+
+    private static String padLeft(String text, int length, char paddingChar) {
+        if(text == null)
+            text = "";
+        if(text.length() > length) {
+            return text.substring(0, length);
+        }
+        String ret = text;
+        while(ret.length() < length)
+            ret = paddingChar + ret;
+        return ret;
     }
 }

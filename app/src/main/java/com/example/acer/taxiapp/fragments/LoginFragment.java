@@ -45,7 +45,7 @@ public class LoginFragment extends Fragment {
         super.onAttach(context);
         try {
             provider = (DriverIdProvider) context;
-        } catch(ClassCastException e) {
+        } catch (ClassCastException e) {
             e.printStackTrace();
         }
     }
@@ -61,7 +61,7 @@ public class LoginFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             try {
                 provider = (DriverIdProvider) activity;
             } catch (ClassCastException e) {
@@ -73,7 +73,7 @@ public class LoginFragment extends Fragment {
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(Utils.hasInternetConnection(getActivity()) &&
+            if (Utils.hasInternetConnection(getActivity()) &&
                     Utils.isLocationEnabled(getActivity()) &&
                     location != null) {
                 enableViews();
@@ -97,21 +97,17 @@ public class LoginFragment extends Fragment {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(isConfig) {
-                    String driverId = loginEditText.getText().toString();
-                    if(driverId.trim().length() != 4) {
-                        errorTextView.setText(R.string.login_error1);
-                        errorTextView.setVisibility(View.VISIBLE);
-                    } else {
-                        provider.onDriverIdProvided(driverId);
-                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
-                        if(!tcpClient.sendBytes(MessengerClient.getLoginMessage(location, driverId, getActivity()))) {
-                            Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();
-                        }
-                        View view = getActivity().getCurrentFocus();
-                        Utils.hideKeyboard(view);
-                        errorTextView.setVisibility(View.INVISIBLE);
+                if (isConfig) {
+                    String driverId = loginEditText.getText().toString().trim();
+                    provider.onDriverIdProvided(driverId);
+                    TCPClient tcpClient = TCPClient.getInstance(getActivity());
+                    if (!tcpClient.sendBytes(MessengerClient.getLoginMessage(location, driverId, getActivity()))) {
+                        Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();
                     }
+                    View view = getActivity().getCurrentFocus();
+                    Utils.hideKeyboard(view);
+                    errorTextView.setVisibility(View.INVISIBLE);
+
                 }
             }
         });
@@ -147,7 +143,7 @@ public class LoginFragment extends Fragment {
 
     public void initLocation(Location location) {
         this.location = location;
-        if(isResumed())
+        if (isResumed())
             setup();
     }
 
@@ -155,22 +151,22 @@ public class LoginFragment extends Fragment {
         disableViews();
         noServicesTextView.setVisibility(View.INVISIBLE);
         SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
-        if(!preferences.contains(MainActivity.DEVICE_ID)) {
+        if (!preferences.contains(MainActivity.DEVICE_ID)) {
             errorTextView.setText(R.string.error_no_config_found);
             errorTextView.setVisibility(View.VISIBLE);
             isConfig = false;
             return;
         }
         isConfig = true;
-        if(!Utils.isLocationEnabled(getActivity())) {
+        if (!Utils.isLocationEnabled(getActivity())) {
             noServicesTextView.setVisibility(View.VISIBLE);
             return;
         }
-        if(!Utils.hasInternetConnection(getActivity())) {
+        if (!Utils.hasInternetConnection(getActivity())) {
             noServicesTextView.setVisibility(View.VISIBLE);
             return;
         }
-        if(location == null) {
+        if (location == null) {
             return;
         }
         noServicesTextView.setVisibility(View.INVISIBLE);

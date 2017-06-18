@@ -16,7 +16,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textAlignment="center"
-                    android:inputType="number" />
+                    android:maxLength="10" />
 
                 <TextView
                     android:id="@+id/text_view_error_login"

@@ -28,7 +28,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/edit_text_setup_confirmation_code"
-                android:inputType="textPassword"
                 android:textAlignment="center"/>
         </LinearLayout>
 
@@ -46,8 +45,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/edit_text_setup_device_code"
-                android:inputType="number"
-                android:textAlignment="center"/>
+                android:textAlignment="center"
+                android:maxLength="5"/>
         </LinearLayout>
 
         <Button
