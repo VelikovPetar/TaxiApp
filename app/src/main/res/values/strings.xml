@@ -73,4 +73,5 @@
     <string name="dont_play_with_the_card">(Ne igraj so kartickata !)</string>
     <string name="state">State</string>
     <string name="configuration">Configuration</string>
+    <string name="waiting_response">Чекање одговор...</string>
 </resources>

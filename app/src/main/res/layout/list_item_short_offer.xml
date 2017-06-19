@@ -6,16 +6,15 @@
 
     <TextView
         android:id="@+id/text_view_list_item_short_offer_source"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:textSize="25sp"
         android:padding="8dp"/>
     <TextView
         android:id="@+id/text_view_list_item_short_offer_text"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="3"
+        android:layout_weight="1"
         android:textSize="25sp"
         android:padding="8dp"/>
     <Button

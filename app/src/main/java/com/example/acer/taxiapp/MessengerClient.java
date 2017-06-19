@@ -23,11 +23,7 @@ public class MessengerClient {
         String deviceID = preferences.getString(MainActivity.DEVICE_ID, null);
         deviceID = padLeft(deviceID, 5, '0');
         byte[] bytes;
-        if(deviceID != null) {
-            bytes = deviceID.getBytes();
-        } else {
-            bytes = new byte[5];
-        }
+        bytes = deviceID.getBytes();
         message[2] = bytes[0];
         message[3] = bytes[1];
         message[4] = bytes[2];
@@ -274,12 +270,9 @@ public class MessengerClient {
         // Broj na ured
         SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         String deviceID = preferences.getString(MainActivity.DEVICE_ID, null);
+        deviceID = padLeft(deviceID, 5, '0');
         byte[] bytes;
-        if(deviceID != null) {
-            bytes = deviceID.getBytes();
-        } else {
-            bytes = new byte[5];
-        }
+        bytes = deviceID.getBytes();
         message[2] = bytes[0];
         message[3] = bytes[1];
         message[4] = bytes[2];
@@ -312,12 +305,9 @@ public class MessengerClient {
         // Broj na ured
         SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         String deviceId = preferences.getString(MainActivity.DEVICE_ID, null);
+        deviceId = padLeft(deviceId, 5, '0');
         byte[] bytes;
-        if(deviceId != null) {
-            bytes = deviceId.getBytes();
-        } else {
-            bytes = new byte[5];
-        }
+        bytes = deviceId.getBytes();
         message[2] = bytes[0];
         message[3] = bytes[1];
         message[4] = bytes[2];
@@ -356,12 +346,9 @@ public class MessengerClient {
         // Broj na ured
         SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         String deviceId = preferences.getString(MainActivity.DEVICE_ID, null);
+        deviceId = padLeft(deviceId, 5, '0');
         byte[] bytes;
-        if(deviceId != null) {
-            bytes = deviceId.getBytes();
-        } else {
-            bytes = new byte[5];
-        }
+        bytes = deviceId.getBytes();
         message[2] = bytes[0];
         message[3] = bytes[1];
         message[4] = bytes[2];
@@ -396,12 +383,9 @@ public class MessengerClient {
         // Broj na ured
         SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         String deviceId = preferences.getString(MainActivity.DEVICE_ID, null);
+        deviceId = padLeft(deviceId, 5, '0');
         byte[] bytes;
-        if(deviceId != null) {
-            bytes = deviceId.getBytes();
-        } else {
-            bytes = new byte[5];
-        }
+        bytes = deviceId.getBytes();
         message[2] = bytes[0];
         message[3] = bytes[1];
         message[4] = bytes[2];
@@ -437,12 +421,9 @@ public class MessengerClient {
         // Broj na ured
         SharedPreferences preferences = context.getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         String deviceId = preferences.getString(MainActivity.DEVICE_ID, null);
+        deviceId = padLeft(deviceId, 5, '0');
         byte[] bytes;
-        if(deviceId != null) {
-            bytes = deviceId.getBytes();
-        } else {
-            bytes = new byte[5];
-        }
+        bytes = deviceId.getBytes();
         message[2] = bytes[0];
         message[3] = bytes[1];
         message[4] = bytes[2];

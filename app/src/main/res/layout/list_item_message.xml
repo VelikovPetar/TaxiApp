@@ -6,9 +6,8 @@
 
     <TextView
         android:id="@+id/text_view_list_item_message_source"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:textSize="25sp"
         android:padding="8dp"
         android:focusable="false"/>
@@ -16,7 +15,7 @@
         android:id="@+id/text_view_list_item_message_text"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="2"
+        android:layout_weight="1"
         android:textSize="25sp"
         android:maxLines="1"
         android:padding="8dp"
@@ -24,9 +23,8 @@
 
     <TextView
         android:id="@+id/text_view_list_item_message_time"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:textSize="25sp"
         android:padding="8dp"
         android:focusable="false"/>

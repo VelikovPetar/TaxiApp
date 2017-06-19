@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.os.Build;
@@ -101,13 +102,15 @@ public class LoginFragment extends Fragment {
                     String driverId = loginEditText.getText().toString().trim();
                     provider.onDriverIdProvided(driverId);
                     TCPClient tcpClient = TCPClient.getInstance(getActivity());
-                    if (!tcpClient.sendBytes(MessengerClient.getLoginMessage(location, driverId, getActivity()))) {
+                    if (tcpClient.sendBytes(MessengerClient.getLoginMessage(location, driverId, getActivity()))) {
+                        errorTextView.setText(R.string.waiting_response);
+                        errorTextView.setTextColor(Color.YELLOW);
+                        errorTextView.setVisibility(View.VISIBLE);
+                    } else {
                         Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();
                     }
                     View view = getActivity().getCurrentFocus();
                     Utils.hideKeyboard(view);
-                    errorTextView.setVisibility(View.INVISIBLE);
-
                 }
             }
         });
@@ -150,6 +153,7 @@ public class LoginFragment extends Fragment {
     private void setup() {
         disableViews();
         noServicesTextView.setVisibility(View.INVISIBLE);
+        errorTextView.setTextColor(Color.RED);
         SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
         if (!preferences.contains(MainActivity.DEVICE_ID)) {
             errorTextView.setText(R.string.error_no_config_found);
