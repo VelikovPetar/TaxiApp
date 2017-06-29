@@ -106,10 +106,8 @@ public class OffersFragment extends Fragment {
 
     public void displayLongOffer(LongOffer _longOffer) {
         longOffer = _longOffer;
-        TextView offerSourceTextView = (TextView) longOfferLayout.findViewById(R.id.text_view_long_offer_source);
         TextView textMessageTextView = (TextView) longOfferLayout.findViewById(R.id.text_view_long_offer_text);
         Button confirmButton = (Button) longOfferLayout.findViewById(R.id.button_long_offer_confirm);
-        offerSourceTextView.setText(longOffer.getOfferSource() == '0' ? getString(R.string.android) : getString(R.string.dispatcher));
         textMessageTextView.setText(longOffer.getTextMessage());
         final float latitude = longOffer.getLatitude();
         final float longitude = longOffer.getLongitude();
@@ -165,12 +163,10 @@ public class OffersFragment extends Fragment {
             if(view == null) {
                 view = LayoutInflater.from(context).inflate(R.layout.list_item_short_offer, parent, false);
             }
-            TextView offerSourceTextView = (TextView) view.findViewById(R.id.text_view_list_item_short_offer_source);
             TextView textMessageTextView = (TextView) view.findViewById(R.id.text_view_list_item_short_offer_text);
             final Button confirmButton = (Button) view.findViewById(R.id.button_short_offer_confirm);
             final ShortOffer shortOffer = getItem(position);
             if(shortOffer != null) {
-                offerSourceTextView.setText(shortOffer.getOfferSource() == '0' ? getString(R.string.android) : getString(R.string.dispatcher));
                 textMessageTextView.setText(shortOffer.getTextMessage());
 
                 // If the offer is cancelled from the server, display it with different color and

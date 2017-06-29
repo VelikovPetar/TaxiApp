@@ -104,7 +104,6 @@ public class LoginFragment extends Fragment {
                     TCPClient tcpClient = TCPClient.getInstance(getActivity());
                     if (tcpClient.sendBytes(MessengerClient.getLoginMessage(location, driverId, getActivity()))) {
                         errorTextView.setText(R.string.waiting_response);
-                        errorTextView.setTextColor(Color.YELLOW);
                         errorTextView.setVisibility(View.VISIBLE);
                     } else {
                         Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();

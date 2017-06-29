@@ -3,6 +3,7 @@ package com.example.acer.taxiapp;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
 
@@ -215,6 +216,7 @@ public class TCPClient implements Runnable {
                     byte[] buffer = new byte[1024];
                     int readBytes = reader.read(buffer);
                     ArrayList<Byte> bytes = new ArrayList<>();
+                    String msg = "";
                     for(int i = 0; i < readBytes; ++i) {
                         // Case when multiple messages come appended to each other
                         if(i < readBytes - 1) {
@@ -222,13 +224,17 @@ public class TCPClient implements Runnable {
                                 if(bytes.size() > 0) {
                                     parser.parse(listToArray(bytes));
                                     bytes = new ArrayList<>();
+                                    Log.e("Incoming msg", msg);
+                                    msg = "";
                                 }
                             }
                         }
                         bytes.add(buffer[i]);
+                        msg += (char) buffer[i];
                     }
                     // Parse the received message
                     parser.parse(listToArray(bytes));
+                    Log.e("Incoming msg", msg);
                 }
             } catch (SocketTimeoutException e) {
                 e.printStackTrace();

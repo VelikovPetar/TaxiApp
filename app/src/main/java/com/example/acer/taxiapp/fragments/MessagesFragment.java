@@ -146,7 +146,6 @@ public class MessagesFragment extends Fragment {
             if(view == null) {
                 view = LayoutInflater.from(context).inflate(R.layout.list_item_message, parent, false);
             }
-            TextView sourceTextView = (TextView) view.findViewById(R.id.text_view_list_item_message_source);
             TextView messageTextView = (TextView) view.findViewById(R.id.text_view_list_item_message_text);
             TextView timeTextView = (TextView) view.findViewById(R.id.text_view_list_item_message_time);
             Button deleteButton = (Button) view.findViewById(R.id.button_list_item_message_delete);
@@ -161,8 +160,6 @@ public class MessagesFragment extends Fragment {
 
             PopupMessage popupMessage = getItem(position);
             if(popupMessage != null) {
-                byte source = popupMessage.getMessageSource();
-                sourceTextView.setText(source == '0' ? R.string.dispatcher : (source == '3' ? R.string.android : R.string.system));
                 String textMessage = popupMessage.getTextMessage();
                 if(textMessage.length() > 12) {
                     messageTextView.setText(String.format("%s...", textMessage.substring(0, 12)));

@@ -18,6 +18,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.media.AudioManager;
+import android.media.SoundPool;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -96,6 +99,12 @@ public class MainActivity extends Activity implements LocationListener,
     // Indicator whether there is a client
     private boolean isWithClient = false;
 
+    // Notification sounds
+    private SoundPool soundPool;
+    int numberLoadedSounds = 0;
+    private boolean canPlay;
+    private int messageSound, shortOfferSound, longOfferSound;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -148,15 +157,36 @@ public class MainActivity extends Activity implements LocationListener,
         // Initialize the Location manager
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        // bind to the Tcp client service
-        Intent intent = new Intent(this, TCPClientService.class);
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-
         // Init handler
         handler = new Handler();
 
         // Init location updater
         locationUpdater = new LocationUpdater(this);
+
+        // Init sound pool
+        if(Build.VERSION.SDK_INT >= 21) {
+            soundPool = new SoundPool.Builder()
+                    .setMaxStreams(1)
+                    .build();
+        } else {
+            soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
+        }
+        soundPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
+            @Override
+            public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
+                numberLoadedSounds ++;
+                if(numberLoadedSounds == 3) {
+                    canPlay = true;
+                }
+            }
+        });
+        messageSound = soundPool.load(this, R.raw.message_sound, 1);
+        shortOfferSound = soundPool.load(this, R.raw.short_offer_sound, 1);
+        longOfferSound = soundPool.load(this, R.raw.long_offer_sound, 1);
+
+        // Bind to the Tcp client service
+        Intent intent = new Intent(this, TCPClientService.class);
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
     public void onLoginButtonClick(View v) {
@@ -519,6 +549,8 @@ public class MainActivity extends Activity implements LocationListener,
             tcpClientService.sendBytes(MessengerClient.getLogoutMessage(lastLocation, driverID, this));
             isLoggedIn = false;
         }
+        soundPool.release();
+        soundPool = null;
         unbindService(serviceConnection);
     }
 
@@ -573,6 +605,7 @@ public class MainActivity extends Activity implements LocationListener,
         if (mapFragment != null && mapFragment.isVisible()) {
             mapFragment.updateLocation(lastLocation);
         }
+        locationUpdater.setLastLocation(lastLocation);
     }
 
     // Displaying the changes in status of the location services
@@ -710,6 +743,9 @@ public class MainActivity extends Activity implements LocationListener,
                 String timestamp = intent.getStringExtra(Parser.TIMESTAMP);
                 popupMessages.insert(new PopupMessage(source, message, timestamp));
                 updateMessagesFragments();
+                if(canPlay) {
+                    soundPool.play(messageSound, 1, 1, 1, 0, 1);
+                }
             }
         }
     };
@@ -821,6 +857,9 @@ public class MainActivity extends Activity implements LocationListener,
                         }
                     }, 45000);
                     updateOfferFragments(null);
+                    if(canPlay) {
+                        soundPool.play(shortOfferSound, 1, 1, 1, 0, 1);
+                    }
                     break;
                 }
                 case BroadcastActions.ACTION_CANCEL_SHORT_OFFER: {
@@ -859,6 +898,9 @@ public class MainActivity extends Activity implements LocationListener,
                             shortOffers.clear();
                             // Display the long offer
                             updateOfferFragments(longOffer);
+                            if(canPlay) {
+                                soundPool.play(longOfferSound, 1, 1, 1, 0, 1);
+                            }
                             break;
                         }
                     }

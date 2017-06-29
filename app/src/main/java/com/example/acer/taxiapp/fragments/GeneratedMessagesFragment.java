@@ -222,6 +222,7 @@ public class GeneratedMessagesFragment extends Fragment {
                         if(!tcpClient.sendBytes(message)) {
                             Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();
                         }
+                        dialog.dismiss();
                     }
                 });
             }
