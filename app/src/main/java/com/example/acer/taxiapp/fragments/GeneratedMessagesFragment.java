@@ -23,6 +23,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.acer.taxiapp.AlertDialogBuilder;
 import com.example.acer.taxiapp.MessageListProvider;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.PopupMessage;
@@ -126,107 +127,13 @@ public class GeneratedMessagesFragment extends Fragment {
     }
 
     private void showConfirmMessageDialog(final String text, final int priority) {
-        LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-        final View dialogLayout = layoutInflater.inflate(R.layout.dialog_confirm_generated_message, null);
-        final AlertDialog dialog = new AlertDialog.Builder(getActivity())
-                .setView(dialogLayout)
-                .setPositiveButton(R.string.send, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        byte[] message = MessengerClient.getGeneratedMessage((byte)'0', Character.forDigit(priority + 1, 10), text, getActivity());
-                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
-                        if(!tcpClient.sendBytes(message)) {
-                            Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();
-                        }
-                    }
-                })
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                })
-                .create();
-        TextView msgDestination = (TextView) dialogLayout.findViewById(R.id.text_view_message_to);
-        msgDestination.setText(R.string.dest_dispatcher);
-        TextView msgContent = (TextView) dialogLayout.findViewById(R.id.text_view_generated_message);
-        msgContent.setText(String.format("%s%s", getString(R.string.message), text));
+        AlertDialog dialog = AlertDialogBuilder.build(getActivity(), text, priority);
         dialog.show();
     }
 
     private void showEnterMessageDialog() {
         final boolean shouldChooseDestination = shouldChooseDestination();
-        LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-        final View dialogLayout = layoutInflater.inflate(R.layout.dialog_enter_generated_message, null);
-        final AlertDialog dialog = new AlertDialog.Builder(getActivity())
-                .setView(dialogLayout)
-                .setPositiveButton(R.string.send, null)
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                })
-                .create();
-        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(DialogInterface _dialog) {
-                final TextView msgDestination = (TextView) dialogLayout.findViewById(R.id.text_view_message_destination);
-                RadioGroup destinationRadioGroup = (RadioGroup) dialogLayout.findViewById(R.id.radio_group_choose_destination);
-                destinationRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(RadioGroup group, @IdRes int checkedId) {
-                        switch (checkedId) {
-                            case R.id.radio_button_destination_android:
-                                msgDestination.setText(R.string.dest_android);
-                                break;
-                            case R.id.radio_button_destination_dispatcher:
-                                msgDestination.setText(R.string.dest_dispatcher);
-                                break;
-                        }
-                    }
-                });
-                if(shouldChooseDestination) {
-                    msgDestination.setText(R.string.dest_android);
-                    destinationRadioGroup.setVisibility(View.VISIBLE);
-                } else {
-                    msgDestination.setText(R.string.dest_dispatcher);
-                    destinationRadioGroup.setVisibility(View.GONE);
-                }
-                Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-                positiveButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        EditText messageEditText = (EditText) dialogLayout.findViewById(R.id.edit_text_generated_message);
-                        String text = messageEditText.getText().toString().trim();
-                        if(text.equals("")) {
-                            messageEditText.setHint(R.string.error_enter_text);
-                            messageEditText.setHintTextColor(Color.RED);
-                            return;
-                        }
-                        byte destination = '0';
-                        RadioGroup destinationRadioGroup = (RadioGroup) dialogLayout.findViewById(R.id.radio_group_choose_destination);
-                        if(shouldChooseDestination) {
-                            int choice = destinationRadioGroup.getCheckedRadioButtonId();
-                            switch (choice) {
-                                case R.id.radio_button_destination_android:
-                                    destination = '3';
-                                    break;
-                                case R.id.radio_button_destination_dispatcher:
-                                    destination = '0';
-                                    break;
-                            }
-                        }
-                        byte[] message = MessengerClient.getGeneratedMessage(destination, '7', text, getActivity());
-                        TCPClient tcpClient = TCPClient.getInstance(getActivity());
-                        if(!tcpClient.sendBytes(message)) {
-                            Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();
-                        }
-                        dialog.dismiss();
-                    }
-                });
-            }
-        });
+        AlertDialog dialog = AlertDialogBuilder.build(getActivity(), shouldChooseDestination);
         dialog.show();
     }
 

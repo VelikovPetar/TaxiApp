@@ -86,6 +86,9 @@ public class OffersFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
 
         shortOffers = provider.getShortOffers();
+        for(ShortOffer so: shortOffers) {
+            so.read();
+        }
         adapter = new ShortOffersListAdapter(getActivity(), shortOffers);
         shortOffersList.setAdapter(adapter);
         longOffer = provider.getLongOffer();
@@ -184,8 +187,8 @@ public class OffersFragment extends Fragment {
                 confirmButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        promptMinutesDialog(shortOffer, confirmButton);
-//                        promptMinutesDialogRadio(shortOffer, confirmButton);
+//                        promptMinutesDialog(shortOffer, confirmButton);
+                        promptMinutesDialogRadio(shortOffer, confirmButton);
                     }
                 });
 

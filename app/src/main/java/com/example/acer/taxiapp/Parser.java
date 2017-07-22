@@ -113,32 +113,39 @@ public class Parser {
         if(message.length < HEADER_LENGTH + 3 + lengthOfMessage + CHECKSUM_LENGTH + PADDING_LENGTH) {
             return;
         }
-
-        // Check if it is confirmation of successful login - SPECIAL CASE
+        // SPECIAL CASE
+        // Check if it is confirmation of successful login
         if(message[13] == '1' && message[14] == '1' && message[15] == '1') {
             // Confirmation of successful login
             // Display the name of the driver on the status bar
             byte[] driverNameBytes = Arrays.copyOfRange(message, 16, 12 + lengthOfMessage - 1);
             String driverName = bytesToString(driverNameBytes);
-            broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue(driverName, Color.GREEN));
+            broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue(driverName, Utils.getColor(context, R.color.green)));
             broadcastLoginAction(true);
-        // Check if it is confirmation of successful logout - SPECIAL CASE
+        // SPECIAL CASE
+        // Check if it is confirmation of successful logout
         } else if(message[13] == '0' && message[14] == '0' && message[15] == '0') {
-            broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue(context.getString(R.string.no_logged_driver), Color.YELLOW));
+            broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS, new StatusBarFragment.DriverStatusValue(context.getString(R.string.no_logged_driver), Utils.getColor(context, R.color.yellow)));
             broadcastLoginAction(false);
         } else {
             // Regular popup message
             byte[] popupMessageTextBytes = Arrays.copyOfRange(message, 13, 12 + lengthOfMessage - 1);
             String popupMessageText = bytesToString(popupMessageTextBytes);
 
-            // Special case
+            // SPECIAL CASE
             // If the message contains "(Ne igraj so kartickata !)", that means that the driver is already
             // logged in. If the driver has remained logged in the previous usage of the application,
             // display his name in the status bar
             if(popupMessageText.contains(context.getString(R.string.dont_play_with_the_card))) {
                 broadcastStatusUpdate(BroadcastActions.ACTION_DRIVER_STATUS,
-                        new StatusBarFragment.DriverStatusValue(popupMessageText.replace(context.getString(R.string.dont_play_with_the_card), "").trim(), Color.GREEN));
+                        new StatusBarFragment.DriverStatusValue(popupMessageText.replace(context.getString(R.string.dont_play_with_the_card), "").trim(), Utils.getColor(context, R.color.green)));
                 broadcastLoginAction(true);
+            }
+            // SPECIAL CASE
+            // The server returned "Invalid card" message
+            if(popupMessageText.contains(context.getString(R.string.invalid_card))) {
+                broadcastMessage(BroadcastActions.ACTION_INVALID_CARD, (byte) -1, null, null);
+                return;
             }
 
             // Calculate the time

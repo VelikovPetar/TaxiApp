@@ -18,9 +18,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
-import android.media.AudioManager;
-import android.media.SoundPool;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -28,16 +25,15 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.example.acer.taxiapp.fragments.ButtonListFragment;
+import com.example.acer.taxiapp.fragments.CheckCardFragment;
 import com.example.acer.taxiapp.fragments.ConfigFragment;
 import com.example.acer.taxiapp.fragments.GeneratedMessagesFragment;
 import com.example.acer.taxiapp.fragments.LoginFragment;
@@ -99,11 +95,7 @@ public class MainActivity extends Activity implements LocationListener,
     // Indicator whether there is a client
     private boolean isWithClient = false;
 
-    // Notification sounds
-    private SoundPool soundPool;
-    int numberLoadedSounds = 0;
-    private boolean canPlay;
-    private int messageSound, shortOfferSound, longOfferSound;
+    private SoundManager soundManager;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -139,7 +131,7 @@ public class MainActivity extends Activity implements LocationListener,
             @Override
             public void onClick(View v) {
                 ConfigFragment configFragment = (ConfigFragment) fManager.findFragmentByTag("TAG_CONFIG_FRAGMENT");
-                if(configFragment != null && configFragment.isVisible()) {
+                if(Utils.isFragmentVisible(configFragment)) {
                     return;
                 }
                 FragmentTransaction fTransaction = fManager.beginTransaction();
@@ -164,25 +156,7 @@ public class MainActivity extends Activity implements LocationListener,
         locationUpdater = new LocationUpdater(this);
 
         // Init sound pool
-        if(Build.VERSION.SDK_INT >= 21) {
-            soundPool = new SoundPool.Builder()
-                    .setMaxStreams(1)
-                    .build();
-        } else {
-            soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
-        }
-        soundPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
-            @Override
-            public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
-                numberLoadedSounds ++;
-                if(numberLoadedSounds == 3) {
-                    canPlay = true;
-                }
-            }
-        });
-        messageSound = soundPool.load(this, R.raw.message_sound, 1);
-        shortOfferSound = soundPool.load(this, R.raw.short_offer_sound, 1);
-        longOfferSound = soundPool.load(this, R.raw.long_offer_sound, 1);
+        soundManager = new SoundManager(this);
 
         // Bind to the Tcp client service
         Intent intent = new Intent(this, TCPClientService.class);
@@ -195,7 +169,7 @@ public class MainActivity extends Activity implements LocationListener,
             boolean isPopped = fManager.popBackStackImmediate("frag_conf", FragmentManager.POP_BACK_STACK_INCLUSIVE);
             if (!isPopped) {
                 LoginFragment loginFragment = (LoginFragment) fManager.findFragmentByTag("TAG_LOGIN_FRAGMENT");
-                if (loginFragment == null || !loginFragment.isVisible()) {
+                if (!Utils.isFragmentVisible(loginFragment)) {
                     FragmentTransaction fTransaction = fManager.beginTransaction();
                     LoginFragment newLoginFragment = new LoginFragment();
                     if(lastLocation != null)
@@ -311,41 +285,7 @@ public class MainActivity extends Activity implements LocationListener,
             Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
             return;
         }
-        LayoutInflater layoutInflater = LayoutInflater.from(this);
-        final View dialogLayout = layoutInflater.inflate(R.layout.dialog_status_request, null);
-        final AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(dialogLayout)
-                .setPositiveButton(getResources().getString(R.string.send), null)
-                .setNegativeButton(getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                })
-                .create();
-        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(final DialogInterface _dialog) {
-                Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-                positiveButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        EditText editText = (EditText) dialogLayout.findViewById(R.id.edit_text_status_request);
-                        String text = editText.getText().toString().trim();
-                        if(text.equals("")) {
-                            editText.setHint(R.string.error_enter_text);
-                            editText.setHintTextColor(Color.RED);
-                            return;
-                        }
-                        byte[] message = MessengerClient.getRequestStatusMessage(text, MainActivity.this);
-                        if(!tcpClientService.sendBytes(message)) {
-                            Toast.makeText(MainActivity.this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
-                        }
-                        dialog.dismiss();
-                    }
-                });
-            }
-        });
+        AlertDialog dialog = AlertDialogBuilder.build(this, AlertDialogBuilder.STATUS_REQUEST_ALERT_DIALOG);
         dialog.show();
     }
 
@@ -366,42 +306,7 @@ public class MainActivity extends Activity implements LocationListener,
             Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
             return;
         }
-        LayoutInflater layoutInflater = LayoutInflater.from(this);
-        final View dialogLayout = layoutInflater.inflate(R.layout.dialog_register_for_region, null);
-        final AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(dialogLayout)
-                .setPositiveButton(R.string.send, null)
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                })
-                .create();
-        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(DialogInterface _dialog) {
-                Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-                positiveButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        EditText regionEditText = (EditText) dialogLayout.findViewById(R.id.edit_text_register_for_region);
-                        String regionText = regionEditText.getText().toString().trim();
-                        if(regionText.equals("")) {
-                            regionEditText.setHint(R.string.error_enter_region);
-                            regionEditText.setHintTextColor(Color.RED);
-                            return;
-                        }
-                        int region = Integer.parseInt(regionText.trim());
-                        byte[] message = MessengerClient.getRegisterForRegionMessage(region, MainActivity.this);
-                        if(!tcpClientService.sendBytes(message)) {
-                            Toast.makeText(MainActivity.this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
-                        }
-                        dialog.dismiss();
-                    }
-                });
-            }
-        });
+        AlertDialog dialog = AlertDialogBuilder.build(this, AlertDialogBuilder.REGISTER_FOR_REGION_ALERT_DIALOG);
         dialog.show();
     }
 
@@ -412,7 +317,7 @@ public class MainActivity extends Activity implements LocationListener,
         }
         FragmentManager fManager = getFragmentManager();
         MessagesFragment messagesFragment = (MessagesFragment) fManager.findFragmentByTag("TAG_POPUP_MESSAGES_FRAGMENT");
-        if(messagesFragment != null && messagesFragment.isVisible())
+        if(Utils.isFragmentVisible(messagesFragment))
             return;
         boolean popped = fManager.popBackStackImmediate("messages_frag", 0);
         if(!popped) {
@@ -420,6 +325,12 @@ public class MainActivity extends Activity implements LocationListener,
             fTransaction.replace(R.id.fragment_content_container, new MessagesFragment(), "TAG_POPUP_MESSAGES_FRAGMENT");
             fTransaction.addToBackStack("messages_frag");
             fTransaction.commit();
+        }
+        // Update the offers status bar
+        OffersStatusBarFragment offersStatusBarFragment =
+                (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+        if(Utils.isFragmentVisible(offersStatusBarFragment)) {
+            offersStatusBarFragment.setMessagesCount(popupMessages.size(), false);
         }
     }
 
@@ -430,7 +341,7 @@ public class MainActivity extends Activity implements LocationListener,
         }
         FragmentManager fManager = getFragmentManager();
         OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
-        if(offersFragment != null && offersFragment.isVisible())
+        if(Utils.isFragmentVisible(offersFragment))
             return;
         boolean popped = fManager.popBackStackImmediate("offers_frag", 0);
         if(!popped) {
@@ -438,6 +349,15 @@ public class MainActivity extends Activity implements LocationListener,
             fTransaction.replace(R.id.fragment_content_container, new OffersFragment(), "TAG_OFFERS_FRAGMENT");
             fTransaction.addToBackStack("offers_frag");
             fTransaction.commit();
+        }
+        // Update the offers status bar
+        OffersStatusBarFragment offersStatusBarFragment =
+                (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+        if(Utils.isFragmentVisible(offersStatusBarFragment)) {
+            if(longOffer == null) {
+                offersStatusBarFragment.setUnreadOffers(0);
+                offersStatusBarFragment.setTotalOffers(shortOffers.size());
+            }
         }
     }
 
@@ -449,13 +369,35 @@ public class MainActivity extends Activity implements LocationListener,
         FragmentManager fManager = getFragmentManager();
         GeneratedMessagesFragment generatedMessagesFragment =
                 (GeneratedMessagesFragment) fManager.findFragmentByTag("TAG_GENERATED_MESSAGES_FRAGMENT");
-        if(generatedMessagesFragment != null && generatedMessagesFragment.isVisible())
+        if(Utils.isFragmentVisible(generatedMessagesFragment))
             return;
         boolean popped = fManager.popBackStackImmediate("generated_messages_frag", 0);
         if(!popped) {
             FragmentTransaction fTransaction = fManager.beginTransaction();
             fTransaction.replace(R.id.fragment_content_container, new GeneratedMessagesFragment(), "TAG_GENERATED_MESSAGES_FRAGMENT");
             fTransaction.addToBackStack("generated_messages_frag");
+            fTransaction.commit();
+        }
+    }
+
+    public void showCheckCardFragment(View view) {
+        if(!isLoggedIn) {
+            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
+            return;
+        }
+        FragmentManager fManager = getFragmentManager();
+        CheckCardFragment checkCardFragment =
+                (CheckCardFragment) fManager.findFragmentByTag("TAG_CHECK_CARD_FRAGMENT");
+        if(Utils.isFragmentVisible(checkCardFragment)) {
+            return;
+        }
+        boolean popped = fManager.popBackStackImmediate("check_card_frag", 0);
+        if(!popped) {
+            FragmentTransaction fTransaction = fManager.beginTransaction();
+            CheckCardFragment ccFragment = new CheckCardFragment();
+            ccFragment.setLocation(lastLocation);
+            fTransaction.replace(R.id.fragment_content_container, ccFragment, "TAG_CHECK_CARD_FRAGMENT");
+            fTransaction.addToBackStack("check_card_frag");
             fTransaction.commit();
         }
     }
@@ -484,6 +426,7 @@ public class MainActivity extends Activity implements LocationListener,
         // Register receiver for popup messages
         intentFilter = new IntentFilter();
         intentFilter.addAction(BroadcastActions.ACTION_POPUP_MESSAGE);
+        intentFilter.addAction(BroadcastActions.ACTION_INVALID_CARD);
         LocalBroadcastManager.getInstance(this).registerReceiver(popupMessageReceiver, intentFilter);
 
         // Register receiver for short offers
@@ -517,7 +460,6 @@ public class MainActivity extends Activity implements LocationListener,
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
         }
-
     }
 
     @Override
@@ -549,15 +491,19 @@ public class MainActivity extends Activity implements LocationListener,
             tcpClientService.sendBytes(MessengerClient.getLogoutMessage(lastLocation, driverID, this));
             isLoggedIn = false;
         }
-        soundPool.release();
-        soundPool = null;
+        soundManager.release();
         unbindService(serviceConnection);
     }
 
     @Override
     public void onBackPressed() {
         if (getFragmentManager().getBackStackEntryCount() > 0) {
-            getFragmentManager().popBackStack();
+            getFragmentManager().popBackStackImmediate();
+            if(Utils.isFragmentVisible(getFragmentManager().findFragmentByTag("TAG_OFFERS_FRAGMENT"))) {
+                updateOfferFragments(longOffer);
+            } else if(Utils.isFragmentVisible(getFragmentManager().findFragmentByTag("TAG_POPUP_MESSAGES_FRAGMENT"))) {
+                updateMessagesFragments(false);
+            }
         } else {
             final AlertDialog dialog = new AlertDialog.Builder(this)
                     .setTitle(R.string.exit)
@@ -596,13 +542,13 @@ public class MainActivity extends Activity implements LocationListener,
         // Initialize the location for the login message
         FragmentManager fManager = getFragmentManager();
         LoginFragment loginFragment = (LoginFragment) fManager.findFragmentByTag("TAG_LOGIN_FRAGMENT");
-        if(loginFragment != null && loginFragment.isVisible()) {
+        if(Utils.isFragmentVisible(loginFragment)) {
             loginFragment.initLocation(location);
             hasInitialLocation = true;
         }
         this.lastLocation = location;
         MapFragment mapFragment = (MapFragment) fManager.findFragmentByTag("TAG_MAP_FRAGMENT");
-        if (mapFragment != null && mapFragment.isVisible()) {
+        if (Utils.isFragmentVisible(mapFragment)) {
             mapFragment.updateLocation(lastLocation);
         }
         locationUpdater.setLastLocation(lastLocation);
@@ -726,9 +672,10 @@ public class MainActivity extends Activity implements LocationListener,
         return popupMessages.getElements();
     }
 
+    // Gets called from the MessageFragment when a message is manually deleted
     @Override
     public void notifyChange() {
-        updateMessagesFragments();
+        updateMessagesFragments(false);
     }
 
     // Broadcast receiver for incoming popup messages
@@ -742,27 +689,30 @@ public class MainActivity extends Activity implements LocationListener,
                 String message = intent.getStringExtra(Parser.MESSAGE);
                 String timestamp = intent.getStringExtra(Parser.TIMESTAMP);
                 popupMessages.insert(new PopupMessage(source, message, timestamp));
-                updateMessagesFragments();
-                if(canPlay) {
-                    soundPool.play(messageSound, 1, 1, 1, 0, 1);
+                updateMessagesFragments(true);
+                soundManager.playMessageSound();
+            } else if(action.equals(BroadcastActions.ACTION_INVALID_CARD)) {
+                LoginFragment loginFragment = (LoginFragment) getFragmentManager().findFragmentByTag("TAG_LOGIN_FRAGMENT");
+                if(Utils.isFragmentVisible(loginFragment)) {
+                    loginFragment.setError(getString(R.string.invalid_card_mk));
                 }
             }
         }
     };
 
-    private void updateMessagesFragments() {
+    private void updateMessagesFragments(boolean wasItemAdded) {
         // If the message fragment is visible, update the list view displaying the messages
         FragmentManager fManager = getFragmentManager();
         MessagesFragment messagesFragment = (MessagesFragment) fManager.findFragmentByTag("TAG_POPUP_MESSAGES_FRAGMENT");
-        if(messagesFragment != null && messagesFragment.isVisible()) {
+        if(Utils.isFragmentVisible(messagesFragment)) {
             messagesFragment.notifyDataSetChanged();
         }
 
         // Update the offers status bar
         OffersStatusBarFragment offersStatusBarFragment =
                 (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-        if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
-            offersStatusBarFragment.setMessagesCount(popupMessages.size());
+        if(Utils.isFragmentVisible(offersStatusBarFragment)) {
+            offersStatusBarFragment.setMessagesCount(popupMessages.size(), wasItemAdded);
         }
     }
 
@@ -793,7 +743,9 @@ public class MainActivity extends Activity implements LocationListener,
         // Cancel the timers and remove the long offer
         OffersStatusBarFragment offersStatusBarFragment =
                 (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-        offersStatusBarFragment.cancelTimers();
+        if(Utils.isFragmentVisible(offersStatusBarFragment)) {
+            offersStatusBarFragment.cancelTimers();
+        }
         // Remove the client marker
         MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentByTag("TAG_MAP_FRAGMENT");
         if (mapFragment != null) {
@@ -805,7 +757,7 @@ public class MainActivity extends Activity implements LocationListener,
         FragmentManager fManager = getFragmentManager();
         // If the offers fragment is visible, update the list view displaying the short offers
         OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
-        if(offersFragment != null && offersFragment.isVisible()) {
+        if(Utils.isFragmentVisible(offersFragment)) {
             offersFragment.notifyDataSetChanged();
             if(longOffer != null) {
                 offersFragment.displayLongOffer(longOffer);
@@ -816,11 +768,17 @@ public class MainActivity extends Activity implements LocationListener,
         // Update the offers status bar
         OffersStatusBarFragment offersStatusBarFragment =
                 (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-        if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+        if(Utils.isFragmentVisible(offersStatusBarFragment)) {
             if(longOffer != null) {
-                offersStatusBarFragment.setOffersCount(-1);
+                offersStatusBarFragment.setHasLongOffer(true);
             } else {
-                offersStatusBarFragment.setOffersCount(shortOffers.size());
+                int read = 0;
+                for(ShortOffer so : shortOffers) {
+                    read += so.isRead() ? 1 : 0;
+                }
+                offersStatusBarFragment.setHasLongOffer(false);
+                offersStatusBarFragment.setUnreadOffers(shortOffers.size() - read);
+                offersStatusBarFragment.setTotalOffers(shortOffers.size());
             }
         }
     }
@@ -846,6 +804,9 @@ public class MainActivity extends Activity implements LocationListener,
                     byte offerSource = intent.getByteExtra(Parser.SOURCE, (byte) -1);
                     String textMessage = intent.getStringExtra(Parser.TEXT_MESSAGE);
                     final ShortOffer shortOffer = new ShortOffer(idPhoneCall, offerSource, textMessage);
+                    if(Utils.isFragmentVisible(getFragmentManager().findFragmentByTag("TAG_OFFERS_FRAGMENT"))) {
+                        shortOffer.read();
+                    }
                     shortOffers.add(0, shortOffer);
                     receiverHandler.postDelayed(new Runnable() {
                         @Override
@@ -857,9 +818,7 @@ public class MainActivity extends Activity implements LocationListener,
                         }
                     }, 45000);
                     updateOfferFragments(null);
-                    if(canPlay) {
-                        soundPool.play(shortOfferSound, 1, 1, 1, 0, 1);
-                    }
+                    soundManager.playShortOfferSound();
                     break;
                 }
                 case BroadcastActions.ACTION_CANCEL_SHORT_OFFER: {
@@ -878,7 +837,12 @@ public class MainActivity extends Activity implements LocationListener,
                                     updateOfferFragments(null);
                                 }
                             }, 10000);
-                            updateOfferFragments(null);
+                            // If the offers fragment is visible, update the list view displaying the short offers
+                            FragmentManager fManager = getFragmentManager();
+                            OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
+                            if(Utils.isFragmentVisible(offersFragment)) {
+                                offersFragment.notifyDataSetChanged();
+                            }
                         }
                     }
                     break;
@@ -898,9 +862,7 @@ public class MainActivity extends Activity implements LocationListener,
                             shortOffers.clear();
                             // Display the long offer
                             updateOfferFragments(longOffer);
-                            if(canPlay) {
-                                soundPool.play(longOfferSound, 1, 1, 1, 0, 1);
-                            }
+                            soundManager.playLongOfferSound();
                             break;
                         }
                     }
@@ -911,30 +873,33 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
 
-    // Broadcast receiver for vehicle state updates
-    // Used for generating the correct message for periodical location updates
+    // Broadcast receiver for vehicle state updates that should start
+    // a countdown timer.
     private BroadcastReceiver vehicleStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if(action.equals(BroadcastActions.ACTION_VEHICLE_STATE_FOR_TIMERS)) {
                 int stateId = intent.getIntExtra(Parser.VEHICLE_STATE, -1);
-                int timeInState = intent.getIntExtra(Parser.TIME_IN_STATE, 0);
-                if(stateId != -1 && timeInState != 0) {
+                int timeInState = intent.getIntExtra(Parser.TIME_IN_STATE, 0-1);
+                if(stateId != -1 && timeInState != -1) {
                     VehicleState state = VehicleState.getByValue(stateId);
+                    OffersStatusBarFragment offersStatusBarFragment =
+                            (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
                     if(state == VehicleState.ODI_KON_KLIENT || state == VehicleState.MOVE_TO_CLIENT_NEW_PHONE_CALL) {
-                        OffersStatusBarFragment offersStatusBarFragment =
-                                (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-                        if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+                        if(Utils.isFragmentVisible(offersStatusBarFragment)) {
                             offersStatusBarFragment.startCountdownMoveToClient(timeInState);
                         }
                     } else if(state == VehicleState.ZONA_NA_KLIENT || state == VehicleState.WAIT_CLIENT_NEW_PHONE_CALL) {
-                        OffersStatusBarFragment offersStatusBarFragment =
-                                (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
                         if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
                             offersStatusBarFragment.startCountdownWaitingClient(timeInState);
                         }
                     }
+                }
+                OffersStatusBarFragment offersStatusBarFragment =
+                        (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
+                if(Utils.isFragmentVisible(offersStatusBarFragment)) {
+                    offersStatusBarFragment.cancelTimers();
                 }
             }
         }
@@ -1030,9 +995,9 @@ public class MainActivity extends Activity implements LocationListener,
             updateOfferFragments(null);
             OffersStatusBarFragment offersStatusBarFragment =
                     (OffersStatusBarFragment) getFragmentManager().findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-            if(offersStatusBarFragment != null && offersStatusBarFragment.isVisible()) {
+            if(Utils.isFragmentVisible(offersStatusBarFragment)) {
                 offersStatusBarFragment.cancelTimers();
-                offersStatusBarFragment.setMessagesCount(popupMessages.size());
+                offersStatusBarFragment.setMessagesCount(popupMessages.size(), false);
                 offersStatusBarFragment.setLoggedIn(false);
             }
 

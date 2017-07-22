@@ -62,6 +62,11 @@
             android:layout_height="96dp"
             android:text="@string/generated_messages"
             android:onClick="showGeneratedMessagesFragment"/>
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="96dp"
+            android:text="@string/checking_card"
+            android:onClick="showCheckCardFragment"/>
 
     </LinearLayout>
 </ScrollView>

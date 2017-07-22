@@ -1,9 +1,13 @@
 package com.example.acer.taxiapp;
 
+import android.app.Fragment;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.v4.content.res.ResourcesCompat;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
@@ -30,6 +34,18 @@ public class Utils {
             InputMethodManager imm = (InputMethodManager) view.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         }
+    }
+
+    public static boolean isFragmentVisible(Fragment fragment) {
+        return fragment != null && fragment.isVisible();
+    }
+
+    public static int getColor(Context context, int resourceId) {
+        return ResourcesCompat.getColor(context.getResources(), resourceId, null);
+    }
+
+    public static Drawable getDrawable(Context context, int resourceId) {
+        return ResourcesCompat.getDrawable(context.getResources(), resourceId, null);
     }
 
 }

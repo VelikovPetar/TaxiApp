@@ -7,14 +7,17 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/enter_minutes"/>
+        android:text="@string/enter_minutes"
+        android:textSize="25sp"/>
 
     <RadioGroup
         android:id="@+id/radio_group_minutes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:checkedButton="@+id/radio_button_minutes_2">
+        android:checkedButton="@+id/radio_button_minutes_2"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
 
         <RadioButton
             android:id="@+id/radio_button_minutes_2"

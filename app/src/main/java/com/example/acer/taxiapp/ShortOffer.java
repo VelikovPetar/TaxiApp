@@ -5,15 +5,17 @@ public class ShortOffer {
     private long idPhoneCall;
     private byte offerSource;
     private String textMessage;
-    private boolean isCancelled;
+    private boolean isCanceled;
     private boolean isAccepted;
+    private boolean isRead;
 
     ShortOffer(long idPhoneCall, byte offerSource, String textMessage) {
         this.idPhoneCall = idPhoneCall;
         this.offerSource = offerSource;
         this.textMessage = textMessage;
-        this.isCancelled = false;
+        this.isCanceled = false;
         this.isAccepted = false;
+        this.isRead = false;
     }
 
     public long getIdPhoneCall() {
@@ -29,12 +31,20 @@ public class ShortOffer {
     }
 
     public boolean isCanceled() {
-        return isCancelled;
+        return isCanceled;
     }
 
     public void cancel(String cancelText) {
         textMessage = cancelText;
-        isCancelled = true;
+        isCanceled = true;
+    }
+
+    public void read() {
+        isRead = true;
+    }
+
+    public boolean isRead() {
+        return isRead;
     }
 
     public void accept() {

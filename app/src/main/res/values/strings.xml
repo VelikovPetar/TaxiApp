@@ -20,7 +20,7 @@
     <string name="configuration_success">Успешна конфигурација!</string>
     <string name="override_prev_configuration">Уредот е веќе конфигуриран. Внесување нови вредности ќе ги препокрие старите.</string>
     <string name="minutes">Минути</string>
-    <string name="enter_text">Внесете тект:</string>
+    <string name="enter_text">Внесете текст:</string>
     <string name="enter_region">Внесете регион:</string>
     <string name="enter_minutes">Внесете минути:</string>
     <string name="error_enter_text">Мора да внесете текст!</string>
@@ -74,4 +74,8 @@
     <string name="state">State</string>
     <string name="configuration">Configuration</string>
     <string name="waiting_response">Чекање одговор...</string>
+    <string name="invalid_card">Nevalidna karticka</string>
+    <string name="invalid_card_mk">Невалидна картичка!</string>
+    <string name="checking_card">Проверка на картичка</string>
+    <string name="check_card">Провери картичка</string>
 </resources>

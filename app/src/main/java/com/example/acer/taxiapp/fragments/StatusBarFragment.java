@@ -4,6 +4,7 @@ import android.app.Fragment;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.res.ResourcesCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -111,9 +112,9 @@ public class StatusBarFragment extends Fragment {
     }
 
     public enum LocationStatusValues implements StatusUpdate {
-        NO_LOCATION_SERVICE("No location service", Color.RED),
-        NETWORK("Network", Color.YELLOW),
-        GPS("GPS", Color.GREEN);
+        NO_LOCATION_SERVICE("No location service", Color.parseColor("#F44336")),
+        NETWORK("Network", Color.parseColor("#FFC107")),
+        GPS("GPS", Color.parseColor("#4CAF50"));
 
         private String value;
         private int color;
@@ -134,9 +135,9 @@ public class StatusBarFragment extends Fragment {
     }
 
     public enum ConnectionStatusValues implements StatusUpdate {
-        NOT_CONNECTED("No connection", Color.RED),
-        CONNECTING("Connecting...", Color.YELLOW),
-        CONNECTED("Connected", Color.GREEN);
+        NOT_CONNECTED("No connection", Color.parseColor("#F44336")),
+        CONNECTING("Connecting...", Color.parseColor("#FFC107")),
+        CONNECTED("Connected", Color.parseColor("#4CAF50"));
 
         private String value;
         private int color;
@@ -157,9 +158,9 @@ public class StatusBarFragment extends Fragment {
     }
 
     public enum ServerStatusValues implements StatusUpdate {
-        NOT_CONNECTED("No connection", Color.RED),
-        CONNECTING("Connecting...", Color.YELLOW),
-        CONNECTED("Connected", Color.GREEN);
+        NOT_CONNECTED("No connection", Color.parseColor("#F44336")),
+        CONNECTING("Connecting...", Color.parseColor("#FFC107")),
+        CONNECTED("Connected", Color.parseColor("#4CAF50"));
 
         private String value;
         private int color;

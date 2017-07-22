@@ -143,6 +143,11 @@ public class LoginFragment extends Fragment {
         super.onStop();
     }
 
+    public void setError(String error) {
+        errorTextView.setText(error);
+        errorTextView.setVisibility(View.VISIBLE);
+    }
+
     public void initLocation(Location location) {
         this.location = location;
         if (isResumed())

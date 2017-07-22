@@ -24,7 +24,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/login_error1"
-                    android:textColor="#FF0000"/>
+                    android:textColor="@color/red"
+                    android:textSize="20sp"/>
 
                 <TextView
                     android:id="@+id/text_view_login_no_required_services"
