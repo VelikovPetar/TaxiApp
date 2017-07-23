@@ -13,8 +13,8 @@ import android.widget.Toast;
 
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
-import com.example.acer.taxiapp.TCPClient;
-import com.example.acer.taxiapp.Utils;
+import com.example.acer.taxiapp.tcp.TCPClient;
+import com.example.acer.taxiapp.utils.Utils;
 
 public class CheckCardFragment extends Fragment {
 
@@ -33,9 +33,11 @@ public class CheckCardFragment extends Fragment {
             public void onClick(View v) {
                 String text = cardEditText.getText().toString().trim();
                 if(!text.equals("")) {
-                    byte[] message = MessengerClient.getLoginMessage(location, text, getActivity());
+                    byte[] message = MessengerClient.getCheckCardMessage(text);
                     TCPClient tcpClient = TCPClient.getInstance(getActivity());
-                    if(!tcpClient.sendBytes(message)) {
+                    if(message == null) {
+                        Toast.makeText(getActivity(), R.string.cannot_check_card, Toast.LENGTH_LONG).show();
+                    } else if(!tcpClient.sendBytes(message)) {
                         Toast.makeText(getActivity(), R.string.error_sending_message, Toast.LENGTH_LONG).show();
                     }
                     View view = getActivity().getCurrentFocus();

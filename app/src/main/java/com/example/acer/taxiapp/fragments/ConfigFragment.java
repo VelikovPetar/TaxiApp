@@ -14,9 +14,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.example.acer.taxiapp.MainActivity;
+import com.example.acer.taxiapp.activity.MainActivity;
 import com.example.acer.taxiapp.R;
-import com.example.acer.taxiapp.Utils;
+import com.example.acer.taxiapp.utils.Utils;
 
 public class ConfigFragment extends Fragment {
 

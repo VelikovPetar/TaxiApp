@@ -1,10 +1,12 @@
-package com.example.acer.taxiapp;
+package com.example.acer.taxiapp.tcp;
 
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.example.acer.taxiapp.utils.BroadcastActions;
+import com.example.acer.taxiapp.utils.Utils;
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
 
 import java.io.DataOutputStream;

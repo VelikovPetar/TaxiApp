@@ -1,12 +1,10 @@
-package com.example.acer.taxiapp.services;
+package com.example.acer.taxiapp.tcp;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-
-import com.example.acer.taxiapp.TCPClient;
 
 public class TCPClientService extends Service {
 

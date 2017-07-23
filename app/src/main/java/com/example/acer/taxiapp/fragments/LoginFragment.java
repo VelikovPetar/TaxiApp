@@ -21,11 +21,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.acer.taxiapp.MainActivity;
+import com.example.acer.taxiapp.activity.MainActivity;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
-import com.example.acer.taxiapp.TCPClient;
-import com.example.acer.taxiapp.Utils;
+import com.example.acer.taxiapp.tcp.TCPClient;
+import com.example.acer.taxiapp.utils.Utils;
 
 public class LoginFragment extends Fragment {
 
@@ -100,6 +100,10 @@ public class LoginFragment extends Fragment {
             public void onClick(View v) {
                 if (isConfig) {
                     String driverId = loginEditText.getText().toString().trim();
+                    if(driverId.equals("")) {
+                        return;
+
+                    }
                     provider.onDriverIdProvided(driverId);
                     TCPClient tcpClient = TCPClient.getInstance(getActivity());
                     if (tcpClient.sendBytes(MessengerClient.getLoginMessage(location, driverId, getActivity()))) {

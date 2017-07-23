@@ -1,4 +1,4 @@
-package com.example.acer.taxiapp;
+package com.example.acer.taxiapp.utils;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -13,9 +13,13 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.acer.taxiapp.MessengerClient;
+import com.example.acer.taxiapp.R;
+import com.example.acer.taxiapp.tcp.TCPClient;
+
 public class AlertDialogBuilder {
-    static final int REGISTER_FOR_REGION_ALERT_DIALOG = 1;
-    static final int STATUS_REQUEST_ALERT_DIALOG = 2;
+    public static final int REGISTER_FOR_REGION_ALERT_DIALOG = 1;
+    public static final int STATUS_REQUEST_ALERT_DIALOG = 2;
 
     public static AlertDialog build(Context context, int alertDialogType) {
         AlertDialog dialog = null;

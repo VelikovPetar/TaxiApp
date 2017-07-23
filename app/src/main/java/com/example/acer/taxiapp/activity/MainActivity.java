@@ -1,7 +1,6 @@
-package com.example.acer.taxiapp;
+package com.example.acer.taxiapp.activity;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -25,33 +24,47 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.acer.taxiapp.fragments.ButtonListFragment;
-import com.example.acer.taxiapp.fragments.CheckCardFragment;
-import com.example.acer.taxiapp.fragments.ConfigFragment;
-import com.example.acer.taxiapp.fragments.GeneratedMessagesFragment;
+import com.example.acer.taxiapp.DiscountCalculator;
+import com.example.acer.taxiapp.LocationUpdater;
+import com.example.acer.taxiapp.LoginCallbacks;
+import com.example.acer.taxiapp.MessageListProvider;
+import com.example.acer.taxiapp.MessengerClient;
+import com.example.acer.taxiapp.R;
+import com.example.acer.taxiapp.SoundManager;
+import com.example.acer.taxiapp.VehicleState;
 import com.example.acer.taxiapp.fragments.LoginFragment;
 import com.example.acer.taxiapp.fragments.MapFragment;
-import com.example.acer.taxiapp.fragments.MessagesFragment;
 import com.example.acer.taxiapp.fragments.OffersFragment;
 import com.example.acer.taxiapp.fragments.OffersStatusBarFragment;
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
-import com.example.acer.taxiapp.services.TCPClientService;
+import com.example.acer.taxiapp.models.LongOffer;
+import com.example.acer.taxiapp.models.PopupMessage;
+import com.example.acer.taxiapp.models.ShortOffer;
+import com.example.acer.taxiapp.tcp.Parser;
+import com.example.acer.taxiapp.tcp.TCPClient;
+import com.example.acer.taxiapp.tcp.TCPClientService;
+import com.example.acer.taxiapp.utils.AlertDialogBuilder;
+import com.example.acer.taxiapp.utils.BroadcastActions;
+import com.example.acer.taxiapp.utils.FixedSizeList;
+import com.example.acer.taxiapp.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-public class MainActivity extends Activity implements LocationListener,
+public class MainActivity extends NavigationActivity implements LocationListener,
         MessageListProvider,
         OffersFragment.ShortOffersListProvider,
         LoginFragment.DriverIdProvider,
-        LoginCallbacks {
+        LoginCallbacks,
+        DiscountCalculator.OnDiscountCompleteListener {
 
     // Constants
     public static final String PREFERENCES = "my_preferences";
@@ -88,36 +101,25 @@ public class MainActivity extends Activity implements LocationListener,
 
     // Id of the logged driver
     private String driverID;
-    // Indicator whether the driver is logged in
-    private boolean isLoggedIn = false;
     // Indicator whether the driver is in pause
     private boolean isPaused = false;
     // Indicator whether there is a client
     private boolean isWithClient = false;
+    // Indicator if there is a client with discount
+    private boolean isWithDiscountClient = false;
+    private DiscountCalculator discountCalculator;
 
     private SoundManager soundManager;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.activity_main);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        // Initialize fragments
-        final FragmentManager fManager = getFragmentManager();
-        if (savedInstanceState == null) {
-            FragmentTransaction fTransaction = fManager.beginTransaction();
-            fTransaction.add(R.id.fragment_offers_container, new OffersStatusBarFragment(), "TAG_OFFERS_STATUS_BAR_FRAGMENT");
-            fTransaction.add(R.id.fragment_buttons_container, new ButtonListFragment(), "TAG_BUTTONS_LIST_FRAGMENT");
-            fTransaction.add(R.id.fragment_status_bar_container, new StatusBarFragment(), "TAG_STATUS_BAR_FRAGMENT");
-            fTransaction.add(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
-            fTransaction.commit();
-        }
         // Special case: On some android devices, when pressing the power button(off then on),
         // the activity changes orientation effectively destroying itself(with that it send message for logging out).
         // When the activity is recreated, it restores the state of the other fragments, but it remains in not logged state
         // So when that happens, we need to clear the fragments from the stack before the activity was destroyed, and add the Login fragment
+        final FragmentManager fManager = getFragmentManager();
         if(savedInstanceState != null && !isLoggedIn) {
             while(fManager.getBackStackEntryCount() > 0)
                 fManager.popBackStackImmediate();
@@ -125,21 +127,6 @@ public class MainActivity extends Activity implements LocationListener,
             fTransaction.replace(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
             fTransaction.commit();
         }
-
-        ImageButton configButton = (ImageButton) findViewById(R.id.button_config);
-        configButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ConfigFragment configFragment = (ConfigFragment) fManager.findFragmentByTag("TAG_CONFIG_FRAGMENT");
-                if(Utils.isFragmentVisible(configFragment)) {
-                    return;
-                }
-                FragmentTransaction fTransaction = fManager.beginTransaction();
-                fTransaction.replace(R.id.fragment_content_container, new ConfigFragment(), "TAG_CONFIG_FRAGMENT");
-                fTransaction.addToBackStack("frag_conf");
-                fTransaction.commit();
-            }
-        });
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -165,20 +152,7 @@ public class MainActivity extends Activity implements LocationListener,
 
     public void onLoginButtonClick(View v) {
         if(!isLoggedIn) {
-            FragmentManager fManager = getFragmentManager();
-            boolean isPopped = fManager.popBackStackImmediate("frag_conf", FragmentManager.POP_BACK_STACK_INCLUSIVE);
-            if (!isPopped) {
-                LoginFragment loginFragment = (LoginFragment) fManager.findFragmentByTag("TAG_LOGIN_FRAGMENT");
-                if (!Utils.isFragmentVisible(loginFragment)) {
-                    FragmentTransaction fTransaction = fManager.beginTransaction();
-                    LoginFragment newLoginFragment = new LoginFragment();
-                    if(lastLocation != null)
-                        newLoginFragment.initLocation(lastLocation);
-                    fTransaction.replace(R.id.fragment_content_container, newLoginFragment, "TAG_LOGIN_FRAGMENT");
-                    fTransaction.addToBackStack(null);
-                    fTransaction.commit();
-                }
-            }
+             super.onLoginButtonClick(lastLocation);
         } else {
             AlertDialog dialog = new AlertDialog.Builder(this)
                     .setTitle(R.string.logout)
@@ -207,14 +181,7 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
     public void onMapButtonClick(View v) {
-        if(!isLoggedIn) {
-            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
-            return;
-        }
-        // If the driver is logged in, the map is always the bottom fragment
-        FragmentManager fManager = getFragmentManager();
-        while(fManager.getBackStackEntryCount() > 0)
-            fManager.popBackStackImmediate();
+         super.onMapButtonClick();
     }
 
     public void onPauseButtonClick(View view) {
@@ -226,7 +193,7 @@ public class MainActivity extends Activity implements LocationListener,
             // Send message for starting pause
             byte[] message = MessengerClient.getPauseStartMessage(lastLocation, this);
             if (tcpClientService.sendBytes(message)) {
-                locationUpdater.setBits(true, false);
+                locationUpdater.setBits(true, false, false, false);
                 isPaused = true;
                 // Change button
                 Button pauseButton = (Button) findViewById(R.id.button_menu_pause_status);
@@ -238,7 +205,7 @@ public class MainActivity extends Activity implements LocationListener,
             // Send message for ending pause
             byte[] message = MessengerClient.getPauseStopMessage(lastLocation, this);
             if (tcpClientService.sendBytes(message)) {
-                locationUpdater.setBits(false, false);
+                locationUpdater.setBits(false, false, false, false);
                 isPaused = false;
                 // Change button
                 Button pauseButton = (Button) findViewById(R.id.button_menu_pause_status);
@@ -256,21 +223,53 @@ public class MainActivity extends Activity implements LocationListener,
         }
         if(!isWithClient) {
             // Send message that the client was picked up
-            if(tcpClientService.sendBytes(MessengerClient.getCommonMessage(lastLocation, this, false, true))) {
-                locationUpdater.setBits(false, true);
-                onLongOfferFinished();
-                isWithClient = true;
-                // Change button
-                Button clientStatusButton = (Button) findViewById(R.id.button_menu_client_status);
-                clientStatusButton.setText(R.string.client_dropped_off);
-            } else {
-                Toast.makeText(this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
-            }
+            AlertDialog dialog = new AlertDialog.Builder(this)
+                    .setTitle("Попуст")
+                    .setMessage("Дали давате попуст?")
+                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            discountCalculator = new DiscountCalculator(MainActivity.this);
+                            discountCalculator.startCalculating(lastLocation);
+                            if(tcpClientService.sendBytes(MessengerClient.getCommonMessage(lastLocation, MainActivity.this, false, false, true, false))) {
+                                locationUpdater.setBits(false, false, true, false);
+                                onLongOfferFinished();
+                                isWithClient = true;
+                                // Change button
+                                Button clientStatusButton = (Button) findViewById(R.id.button_menu_client_status);
+                                clientStatusButton.setText(R.string.client_dropped_off);
+                            } else {
+                                Toast.makeText(MainActivity.this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    })
+                    .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if(tcpClientService.sendBytes(MessengerClient.getCommonMessage(lastLocation, MainActivity.this, false, true, false, false))) {
+                                locationUpdater.setBits(false, true, false, false);
+                                onLongOfferFinished();
+                                isWithClient = true;
+                                // Change button
+                                Button clientStatusButton = (Button) findViewById(R.id.button_menu_client_status);
+                                clientStatusButton.setText(R.string.client_dropped_off);
+                            } else {
+                                Toast.makeText(MainActivity.this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    })
+                    .create();
+            dialog.show();
         } else {
             // Send message that client was dropped
             if(tcpClientService.sendBytes(MessengerClient.getCommonMessage(lastLocation, this, false, false))) {
                 locationUpdater.setBits(false, false);
                 isWithClient = false;
+                isWithDiscountClient = false;
+                if(discountCalculator != null) {
+                    discountCalculator.cancel();
+                }
+                discountCalculator = null;
                 // Change button
                 Button clientStatusButton = (Button) findViewById(R.id.button_menu_client_status);
                 clientStatusButton.setText(R.string.client_taken);
@@ -311,95 +310,19 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
     public void showMessagesFragment(View view) {
-        if(!isLoggedIn) {
-            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
-            return;
-        }
-        FragmentManager fManager = getFragmentManager();
-        MessagesFragment messagesFragment = (MessagesFragment) fManager.findFragmentByTag("TAG_POPUP_MESSAGES_FRAGMENT");
-        if(Utils.isFragmentVisible(messagesFragment))
-            return;
-        boolean popped = fManager.popBackStackImmediate("messages_frag", 0);
-        if(!popped) {
-            FragmentTransaction fTransaction = fManager.beginTransaction();
-            fTransaction.replace(R.id.fragment_content_container, new MessagesFragment(), "TAG_POPUP_MESSAGES_FRAGMENT");
-            fTransaction.addToBackStack("messages_frag");
-            fTransaction.commit();
-        }
-        // Update the offers status bar
-        OffersStatusBarFragment offersStatusBarFragment =
-                (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-        if(Utils.isFragmentVisible(offersStatusBarFragment)) {
-            offersStatusBarFragment.setMessagesCount(popupMessages.size(), false);
-        }
+         super.showMessagesFragment(popupMessages.size());
     }
 
     public void showOffersFragment(View view) {
-        if(!isLoggedIn) {
-            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
-            return;
-        }
-        FragmentManager fManager = getFragmentManager();
-        OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
-        if(Utils.isFragmentVisible(offersFragment))
-            return;
-        boolean popped = fManager.popBackStackImmediate("offers_frag", 0);
-        if(!popped) {
-            FragmentTransaction fTransaction = fManager.beginTransaction();
-            fTransaction.replace(R.id.fragment_content_container, new OffersFragment(), "TAG_OFFERS_FRAGMENT");
-            fTransaction.addToBackStack("offers_frag");
-            fTransaction.commit();
-        }
-        // Update the offers status bar
-        OffersStatusBarFragment offersStatusBarFragment =
-                (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-        if(Utils.isFragmentVisible(offersStatusBarFragment)) {
-            if(longOffer == null) {
-                offersStatusBarFragment.setUnreadOffers(0);
-                offersStatusBarFragment.setTotalOffers(shortOffers.size());
-            }
-        }
+         super.showOffersFragment(longOffer, shortOffers);
     }
 
     public void showGeneratedMessagesFragment(View view) {
-        if(!isLoggedIn) {
-            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
-            return;
-        }
-        FragmentManager fManager = getFragmentManager();
-        GeneratedMessagesFragment generatedMessagesFragment =
-                (GeneratedMessagesFragment) fManager.findFragmentByTag("TAG_GENERATED_MESSAGES_FRAGMENT");
-        if(Utils.isFragmentVisible(generatedMessagesFragment))
-            return;
-        boolean popped = fManager.popBackStackImmediate("generated_messages_frag", 0);
-        if(!popped) {
-            FragmentTransaction fTransaction = fManager.beginTransaction();
-            fTransaction.replace(R.id.fragment_content_container, new GeneratedMessagesFragment(), "TAG_GENERATED_MESSAGES_FRAGMENT");
-            fTransaction.addToBackStack("generated_messages_frag");
-            fTransaction.commit();
-        }
+         super.showGeneratedMessagesFragment();
     }
 
     public void showCheckCardFragment(View view) {
-        if(!isLoggedIn) {
-            Toast.makeText(this, R.string.must_be_logged_in, Toast.LENGTH_LONG).show();
-            return;
-        }
-        FragmentManager fManager = getFragmentManager();
-        CheckCardFragment checkCardFragment =
-                (CheckCardFragment) fManager.findFragmentByTag("TAG_CHECK_CARD_FRAGMENT");
-        if(Utils.isFragmentVisible(checkCardFragment)) {
-            return;
-        }
-        boolean popped = fManager.popBackStackImmediate("check_card_frag", 0);
-        if(!popped) {
-            FragmentTransaction fTransaction = fManager.beginTransaction();
-            CheckCardFragment ccFragment = new CheckCardFragment();
-            ccFragment.setLocation(lastLocation);
-            fTransaction.replace(R.id.fragment_content_container, ccFragment, "TAG_CHECK_CARD_FRAGMENT");
-            fTransaction.addToBackStack("check_card_frag");
-            fTransaction.commit();
-        }
+         super.showCheckCardFragment(lastLocation);
     }
 
     @Override
@@ -481,6 +404,7 @@ public class MainActivity extends Activity implements LocationListener,
         super.onStop();
         // Unregister status bar updates receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(statusBarUpdatesReceiver);
+        soundManager.cancelBeepSound();
     }
 
     @Override
@@ -505,23 +429,7 @@ public class MainActivity extends Activity implements LocationListener,
                 updateMessagesFragments(false);
             }
         } else {
-            final AlertDialog dialog = new AlertDialog.Builder(this)
-                    .setTitle(R.string.exit)
-                    .setMessage(R.string.confirm_exit)
-                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            MainActivity.super.onBackPressed();
-                        }
-                    })
-                    .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.cancel();
-                        }
-                    })
-                    .create();
-            dialog.show();
+             super.onBackPressed();
         }
     }
 
@@ -552,6 +460,9 @@ public class MainActivity extends Activity implements LocationListener,
             mapFragment.updateLocation(lastLocation);
         }
         locationUpdater.setLastLocation(lastLocation);
+        if(isWithDiscountClient) {
+            discountCalculator.add(lastLocation);
+        }
     }
 
     // Displaying the changes in status of the location services
@@ -701,19 +612,7 @@ public class MainActivity extends Activity implements LocationListener,
     };
 
     private void updateMessagesFragments(boolean wasItemAdded) {
-        // If the message fragment is visible, update the list view displaying the messages
-        FragmentManager fManager = getFragmentManager();
-        MessagesFragment messagesFragment = (MessagesFragment) fManager.findFragmentByTag("TAG_POPUP_MESSAGES_FRAGMENT");
-        if(Utils.isFragmentVisible(messagesFragment)) {
-            messagesFragment.notifyDataSetChanged();
-        }
-
-        // Update the offers status bar
-        OffersStatusBarFragment offersStatusBarFragment =
-                (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-        if(Utils.isFragmentVisible(offersStatusBarFragment)) {
-            offersStatusBarFragment.setMessagesCount(popupMessages.size(), wasItemAdded);
-        }
+        super.updateMessagesFragments(popupMessages.size(), wasItemAdded);
     }
 
     // List that keeps current short offers
@@ -754,33 +653,7 @@ public class MainActivity extends Activity implements LocationListener,
     }
 
     private void updateOfferFragments(LongOffer longOffer) {
-        FragmentManager fManager = getFragmentManager();
-        // If the offers fragment is visible, update the list view displaying the short offers
-        OffersFragment offersFragment = (OffersFragment) fManager.findFragmentByTag("TAG_OFFERS_FRAGMENT");
-        if(Utils.isFragmentVisible(offersFragment)) {
-            offersFragment.notifyDataSetChanged();
-            if(longOffer != null) {
-                offersFragment.displayLongOffer(longOffer);
-            } else {
-                offersFragment.hideLongOffer();
-            }
-        }
-        // Update the offers status bar
-        OffersStatusBarFragment offersStatusBarFragment =
-                (OffersStatusBarFragment) fManager.findFragmentByTag("TAG_OFFERS_STATUS_BAR_FRAGMENT");
-        if(Utils.isFragmentVisible(offersStatusBarFragment)) {
-            if(longOffer != null) {
-                offersStatusBarFragment.setHasLongOffer(true);
-            } else {
-                int read = 0;
-                for(ShortOffer so : shortOffers) {
-                    read += so.isRead() ? 1 : 0;
-                }
-                offersStatusBarFragment.setHasLongOffer(false);
-                offersStatusBarFragment.setUnreadOffers(shortOffers.size() - read);
-                offersStatusBarFragment.setTotalOffers(shortOffers.size());
-            }
-        }
+        super.updateOfferFragments(longOffer, shortOffers);
     }
 
     // Broadcast receiver for incoming short offers
@@ -1005,6 +878,53 @@ public class MainActivity extends Activity implements LocationListener,
             Button loginButton = (Button) findViewById(R.id.button_menu_login_logout);
             loginButton.setText(R.string.login);
         }
+    }
+
+    @Override
+    public void onDiscountStarted() {
+        isWithDiscountClient = true;
+        locationUpdater.setBits(false, false, true, false);
+    }
+
+    @Override
+    public void onDiscountComplete(final double distanceInMeters, final long timeInSeconds) {
+        isWithDiscountClient = false;
+        locationUpdater.setBits(false, false, false, true);
+        soundManager.playBeepSound();
+        LayoutInflater inflater = LayoutInflater.from(this);
+        final View dialogLayout = inflater.inflate(R.layout.dialog_discount_ended, null);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogLayout)
+                .create();
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(final DialogInterface dialog) {
+                TextView text = (TextView) dialogLayout.findViewById(R.id.text_view_discount_ended);
+                text.setText(String.format(Locale.getDefault(), "Заврши попустот.\nВклучете таксиметар!\n(%.2f/%d)", distanceInMeters, timeInSeconds % 1000));
+                Button okButton = (Button) dialogLayout.findViewById(R.id.button_discount_ended);
+                okButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if(tcpClientService.sendBytes(MessengerClient.getCommonMessage(lastLocation, MainActivity.this, false, true, false, false))) {
+                            locationUpdater.setBits(false, true, false, false);
+                            soundManager.cancelBeepSound();
+                            dialog.dismiss();
+                        } else {
+                            Toast.makeText(MainActivity.this, R.string.error_sending_message, Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+            }
+        });
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                tcpClientService.sendBytes(MessengerClient.getCommonMessage(lastLocation, MainActivity.this, false, true, false, false));
+                locationUpdater.setBits(false, true, false, false);
+                soundManager.cancelBeepSound();
+            }
+        });
+        dialog.show();
     }
 
     @Override

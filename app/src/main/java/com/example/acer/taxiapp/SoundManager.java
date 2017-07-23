@@ -11,7 +11,8 @@ public class SoundManager {
     private SoundPool soundPool;
     private int numberLoadedSounds = 0;
     private boolean canPlay;
-    private int messageSound, shortOfferSound, longOfferSound;
+    private int messageSound, shortOfferSound, longOfferSound, beep;
+    private int beepId = -1;
 
     public SoundManager(Context context) {
         this.context = context;
@@ -26,7 +27,7 @@ public class SoundManager {
             @Override
             public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
                 numberLoadedSounds ++;
-                if(numberLoadedSounds == 3) {
+                if(numberLoadedSounds == 4) {
                     canPlay = true;
                 }
             }
@@ -34,6 +35,7 @@ public class SoundManager {
         messageSound = soundPool.load(this.context, R.raw.message_sound, 1);
         shortOfferSound = soundPool.load(this.context, R.raw.short_offer_sound, 1);
         longOfferSound = soundPool.load(this.context, R.raw.long_offer_sound, 1);
+        beep = soundPool.load(this.context, R.raw.beep_sound, 1);
     }
 
     public void playMessageSound() {
@@ -51,6 +53,18 @@ public class SoundManager {
     public void playLongOfferSound() {
         if(canPlay) {
             soundPool.play(longOfferSound, 1, 1, 1, 0, 1);
+        }
+    }
+
+    public void playBeepSound() {
+        if(canPlay) {
+            beepId = soundPool.play(beep, 1, 1, 1, -1, 1);
+        }
+    }
+
+    public void cancelBeepSound() {
+        if(canPlay && beepId != -1) {
+            soundPool.stop(beepId);
         }
     }
 

@@ -16,7 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.acer.taxiapp.R;
-import com.example.acer.taxiapp.Utils;
+import com.example.acer.taxiapp.utils.Utils;
 
 import java.util.Locale;
 
@@ -131,6 +131,7 @@ public class OffersStatusBarFragment extends Fragment {
             MessagesFragment messagesFragment = (MessagesFragment) fManager.findFragmentByTag("TAG_POPUP_MESSAGES_FRAGMENT");
             if(!Utils.isFragmentVisible(messagesFragment)) {
                 unreadMessages++;
+                unreadMessages = Math.min(unreadMessages, total);
             }
         } else {
             // Ako item ne bil dodaden, ili bil izbrishan

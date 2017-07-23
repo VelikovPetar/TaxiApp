@@ -1,4 +1,4 @@
-package com.example.acer.taxiapp;
+package com.example.acer.taxiapp.utils;
 
 public class BroadcastActions {
     public static final String ACTION_DRIVER_STATUS = "broadcastactions.driver";

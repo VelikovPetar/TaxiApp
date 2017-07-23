@@ -19,7 +19,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.acer.taxiapp.MessageListProvider;
-import com.example.acer.taxiapp.PopupMessage;
+import com.example.acer.taxiapp.models.PopupMessage;
 import com.example.acer.taxiapp.R;
 
 import java.util.List;

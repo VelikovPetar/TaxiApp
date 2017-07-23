@@ -4,6 +4,9 @@ package com.example.acer.taxiapp;
 import android.content.Context;
 import android.location.Location;
 
+import com.example.acer.taxiapp.MessengerClient;
+import com.example.acer.taxiapp.tcp.TCPClient;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -18,7 +21,7 @@ public class LocationUpdater {
     private ScheduledExecutorService scheduler;
     private ScheduledFuture scheduledFuture;
     private Location lastLocation;
-    private boolean pause, taximeter;
+    private boolean pause = false, taximeter = false, sensor9 = false, sensor10 = false;
 
     private volatile boolean isRunning;
 
@@ -45,6 +48,15 @@ public class LocationUpdater {
         if(isRunning) {
             scheduler.shutdownNow();
             isRunning = false;
+        }
+    }
+
+    public void setBits(boolean pause, boolean taximeter, boolean sensor9, boolean sensor10) {
+        synchronized (bitsLock) {
+            this.pause = pause;
+            this.taximeter = taximeter;
+            this.sensor9 = sensor9;
+            this.sensor10 = sensor10;
         }
     }
 
@@ -78,7 +90,7 @@ public class LocationUpdater {
                 current = new Location(lastLocation);
             }
             synchronized (bitsLock) {
-                message = MessengerClient.getCommonMessage(current, context, pause, taximeter);
+                message = MessengerClient.getCommonMessage(current, context, pause, taximeter, sensor9, sensor10);
             }
             tcpClient.sendBytes(message);
         }

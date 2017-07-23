@@ -23,11 +23,11 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.acer.taxiapp.LongOffer;
+import com.example.acer.taxiapp.models.LongOffer;
 import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.R;
-import com.example.acer.taxiapp.ShortOffer;
-import com.example.acer.taxiapp.TCPClient;
+import com.example.acer.taxiapp.models.ShortOffer;
+import com.example.acer.taxiapp.tcp.TCPClient;
 
 import java.util.List;
 

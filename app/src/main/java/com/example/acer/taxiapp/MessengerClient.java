@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
 
+import com.example.acer.taxiapp.activity.MainActivity;
+
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -11,6 +14,7 @@ public class MessengerClient {
 
     private static final int BINARY_DATA_1 = 49;
     private static final int BINARY_DATA_2 = 50;
+    private static byte[] lastCommonMessage;
 
     private static byte[] getBaseCommonMessage(Location location, Context context) {
         byte[] message = new byte[71];
@@ -200,6 +204,34 @@ public class MessengerClient {
         } else {
             turnOnTaximeterBit(message);
         }
+        lastCommonMessage = Arrays.copyOf(message, message.length);
+        return addChkSum(message);
+    }
+
+    public static byte[] getCommonMessage(Location location, Context context,
+                                          boolean pause, boolean taximeter, boolean sensor9, boolean sensor10) {
+        byte[] message = getBaseCommonMessage(location, context);
+        if(pause) {
+            turnOnPauseBit(message);
+        } else {
+            turnOffPauseBit(message);
+        }
+        if(taximeter) {
+            turnOffTaximeterBit(message);
+        } else {
+            turnOnTaximeterBit(message);
+        }
+        if(sensor9) {
+            turnOnSensor9Bit(message);
+        } else {
+            turnOffSensor9Bit(message);
+        }
+        if(sensor10) {
+            turnOnSensor10Bit(message);
+        } else {
+            turnOffSensor10Bit(message);
+        }
+        lastCommonMessage = Arrays.copyOf(message, message.length);
         return addChkSum(message);
     }
 
@@ -207,7 +239,6 @@ public class MessengerClient {
         byte[] message = getBaseCommonMessage(location, context);
         turnOffPauseBit(message);
         turnOnTaximeterBit(message);
-
         driverId = padLeft(driverId, 10, '0');
         byte[] bytes = driverId.getBytes();
         message[61] = bytes[0];
@@ -220,7 +251,29 @@ public class MessengerClient {
         message[68] = bytes[7];
         message[69] = bytes[8];
         message[70] = bytes[9];
+        return addChkSum(message);
+    }
 
+    public static byte[] getCheckCardMessage(String cardId) {
+        if(lastCommonMessage == null) {
+            return null;
+        }
+        if((lastCommonMessage[BINARY_DATA_1] & (1 << 5)) > 0) {
+            return null;
+        }
+        byte[] message = Arrays.copyOf(lastCommonMessage, lastCommonMessage.length);
+        cardId = padLeft(cardId, 10, '0');
+        byte[] bytes = cardId.getBytes();
+        message[61] = bytes[0];
+        message[62] = bytes[1];
+        message[63] = bytes[2];
+        message[64] = bytes[3];
+        message[65] = bytes[4];
+        message[66] = bytes[5];
+        message[67] = bytes[6];
+        message[68] = bytes[7];
+        message[69] = bytes[8];
+        message[70] = bytes[9];
         return addChkSum(message);
     }
 
@@ -228,7 +281,6 @@ public class MessengerClient {
         byte[] message = getBaseCommonMessage(location, context);
         turnOnPauseBit(message);
         turnOnTaximeterBit(message);
-
         driverId = padLeft(driverId, 10, '0');
         byte[] bytes = driverId.getBytes();
         message[61] = bytes[0];
@@ -241,7 +293,6 @@ public class MessengerClient {
         message[68] = bytes[7];
         message[69] = bytes[8];
         message[70] = bytes[9];
-
         return addChkSum(message);
     }
 
@@ -249,7 +300,7 @@ public class MessengerClient {
         byte[] message = getBaseCommonMessage(location, context);
         turnOnPauseBit(message);
         turnOnTaximeterBit(message);
-
+        lastCommonMessage = Arrays.copyOf(message, message.length);
         return addChkSum(message);
     }
 
@@ -257,7 +308,7 @@ public class MessengerClient {
         byte[] message = getBaseCommonMessage(location, context);
         turnOffPauseBit(message);
         turnOnTaximeterBit(message);
-
+        lastCommonMessage = Arrays.copyOf(message, message.length);
         return addChkSum(message);
     }
 
@@ -518,6 +569,22 @@ public class MessengerClient {
 
     private static void turnOffTaximeterBit(byte[] message) {
         message[BINARY_DATA_2] &= ~(1 << 1);
+    }
+
+    private static void turnOnSensor9Bit(byte[] message) {
+        message[BINARY_DATA_2] |= 1 << 2;
+    }
+
+    private static void turnOffSensor9Bit(byte[] message) {
+        message[BINARY_DATA_2] &= ~(1 << 2);
+    }
+
+    private static void turnOnSensor10Bit(byte[] message) {
+        message[BINARY_DATA_2] |= 1 << 3;
+    }
+
+    private static void turnOffSensor10Bit(byte[] message) {
+        message[BINARY_DATA_2] &= ~(1 << 3);
     }
 
     private static String padLeft(String text, int length, char paddingChar) {

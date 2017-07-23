@@ -1,4 +1,4 @@
-package com.example.acer.taxiapp;
+package com.example.acer.taxiapp.models;
 
 public class PopupMessage {
 

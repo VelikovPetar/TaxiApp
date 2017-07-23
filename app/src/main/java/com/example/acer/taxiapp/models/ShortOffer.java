@@ -1,4 +1,4 @@
-package com.example.acer.taxiapp;
+package com.example.acer.taxiapp.models;
 
 public class ShortOffer {
 
@@ -9,7 +9,7 @@ public class ShortOffer {
     private boolean isAccepted;
     private boolean isRead;
 
-    ShortOffer(long idPhoneCall, byte offerSource, String textMessage) {
+    public ShortOffer(long idPhoneCall, byte offerSource, String textMessage) {
         this.idPhoneCall = idPhoneCall;
         this.offerSource = offerSource;
         this.textMessage = textMessage;

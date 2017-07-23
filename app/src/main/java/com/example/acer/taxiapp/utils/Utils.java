@@ -1,4 +1,4 @@
-package com.example.acer.taxiapp;
+package com.example.acer.taxiapp.utils;
 
 import android.app.Fragment;
 import android.content.Context;
