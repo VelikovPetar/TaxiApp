@@ -17,6 +17,16 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    productFlavors {
+        development {
+            buildConfigField "String", "IP_ADRESS", "\"62.162.54.11\""
+            buildConfigField "int", "PORT", "2004"
+        }
+        production {
+            buildConfigField "String", "IP_ADRESS", "\"62.162.54.10\""
+            buildConfigField "int", "PORT", "1002"
+        }
+    }
 }
 
 dependencies {

@@ -268,9 +268,7 @@ public class NavigationActivity extends Activity {
         boolean popped = fManager.popBackStackImmediate("check_card_frag", 0);
         if(!popped) {
             FragmentTransaction fTransaction = fManager.beginTransaction();
-            CheckCardFragment ccFragment = new CheckCardFragment();
-            ccFragment.setLocation(lastLocation);
-            fTransaction.replace(R.id.fragment_content_container, ccFragment, "TAG_CHECK_CARD_FRAGMENT");
+            fTransaction.replace(R.id.fragment_content_container, new CheckCardFragment(), "TAG_CHECK_CARD_FRAGMENT");
             fTransaction.addToBackStack("check_card_frag");
             fTransaction.commit();
         }

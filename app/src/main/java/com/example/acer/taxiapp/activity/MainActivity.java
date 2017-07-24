@@ -115,19 +115,6 @@ public class MainActivity extends NavigationActivity implements LocationListener
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Special case: On some android devices, when pressing the power button(off then on),
-        // the activity changes orientation effectively destroying itself(with that it send message for logging out).
-        // When the activity is recreated, it restores the state of the other fragments, but it remains in not logged state
-        // So when that happens, we need to clear the fragments from the stack before the activity was destroyed, and add the Login fragment
-        final FragmentManager fManager = getFragmentManager();
-        if(savedInstanceState != null && !isLoggedIn) {
-            while(fManager.getBackStackEntryCount() > 0)
-                fManager.popBackStackImmediate();
-            FragmentTransaction fTransaction = fManager.beginTransaction();
-            fTransaction.replace(R.id.fragment_content_container, new LoginFragment(), "TAG_LOGIN_FRAGMENT");
-            fTransaction.commit();
-        }
-
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1234);
@@ -224,8 +211,8 @@ public class MainActivity extends NavigationActivity implements LocationListener
         if(!isWithClient) {
             // Send message that the client was picked up
             AlertDialog dialog = new AlertDialog.Builder(this)
-                    .setTitle("Попуст")
-                    .setMessage("Дали давате попуст?")
+                    .setTitle(R.string.discount)
+                    .setMessage(R.string.confirm_discount)
                     .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {

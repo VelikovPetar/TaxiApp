@@ -20,7 +20,6 @@ public class CheckCardFragment extends Fragment {
 
     private EditText cardEditText;
     private Button checkCardButton;
-    private Location location;
 
     @Nullable
     @Override
@@ -48,7 +47,4 @@ public class CheckCardFragment extends Fragment {
         return view;
     }
 
-    public void setLocation(Location location) {
-        this.location = location;
-    }
 }

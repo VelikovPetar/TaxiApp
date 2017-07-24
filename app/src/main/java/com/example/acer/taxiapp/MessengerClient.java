@@ -89,8 +89,8 @@ public class MessengerClient {
         // longitude direction
         message[32] = 'E';
 
-        // Speed
-        float speed = location.getSpeed();
+        // Speed in km/h
+        float speed = location.getSpeed() * 3.6f;
         bits = Float.floatToIntBits(speed);
         message[33] = (byte) (bits);
         message[34] = (byte) (bits >> 8);

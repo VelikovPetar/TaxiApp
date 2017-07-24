@@ -80,4 +80,7 @@
     <string name="check_card">Провери картичка</string>
     <string name="cannot_check_card">Не може да направите проверка во оваа состојба!</string>
     <string name="ok">ОК</string>
+    <string name="discount">Попуст</string>
+    <string name="confirm_discount">Дали давате попуст?</string>
+    <string name="region">Регион</string>
 </resources>

@@ -3,8 +3,8 @@ package com.example.acer.taxiapp.tcp;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
+import com.example.acer.taxiapp.BuildConfig;
 import com.example.acer.taxiapp.utils.BroadcastActions;
 import com.example.acer.taxiapp.utils.Utils;
 import com.example.acer.taxiapp.fragments.StatusBarFragment;
@@ -25,8 +25,8 @@ public class TCPClient implements Runnable {
 
 
     // Server information
-    private static final String SERVER_IP = "62.162.54.11";
-    private static final int SERVER_PORT = 2004;
+    private static final String SERVER_IP = BuildConfig.IP_ADRESS;
+    private static final int SERVER_PORT = BuildConfig.PORT;
     private static final int TIMEOUT = 50000;
 
     // Indicates whether the socket is waiting incoming data
@@ -218,7 +218,6 @@ public class TCPClient implements Runnable {
                     byte[] buffer = new byte[1024];
                     int readBytes = reader.read(buffer);
                     ArrayList<Byte> bytes = new ArrayList<>();
-                    String msg = "";
                     for(int i = 0; i < readBytes; ++i) {
                         // Case when multiple messages come appended to each other
                         if(i < readBytes - 1) {
@@ -226,17 +225,13 @@ public class TCPClient implements Runnable {
                                 if(bytes.size() > 0) {
                                     parser.parse(listToArray(bytes));
                                     bytes = new ArrayList<>();
-                                    Log.e("Incoming msg", msg);
-                                    msg = "";
                                 }
                             }
                         }
                         bytes.add(buffer[i]);
-                        msg += (char) buffer[i];
                     }
                     // Parse the received message
                     parser.parse(listToArray(bytes));
-                    Log.e("Incoming msg", msg);
                 }
             } catch (SocketTimeoutException e) {
                 e.printStackTrace();

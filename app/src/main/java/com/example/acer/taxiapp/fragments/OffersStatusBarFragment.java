@@ -46,7 +46,7 @@ public class OffersStatusBarFragment extends Fragment {
         // go kreira i ja stava transakcijata na stack
 
         offersInfoButton = (Button) view.findViewById(R.id.button_offers_info);
-        offersInfoButton.setText(String.format(Locale.getDefault(), "Најави: %d/%d", unreadOffers, totalOffers));
+        offersInfoButton.setText(String.format(Locale.getDefault(), "%d/%d", unreadOffers, totalOffers));
         offersInfoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -73,7 +73,7 @@ public class OffersStatusBarFragment extends Fragment {
             }
         });
         messagesInfoButton = (Button) view.findViewById(R.id.button_messages_info);
-        messagesInfoButton.setText(String.format(Locale.getDefault(), "Пораки: %d/%d", unreadMessages, totalMessages));
+        messagesInfoButton.setText(String.format(Locale.getDefault(), "%d/%d", unreadMessages, totalMessages));
         messagesInfoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -151,7 +151,7 @@ public class OffersStatusBarFragment extends Fragment {
             backgroundId = R.drawable.rounded_yellow;
         }
         offersInfoButton.setBackground(Utils.getDrawable(getActivity(), backgroundId));
-        offersInfoButton.setText(String.format(Locale.getDefault(), "Најави: %d/%d", unreadOffers, totalOffers));
+        offersInfoButton.setText(String.format(Locale.getDefault(), "%d/%d", unreadOffers, totalOffers));
     }
 
     private void setMessagesButtonBackground() {
@@ -162,7 +162,7 @@ public class OffersStatusBarFragment extends Fragment {
             backgroundId = R.drawable.rounded_yellow;
         }
         messagesInfoButton.setBackground(Utils.getDrawable(getActivity(), backgroundId));
-        messagesInfoButton.setText(String.format(Locale.getDefault(), "Пораки: %d/%d", unreadMessages, totalMessages));
+        messagesInfoButton.setText(String.format(Locale.getDefault(), "%d/%d", unreadMessages, totalMessages));
     }
 
     public void startCountdownMoveToClient(int minutes) {

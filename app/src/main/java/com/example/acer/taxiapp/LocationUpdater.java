@@ -4,7 +4,6 @@ package com.example.acer.taxiapp;
 import android.content.Context;
 import android.location.Location;
 
-import com.example.acer.taxiapp.MessengerClient;
 import com.example.acer.taxiapp.tcp.TCPClient;
 
 import java.util.concurrent.Executors;

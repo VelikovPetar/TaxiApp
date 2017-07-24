@@ -15,46 +15,42 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:checkedButton="@+id/radio_button_minutes_2"
+        android:checkedButton="@+id/radio_button_minutes_1"
         android:paddingTop="4dp"
         android:paddingBottom="4dp">
 
         <RadioButton
-            android:id="@+id/radio_button_minutes_2"
+            android:id="@+id/radio_button_minutes_1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="2"
+            android:text="1"
             android:textSize="20sp"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"/>
+            android:padding="4dp"/>
         <RadioButton
-            android:id="@+id/radio_button_minutes_4"
+            android:id="@+id/radio_button_minutes_3"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="4"
+            android:text="3"
             android:textSize="20sp"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"/>
+            android:padding="4dp"/>
         <RadioButton
-            android:id="@+id/radio_button_minutes_6"
+            android:id="@+id/radio_button_minutes_5"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="6"
+            android:text="5"
             android:textSize="20sp"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp" />
+            android:padding="4dp" />
         <RadioButton
-            android:id="@+id/radio_button_minutes_8"
+            android:id="@+id/radio_button_minutes_7"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="8"
+            android:text="7"
             android:textSize="20sp"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"/>
+            android:padding="4dp"/>
         <RadioButton
             android:id="@+id/radio_button_minutes_10"
             android:layout_width="0dp"
@@ -62,8 +58,15 @@
             android:layout_weight="1"
             android:text="10"
             android:textSize="20sp"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"/>
+            android:padding="4dp"/>
+        <RadioButton
+            android:id="@+id/radio_button_minutes_15"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="15"
+            android:textSize="20sp"
+            android:padding="4dp"/>
     </RadioGroup>
 
 </LinearLayout>

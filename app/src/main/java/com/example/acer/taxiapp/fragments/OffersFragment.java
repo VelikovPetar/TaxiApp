@@ -251,22 +251,25 @@ public class OffersFragment extends Fragment {
                     public void onClick(DialogInterface dialog, int which) {
                         RadioGroup radioGroup = (RadioGroup) dialogLayout.findViewById(R.id.radio_group_minutes);
                         int checkedId = radioGroup.getCheckedRadioButtonId();
-                        int minutes = 2;
+                        int minutes = 1;
                         switch (checkedId) {
-                            case R.id.radio_button_minutes_2:
-                                minutes = 2;
+                            case R.id.radio_button_minutes_1:
+                                minutes = 1;
                                 break;
-                            case R.id.radio_button_minutes_4:
-                                minutes = 4;
+                            case R.id.radio_button_minutes_3:
+                                minutes = 3;
                                 break;
-                            case R.id.radio_button_minutes_6:
-                                minutes = 6;
+                            case R.id.radio_button_minutes_5:
+                                minutes = 5;
                                 break;
-                            case R.id.radio_button_minutes_8:
-                                minutes = 8;
+                            case R.id.radio_button_minutes_7:
+                                minutes = 7;
                                 break;
                             case R.id.radio_button_minutes_10:
                                 minutes = 10;
+                                break;
+                            case R.id.radio_button_minutes_15:
+                                minutes = 15;
                                 break;
                         }
                         byte[] message = MessengerClient.getShortOfferConfirmMessage(shortOffer.getIdPhoneCall(), minutes, getActivity());
