@@ -887,7 +887,7 @@ public class MainActivity extends NavigationActivity implements LocationListener
             @Override
             public void onShow(final DialogInterface dialog) {
                 TextView text = (TextView) dialogLayout.findViewById(R.id.text_view_discount_ended);
-                text.setText(String.format(Locale.getDefault(), "Заврши попустот.\nВклучете таксиметар!\n(%.2f/%d)", distanceInMeters, timeInSeconds % 1000));
+                text.setText(String.format(Locale.getDefault(), "Заврши попустот.\nВклучете таксиметар!\n(%.2f/%d)", distanceInMeters, timeInSeconds));
                 Button okButton = (Button) dialogLayout.findViewById(R.id.button_discount_ended);
                 okButton.setOnClickListener(new View.OnClickListener() {
                     @Override

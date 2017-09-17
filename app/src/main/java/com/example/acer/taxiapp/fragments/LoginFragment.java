@@ -2,14 +2,9 @@ package com.example.acer.taxiapp.fragments;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.location.Location;
-import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -35,8 +30,6 @@ public class LoginFragment extends Fragment {
     private Button loginButton;
 
     private Location location;
-
-    private boolean isConfig = true;
 
     // Reference to MainActivity for providing the driver ID
     private DriverIdProvider provider;
@@ -71,20 +64,6 @@ public class LoginFragment extends Fragment {
         }
     }
 
-    private BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (Utils.hasInternetConnection(getActivity()) &&
-                    Utils.isLocationEnabled(getActivity()) &&
-                    location != null) {
-                enableViews();
-            } else {
-                disableViews();
-            }
-            errorTextView.setVisibility(View.INVISIBLE);
-        }
-    };
-
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
@@ -98,11 +77,16 @@ public class LoginFragment extends Fragment {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isConfig) {
+                if (isConfig()) {
                     String driverId = loginEditText.getText().toString().trim();
-                    if(driverId.equals("")) {
+                    if (driverId.equals("")) {
                         return;
 
+                    }
+                    if (!Utils.hasInternetConnection(getActivity()) || !Utils.isLocationEnabled(getActivity()) || location == null) {
+                        errorTextView.setText(R.string.login_error2);
+                        errorTextView.setVisibility(View.VISIBLE);
+                        return;
                     }
                     provider.onDriverIdProvided(driverId);
                     TCPClient tcpClient = TCPClient.getInstance(getActivity());
@@ -114,6 +98,9 @@ public class LoginFragment extends Fragment {
                     }
                     View view = getActivity().getCurrentFocus();
                     Utils.hideKeyboard(view);
+                } else {
+                    errorTextView.setText(R.string.error_no_config_found);
+                    errorTextView.setVisibility(View.VISIBLE);
                 }
             }
         });
@@ -121,130 +108,18 @@ public class LoginFragment extends Fragment {
         return view;
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        setup();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        intentFilter.addAction("android.location.PROVIDERS_CHANGED");
-        getActivity().registerReceiver(receiver, intentFilter);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        getActivity().unregisterReceiver(receiver);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
-
     public void setError(String error) {
         errorTextView.setText(error);
         errorTextView.setVisibility(View.VISIBLE);
     }
 
+    private boolean isConfig() {
+        SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+        return preferences.contains(MainActivity.DEVICE_ID);
+    }
+
     public void initLocation(Location location) {
         this.location = location;
-        if (isResumed())
-            setup();
-    }
-
-    private void setup() {
-        disableViews();
-        noServicesTextView.setVisibility(View.INVISIBLE);
-        errorTextView.setTextColor(Color.RED);
-        SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
-        if (!preferences.contains(MainActivity.DEVICE_ID)) {
-            errorTextView.setText(R.string.error_no_config_found);
-            errorTextView.setVisibility(View.VISIBLE);
-            isConfig = false;
-            return;
-        }
-        isConfig = true;
-        if (!Utils.isLocationEnabled(getActivity())) {
-            noServicesTextView.setVisibility(View.VISIBLE);
-            return;
-        }
-        if (!Utils.hasInternetConnection(getActivity())) {
-            noServicesTextView.setVisibility(View.VISIBLE);
-            return;
-        }
-        if (location == null) {
-            return;
-        }
-        noServicesTextView.setVisibility(View.INVISIBLE);
-        enableViews();
-    }
-
-//    private void promptLocationServices() {
-//        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-//        builder.setTitle("Location Services");
-//        builder.setMessage("Turn on location services to enable login.");
-//        builder.setPositiveButton("Turn on", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-//                startActivity(intent);
-//            }
-//        });
-//        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                dialog.cancel();
-//            }
-//        });
-//        builder.create().show();
-//    }
-
-//    private void promptInternetConnection() {
-//        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-//        builder.setTitle("Internet Connection");
-//        builder.setMessage("Turn on internet connection to enable login.");
-//        builder.setPositiveButton("WiFi", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
-//                startActivity(intent);
-//            }
-//        });
-//        builder.setNeutralButton("Mobile Data", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                Intent intent = new Intent();
-//                intent.setComponent(new ComponentName(
-//                            "com.android.settings",
-//                            "com.android.settings.Settings$DataUsageSummaryActivity"));
-//                startActivity(intent);
-//            }
-//        });
-//        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                dialog.cancel();
-//            }
-//        });
-//        builder.create().show();
-//    }
-
-    private void enableViews() {
-        loginEditText.setEnabled(true);
-        loginButton.setEnabled(true);
-        noServicesTextView.setVisibility(View.INVISIBLE);
-    }
-
-    private void disableViews() {
-        loginEditText.setEnabled(false);
-        loginButton.setEnabled(false);
-        noServicesTextView.setVisibility(View.VISIBLE);
     }
 
     public interface DriverIdProvider {

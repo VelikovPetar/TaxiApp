@@ -3,13 +3,13 @@
     <string name="title_activity_maps">Map</string>
     <string name="server_status">Сервер:</string>
     <string name="connection_status">Конекција:</string>
-    <string name="logged_driver">Најавен возач:</string>
+    <string name="logged_driver">Возач:</string>
     <string name="login">Најава</string>
     <string name="login_error1">Внесовте погрешен код! Обидете се повторно!</string>
     <string name="login_error2">Мора да има интернет конекција и вклучени локациски сервиси за да се најавите!</string>
     <string name="gps_status">GPS</string>
     <string name="confirm">Потврди</string>
-    <string name="vehicle_status">Статус на возило:</string>
+    <string name="vehicle_status">Статус:</string>
     <string name="no_offers">Нема најави!</string>
     <string name="no_messages">Нема пораки!</string>
     <string name="send">Испрати</string>
@@ -26,6 +26,7 @@
     <string name="error_enter_text">Мора да внесете текст!</string>
     <string name="error_enter_region">Мора да внесете регион!</string>
     <string name="error_enter_minutes">Мора да внесете минути!</string>
+    <string name="error_enter_device_id">Мора да внесете бр. на уред!</string>
     <string name="active_long_offer">Активна долга најава!</string>
     <string name="number_of_offers">Број на најави: %d</string>
     <string name="number_of_messages">Број на пораки: %d</string>
@@ -35,6 +36,7 @@
     <string name="location_permissions_needed">PLEASE GIVE PERMISSION TO USE FINE LOCATION</string>
     <string name="no_info">No info</string>
     <string name="error_no_config_found">Уредот не е конфигуриран! Направете конфигурација пред да се логирате!</string>
+    <string name="error_wrong_config_code">Погрешен код за конфигурација!</string>
     <string name="error_reading_full_message">Проблем при вчитувањето на пораката!</string>
     <string name="full_message">Целосна порака</string>
     <string name="close">Затвори</string>

@@ -10,6 +10,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -32,36 +33,50 @@ public class ConfigFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_config, container, false);
         confirmationCodeEditText = (EditText) view.findViewById(R.id.edit_text_setup_confirmation_code);
-        confirmationCodeEditText.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (confirmationCodeEditText.getText().toString().equals(CONFIGURATION_CODE)) {
-                    deviceNumberEditText.setEnabled(true);
-                } else {
-                    deviceNumberEditText.setEnabled(false);
-                }
-                return false;
-            }
-        });
         deviceNumberEditText = (EditText) view.findViewById(R.id.edit_text_setup_device_code);
-        deviceNumberEditText.setEnabled(false);
         errorTextView = (TextView) view.findViewById(R.id.text_view_error_config);
         confirmButton = (Button) view.findViewById(R.id.button_confirm_config);
         confirmButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = preferences.edit();
-                editor.putString(MainActivity.DEVICE_ID, deviceNumberEditText.getText().toString().trim());
-                editor.apply();
-                errorTextView.setText(R.string.configuration_success);
-                errorTextView.setTextColor(Color.GREEN);
-                // Hide keyboard
-                View view = getActivity().getCurrentFocus();
-                Utils.hideKeyboard(view);
+                saveDeviceId();
+            }
+        });
+        deviceNumberEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    saveDeviceId();
+                }
+                return true;
             }
         });
         return view;
+    }
+
+    private void saveDeviceId() {
+        if (!confirmationCodeEditText.getText().toString().trim().equals(CONFIGURATION_CODE)) {
+            errorTextView.setText(R.string.error_wrong_config_code);
+            errorTextView.setTextColor(Color.RED);
+            View view = getActivity().getCurrentFocus();
+            Utils.hideKeyboard(view);
+            return;
+        }
+        SharedPreferences preferences = getActivity().getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        String deviceId = deviceNumberEditText.getText().toString().trim();
+        if (deviceId.equals(""))  {
+            errorTextView.setText(R.string.error_enter_device_id);
+            errorTextView.setTextColor(Color.RED);
+        } else {
+            editor.putString(MainActivity.DEVICE_ID, deviceNumberEditText.getText().toString().trim());
+            editor.apply();
+            errorTextView.setText(R.string.configuration_success);
+            errorTextView.setTextColor(Color.GREEN);
+        }
+        // Hide keyboard
+        View view = getActivity().getCurrentFocus();
+        Utils.hideKeyboard(view);
     }
 
     @Override
